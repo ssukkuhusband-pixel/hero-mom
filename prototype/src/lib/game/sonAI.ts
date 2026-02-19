@@ -1,0 +1,380 @@
+// ============================================================
+// Son AI Behavior System
+// Decision tree evaluated every 2-second tick
+// ============================================================
+
+import type {
+  GameState,
+  SonState,
+  SonAction,
+  Food,
+  Potion,
+  Equipment,
+  EquipmentSlot,
+  TempBuff,
+} from '../types';
+import { SonAction as Action } from '../types';
+import {
+  DEPARTURE_HUNGER_THRESHOLD,
+  DEPARTURE_HP_THRESHOLD,
+  SLEEP_HP_RESTORE,
+  REST_HP_RESTORE,
+  TRAINING_EXP_MIN,
+  TRAINING_EXP_MAX,
+  ACTION_DURATIONS,
+  HUNGER_DECAY_PER_TICK,
+  SON_DIALOGUES,
+} from '../constants';
+
+/** Pick a random element from an array */
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/** Random integer between min and max (inclusive) */
+function randInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// -----------------------------------------------------------------
+// Core tick: process hunger decay and decide next action
+// -----------------------------------------------------------------
+
+export function processSonTick(state: GameState): GameState {
+  // Only process when son is home
+  if (!state.son.isHome) return state;
+
+  let newState = structuredClone(state);
+  const son = newState.son;
+
+  // Decay hunger
+  son.stats.hunger = Math.max(0, son.stats.hunger - HUNGER_DECAY_PER_TICK);
+
+  // Starvation damage: if hunger is 0, HP decreases
+  if (son.stats.hunger <= 0) {
+    son.stats.hp = Math.max(1, son.stats.hp - 1); // ~-0.5/s via 2s tick
+    son.dialogue = pick(SON_DIALOGUES.eatingNoFood);
+  }
+
+  // If son is currently performing an action, tick it down
+  if (son.actionTimer > 0) {
+    son.actionTimer = Math.max(0, son.actionTimer - 2); // 2s tick
+    if (son.actionTimer <= 0) {
+      // DEPARTING is handled by processTick in gameState.tsx -> startAdventure
+      // Do NOT reset it to IDLE here; let processTick detect it next tick
+      if (son.currentAction === Action.DEPARTING) {
+        return newState;
+      }
+      // Action completed: apply effects
+      newState = applyActionEffect(newState);
+      son.currentAction = Action.IDLE;
+    } else {
+      return newState; // still busy
+    }
+  }
+
+  // Decision tree: pick next action
+  return decideNextAction(newState);
+}
+
+// -----------------------------------------------------------------
+// Decision tree
+// -----------------------------------------------------------------
+
+function decideNextAction(state: GameState): GameState {
+  const son = state.son;
+  const home = state.home;
+  const hpPercent = son.stats.hp / son.stats.maxHp;
+
+  // 1. HP < 30%? => potion or sleep
+  if (hpPercent < 0.3) {
+    const healPotion = home.potionShelf.find(p => p.effect === 'instant' && p.stat === 'hp');
+    if (healPotion) {
+      return startAction(state, Action.DRINKING_POTION);
+    }
+    return startAction(state, Action.SLEEPING);
+  }
+
+  // 2. Hunger < 20%? => eat or rest
+  if (son.stats.hunger < 20) {
+    if (home.table.length > 0) {
+      return startAction(state, Action.EATING);
+    }
+    return startAction(state, Action.RESTING);
+  }
+
+  // 3. Check departure conditions
+  if (
+    son.stats.hunger >= DEPARTURE_HUNGER_THRESHOLD &&
+    hpPercent >= DEPARTURE_HP_THRESHOLD
+  ) {
+    return prepareDeparture(state);
+  }
+
+  // 4. HP < 80%? => sleep
+  if (hpPercent < 0.8) {
+    return startAction(state, Action.SLEEPING);
+  }
+
+  // 5. Hunger < 80%? => eat if food available
+  if (son.stats.hunger < DEPARTURE_HUNGER_THRESHOLD && home.table.length > 0) {
+    return startAction(state, Action.EATING);
+  }
+
+  // 6. Book on desk? 30% chance to read
+  if (home.desk.length > 0 && Math.random() < 0.3) {
+    return startAction(state, Action.READING);
+  }
+
+  // 7. Train at dummy
+  if (Math.random() < 0.7) {
+    return startAction(state, Action.TRAINING);
+  }
+
+  // 8. Default: rest
+  return startAction(state, Action.RESTING);
+}
+
+// -----------------------------------------------------------------
+// Start an action
+// -----------------------------------------------------------------
+
+function startAction(state: GameState, action: SonAction): GameState {
+  const son = state.son;
+  son.currentAction = action as SonAction;
+  son.actionTimer = ACTION_DURATIONS[action] ?? 2;
+
+  // Set dialogue
+  switch (action) {
+    case Action.SLEEPING:
+      son.dialogue = pick(SON_DIALOGUES.sleeping);
+      break;
+    case Action.EATING:
+      son.dialogue = pick(SON_DIALOGUES.eating);
+      break;
+    case Action.TRAINING:
+      son.dialogue = pick(SON_DIALOGUES.training);
+      break;
+    case Action.READING:
+      son.dialogue = pick(SON_DIALOGUES.reading);
+      break;
+    case Action.RESTING:
+      son.dialogue = pick(SON_DIALOGUES.resting);
+      break;
+    case Action.DRINKING_POTION:
+      son.dialogue = pick(SON_DIALOGUES.drinkingPotion);
+      break;
+    default:
+      break;
+  }
+
+  return state;
+}
+
+// -----------------------------------------------------------------
+// Apply action effects when completed
+// -----------------------------------------------------------------
+
+function applyActionEffect(state: GameState): GameState {
+  const son = state.son;
+  const home = state.home;
+
+  switch (son.currentAction) {
+    case Action.SLEEPING:
+      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + SLEEP_HP_RESTORE);
+      break;
+
+    case Action.EATING: {
+      // Eat best food from table (highest hunger restore)
+      if (home.table.length > 0) {
+        const sorted = [...home.table].sort((a, b) => b.hungerRestore - a.hungerRestore);
+        const food = sorted[0];
+        // Remove from table
+        const idx = home.table.findIndex(f => f.id === food.id);
+        if (idx !== -1) home.table.splice(idx, 1);
+        // Apply food effects
+        son.stats.hunger = Math.min(son.stats.maxHunger, son.stats.hunger + food.hungerRestore);
+        if (food.hpRestore) {
+          son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + food.hpRestore);
+        }
+        if (food.tempBuff) {
+          son.tempBuffs.push({
+            stat: food.tempBuff.stat,
+            value: food.tempBuff.value,
+            source: food.name,
+          });
+        }
+      }
+      break;
+    }
+
+    case Action.TRAINING: {
+      const expGain = randInt(TRAINING_EXP_MIN, TRAINING_EXP_MAX);
+      son.stats.exp += expGain;
+      // Check level up (handled by caller/gameState)
+      break;
+    }
+
+    case Action.READING: {
+      if (home.desk.length > 0) {
+        const book = home.desk[0];
+        // Apply stat effect permanently
+        const stat = book.statEffect.stat;
+        son.stats[stat] += book.statEffect.value;
+        // Remove book from desk after reading
+        home.desk.splice(0, 1);
+        // Also remove from inventory books
+        const bookIdx = state.inventory.books.findIndex(b => b.id === book.id);
+        if (bookIdx !== -1) state.inventory.books.splice(bookIdx, 1);
+      }
+      break;
+    }
+
+    case Action.RESTING:
+      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + REST_HP_RESTORE);
+      break;
+
+    case Action.DRINKING_POTION: {
+      // Find and consume a health potion from shelf
+      const potionIdx = home.potionShelf.findIndex(
+        p => p.effect === 'instant' && p.stat === 'hp'
+      );
+      if (potionIdx !== -1) {
+        const potion = home.potionShelf[potionIdx];
+        home.potionShelf.splice(potionIdx, 1);
+        if (potion.value) {
+          son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + potion.value);
+        }
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+
+  return state;
+}
+
+// -----------------------------------------------------------------
+// Departure preparation
+// -----------------------------------------------------------------
+
+function prepareDeparture(state: GameState): GameState {
+  const son = state.son;
+  const home = state.home;
+
+  // 1. Drink buff potions from shelf (not health potions)
+  const buffPotions = home.potionShelf.filter(p => p.effect === 'buff');
+  for (const potion of buffPotions) {
+    if (potion.stat && potion.value) {
+      son.tempBuffs.push({
+        stat: potion.stat === 'hp' ? 'all' : potion.stat,
+        value: potion.value,
+        source: potion.name,
+      });
+    }
+  }
+  // Remove consumed buff potions from shelf
+  home.potionShelf = home.potionShelf.filter(p => p.effect !== 'buff');
+
+  // 2. Auto-equip best gear from equipment rack
+  autoEquipBestGear(state);
+
+  // 3. Set departing state
+  son.currentAction = Action.DEPARTING;
+  son.actionTimer = ACTION_DURATIONS[Action.DEPARTING];
+  son.dialogue = pick(SON_DIALOGUES.departing);
+
+  return state;
+}
+
+// -----------------------------------------------------------------
+// Auto-equip best gear by total stat contribution
+// -----------------------------------------------------------------
+
+function autoEquipBestGear(state: GameState): void {
+  const rack = state.home.equipmentRack;
+  const son = state.son;
+
+  const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
+
+  for (const slot of slots) {
+    const candidates = rack.filter(e => e.slot === slot);
+    if (candidates.length === 0) continue;
+
+    // Pick equipment with highest total stat sum
+    const best = candidates.reduce((a, b) =>
+      equipmentStatTotal(b) > equipmentStatTotal(a) ? b : a
+    );
+
+    // Compare with currently equipped
+    const current = son.equipment[slot];
+    if (!current || equipmentStatTotal(best) > equipmentStatTotal(current)) {
+      // Swap: put old gear back on rack, equip new
+      if (current) {
+        rack.push(current);
+      }
+      son.equipment[slot] = best;
+      const idx = rack.findIndex(e => e.id === best.id);
+      if (idx !== -1) rack.splice(idx, 1);
+    }
+  }
+}
+
+function equipmentStatTotal(eq: Equipment): number {
+  const s = eq.baseStats;
+  return (s.str ?? 0) + (s.def ?? 0) + (s.agi ?? 0) + (s.int ?? 0) + (s.hp ?? 0) / 5;
+}
+
+// -----------------------------------------------------------------
+// Check and process level up
+// -----------------------------------------------------------------
+
+export function checkLevelUp(state: GameState): GameState {
+  const son = state.son;
+  while (son.stats.exp >= son.stats.maxExp && son.stats.level < 20) {
+    son.stats.exp -= son.stats.maxExp;
+    son.stats.level += 1;
+
+    // Import level table dynamically to avoid circular deps
+    const { LEVEL_TABLE } = require('../constants');
+    const entry = LEVEL_TABLE.find(
+      (e: { level: number }) => e.level === son.stats.level
+    );
+    if (entry) {
+      son.stats.maxHp += entry.hpGain;
+      son.stats.hp = son.stats.maxHp; // Full heal on level up
+      son.stats.str += entry.statGains.str;
+      son.stats.def += entry.statGains.def;
+      son.stats.agi += entry.statGains.agi;
+      son.stats.int += entry.statGains.int;
+      son.stats.maxExp = entry.expRequired;
+    }
+
+    // Check unlock milestones
+    checkUnlocks(state);
+  }
+  return state;
+}
+
+function checkUnlocks(state: GameState): void {
+  const level = state.son.stats.level;
+  const unlocks = state.unlocks;
+  const { UNLOCK_LEVELS } = require('../constants');
+
+  if (level >= UNLOCK_LEVELS.alchemy) unlocks.systems.alchemy = true;
+  if (level >= UNLOCK_LEVELS.enhancement) unlocks.systems.enhancement = true;
+  if (level >= UNLOCK_LEVELS.gacha) unlocks.systems.gacha = true;
+  if (level >= UNLOCK_LEVELS.farmExpansion && unlocks.farmSlots < 6) {
+    unlocks.farmSlots = 6;
+    // Expand farm plots
+    while (state.farm.plots.length < 6) {
+      state.farm.plots.push({ crop: null, plantedAt: null, growthTime: 0, ready: false });
+    }
+    state.farm.maxPlots = 6;
+  }
+  if (level >= UNLOCK_LEVELS.potionShelfExpansion) {
+    unlocks.potionSlots = 5;
+  }
+}
