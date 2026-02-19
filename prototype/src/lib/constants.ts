@@ -24,22 +24,29 @@ export const HUNGER_DECAY_PER_TICK = HUNGER_DECAY_PER_MINUTE / 30; // ~0.167 per
 export const DEPARTURE_HUNGER_THRESHOLD = 80;
 export const DEPARTURE_HP_THRESHOLD = 0.8; // 80% of maxHP
 
-// Action durations in seconds
-export const ACTION_DURATIONS: Record<string, number> = {
-  [SonAction.SLEEPING]: 5,
-  [SonAction.EATING]: 3,
-  [SonAction.TRAINING]: 4,
-  [SonAction.READING]: 6,
-  [SonAction.RESTING]: 3,
-  [SonAction.DRINKING_POTION]: 2,
-  [SonAction.DEPARTING]: 2,
+// Action durations in seconds (min ~ max range, randomly chosen)
+export const ACTION_DURATIONS: Record<string, [number, number]> = {
+  [SonAction.SLEEPING]: [8, 12],
+  [SonAction.EATING]: [5, 7],
+  [SonAction.TRAINING]: [6, 10],
+  [SonAction.READING]: [7, 10],
+  [SonAction.RESTING]: [5, 8],
+  [SonAction.DRINKING_POTION]: [3, 4],
+  [SonAction.DEPARTING]: [3, 4],
 };
 
-// Action effects
+// Action effects (HP restore is now per-tick, not lump sum)
+export const SLEEP_HP_PER_TICK = 1;  // 2초마다 1 HP 회복
+export const REST_HP_PER_TICK = 1;   // 2초마다 1 HP 회복
+
+// Legacy (kept for reference, no longer used)
 export const SLEEP_HP_RESTORE = 15;
 export const REST_HP_RESTORE = 5;
 export const TRAINING_EXP_MIN = 8;
 export const TRAINING_EXP_MAX = 12;
+
+// Departure behavior: even when conditions are met, son may stay to train/read first
+export const DEPARTURE_SKIP_CHANCE = 0.6; // 60% chance to do something else before leaving
 
 // --- Adventure ---
 

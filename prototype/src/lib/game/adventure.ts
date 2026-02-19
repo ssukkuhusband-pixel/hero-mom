@@ -220,9 +220,11 @@ function completeAdventure(state: GameState): GameState {
     son.stats.hp = 1; // return with 1 HP on failure
     son.stats.hunger = Math.max(10, son.stats.hunger - 30);
   } else {
-    // Successful return: some HP and hunger loss
-    son.stats.hp = Math.max(1, Math.floor(son.stats.maxHp * (adventure.sonHpPercent / 100)));
-    son.stats.hunger = Math.max(20, son.stats.hunger - 20);
+    // Successful return: always come back battered (HP ≤ 30)
+    // This ensures the son stays home long enough for the parent to care for them
+    const returnHp = randInt(5, 30);
+    son.stats.hp = Math.min(returnHp, son.stats.maxHp);
+    son.stats.hunger = Math.max(20, son.stats.hunger - 30);
   }
 
   // Clear adventure

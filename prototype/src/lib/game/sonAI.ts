@@ -17,8 +17,9 @@ import { SonAction as Action } from '../types';
 import {
   DEPARTURE_HUNGER_THRESHOLD,
   DEPARTURE_HP_THRESHOLD,
-  SLEEP_HP_RESTORE,
-  REST_HP_RESTORE,
+  DEPARTURE_SKIP_CHANCE,
+  SLEEP_HP_PER_TICK,
+  REST_HP_PER_TICK,
   TRAINING_EXP_MIN,
   TRAINING_EXP_MAX,
   ACTION_DURATIONS,
@@ -58,6 +59,13 @@ export function processSonTick(state: GameState): GameState {
 
   // If son is currently performing an action, tick it down
   if (son.actionTimer > 0) {
+    // Apply per-tick effects for continuous actions (healing per tick)
+    if (son.currentAction === Action.SLEEPING) {
+      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + SLEEP_HP_PER_TICK);
+    } else if (son.currentAction === Action.RESTING) {
+      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + REST_HP_PER_TICK);
+    }
+
     son.actionTimer = Math.max(0, son.actionTimer - 2); // 2s tick
     if (son.actionTimer <= 0) {
       // DEPARTING is handled by processTick in gameState.tsx -> startAdventure
@@ -104,14 +112,27 @@ function decideNextAction(state: GameState): GameState {
   }
 
   // 3. Check departure conditions
-  if (
-    son.stats.hunger >= DEPARTURE_HUNGER_THRESHOLD &&
-    hpPercent >= DEPARTURE_HP_THRESHOLD
-  ) {
+  const canDepart = son.stats.hunger >= DEPARTURE_HUNGER_THRESHOLD && hpPercent >= DEPARTURE_HP_THRESHOLD;
+
+  if (canDepart) {
+    // Even when ready to depart, son may choose to train or read first
+    const skipRoll = Math.random();
+    if (skipRoll < DEPARTURE_SKIP_CHANCE) {
+      // Son decides to do something at home before leaving
+      if (home.desk.length > 0 && Math.random() < 0.4) {
+        return startAction(state, Action.READING);
+      }
+      if (Math.random() < 0.6) {
+        return startAction(state, Action.TRAINING);
+      }
+      // Rest a bit before heading out
+      return startAction(state, Action.RESTING);
+    }
+    // Son decides to leave
     return prepareDeparture(state);
   }
 
-  // 4. HP < 80%? => sleep
+  // 4. HP < 80%? => sleep to recover
   if (hpPercent < 0.8) {
     return startAction(state, Action.SLEEPING);
   }
@@ -121,13 +142,13 @@ function decideNextAction(state: GameState): GameState {
     return startAction(state, Action.EATING);
   }
 
-  // 6. Book on desk? 30% chance to read
-  if (home.desk.length > 0 && Math.random() < 0.3) {
+  // 6. Book on desk? 40% chance to read
+  if (home.desk.length > 0 && Math.random() < 0.4) {
     return startAction(state, Action.READING);
   }
 
   // 7. Train at dummy
-  if (Math.random() < 0.7) {
+  if (Math.random() < 0.6) {
     return startAction(state, Action.TRAINING);
   }
 
@@ -142,7 +163,8 @@ function decideNextAction(state: GameState): GameState {
 function startAction(state: GameState, action: SonAction): GameState {
   const son = state.son;
   son.currentAction = action as SonAction;
-  son.actionTimer = ACTION_DURATIONS[action] ?? 2;
+  const durationRange = ACTION_DURATIONS[action] ?? [2, 4];
+  son.actionTimer = randInt(durationRange[0], durationRange[1]);
 
   // Set dialogue
   switch (action) {
@@ -181,7 +203,7 @@ function applyActionEffect(state: GameState): GameState {
 
   switch (son.currentAction) {
     case Action.SLEEPING:
-      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + SLEEP_HP_RESTORE);
+      // HP recovery is handled per-tick, no lump sum on completion
       break;
 
     case Action.EATING: {
@@ -231,7 +253,7 @@ function applyActionEffect(state: GameState): GameState {
     }
 
     case Action.RESTING:
-      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + REST_HP_RESTORE);
+      // HP recovery is handled per-tick, no lump sum on completion
       break;
 
     case Action.DRINKING_POTION: {
@@ -283,7 +305,8 @@ function prepareDeparture(state: GameState): GameState {
 
   // 3. Set departing state
   son.currentAction = Action.DEPARTING;
-  son.actionTimer = ACTION_DURATIONS[Action.DEPARTING];
+  const departRange = ACTION_DURATIONS[Action.DEPARTING] ?? [3, 4];
+  son.actionTimer = randInt(departRange[0], departRange[1]);
   son.dialogue = pick(SON_DIALOGUES.departing);
 
   return state;
