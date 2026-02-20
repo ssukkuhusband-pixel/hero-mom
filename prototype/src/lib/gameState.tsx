@@ -30,6 +30,8 @@ import {
 } from './game/crafting';
 import { startAdventure, processAdventureTick } from './game/adventure';
 import { plantCrop, harvestCrop, processFarmTick } from './game/farm';
+import { processDialogueResponse, dismissDialogue } from './game/dialogue';
+import { createQuestFromTemplate, checkQuestProgress } from './game/quest';
 
 // -----------------------------------------------------------------
 // localStorage helpers
@@ -49,7 +51,25 @@ function loadFromLocalStorage(): GameState | null {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return null;
-    return JSON.parse(saved) as GameState;
+    const state = JSON.parse(saved) as GameState;
+    // Migrate old saves: add dialogue & quest state if missing
+    if (!state.son.dialogueState) {
+      state.son.dialogueState = {
+        activeDialogue: null,
+        cooldowns: { emotion: 0, bedtime: 0, daily: 0, request: 0 },
+        counts: { emotion: 0, bedtime: 0, daily: 0, request: 0 },
+        mood: 70,
+        ticksSinceReturn: 999,
+      };
+    }
+    if (!state.son.questState) {
+      state.son.questState = {
+        activeQuests: [],
+        completedQuests: [],
+        lastQuestOfferedAt: 0,
+      };
+    }
+    return state;
   } catch {
     return null;
   }
@@ -65,13 +85,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return processTick(state, action.now);
 
     case 'CRAFT_EQUIPMENT':
-      return craftEquipment(state, action.recipeId);
+      return checkQuestProgress(craftEquipment(state, action.recipeId));
 
     case 'COOK_FOOD':
-      return cookFood(state, action.recipeId);
+      return checkQuestProgress(cookFood(state, action.recipeId));
 
     case 'BREW_POTION':
-      return brewPotion(state, action.recipeId);
+      return checkQuestProgress(brewPotion(state, action.recipeId));
 
     case 'PLANT_CROP':
       return plantCrop(state, action.plotIndex, action.crop);
@@ -87,21 +107,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PERFORM_GACHA':
       return performGacha(state);
 
-    case 'PLACE_FOOD': {
-      return placeFood(state, action.foodIndex);
-    }
+    case 'PLACE_FOOD':
+      return checkQuestProgress(placeFood(state, action.foodIndex));
 
-    case 'PLACE_POTION': {
-      return placePotion(state, action.potionIndex);
-    }
+    case 'PLACE_POTION':
+      return checkQuestProgress(placePotion(state, action.potionIndex));
 
-    case 'PLACE_EQUIPMENT': {
-      return placeEquipmentOnRack(state, action.equipmentId);
-    }
+    case 'PLACE_EQUIPMENT':
+      return checkQuestProgress(placeEquipmentOnRack(state, action.equipmentId));
 
-    case 'PLACE_BOOK': {
-      return placeBook(state, action.bookIndex);
-    }
+    case 'PLACE_BOOK':
+      return checkQuestProgress(placeBook(state, action.bookIndex));
 
     case 'REMOVE_FOOD':
       return removeFood(state, action.placedIndex);
@@ -126,6 +142,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'SELL_EQUIPMENT':
       return sellEquipment(state, action.equipmentId);
+
+    case 'RESPOND_DIALOGUE': {
+      const { state: newState, acceptedTemplate } = processDialogueResponse(state, action.choiceId);
+      if (acceptedTemplate) {
+        return createQuestFromTemplate(newState, acceptedTemplate);
+      }
+      return newState;
+    }
+
+    case 'DISMISS_DIALOGUE':
+      return dismissDialogue(state);
+
+    case 'ACCEPT_QUEST':
+      // Quest acceptance is handled through RESPOND_DIALOGUE
+      return state;
+
+    case 'DECLINE_QUEST':
+      return dismissDialogue(state);
 
     case 'LOAD_STATE':
       return action.state;
@@ -449,6 +483,18 @@ export function useGameActions() {
     ),
     sellEquipment: useCallback(
       (equipmentId: string) => dispatch({ type: 'SELL_EQUIPMENT', equipmentId }),
+      [dispatch]
+    ),
+    respondDialogue: useCallback(
+      (choiceId: string) => dispatch({ type: 'RESPOND_DIALOGUE', choiceId }),
+      [dispatch]
+    ),
+    dismissDialogue: useCallback(
+      () => dispatch({ type: 'DISMISS_DIALOGUE' }),
+      [dispatch]
+    ),
+    declineQuest: useCallback(
+      () => dispatch({ type: 'DECLINE_QUEST' }),
       [dispatch]
     ),
     resetGame: useCallback(

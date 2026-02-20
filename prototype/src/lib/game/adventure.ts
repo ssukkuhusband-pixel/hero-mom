@@ -257,6 +257,12 @@ function completeAdventure(state: GameState): GameState {
   son.tempBuffs = []; // clear adventure buffs
   son.isInjured = adventure.failed;
 
+  // Reset dialogue state for return-related dialogues
+  if (son.dialogueState) {
+    son.dialogueState.ticksSinceReturn = 0;
+    son.dialogueState.cooldowns.emotion = 0; // allow immediate emotion dialogue on return
+  }
+
   if (adventure.failed) {
     son.stats.hp = 1; // return with 1 HP on failure
     son.stats.hunger = Math.max(10, son.stats.hunger - 30);

@@ -49,6 +49,26 @@ export const TRAINING_EXP_MAX = 12;
 // Departure behavior: even when conditions are met, son may stay to train/read first
 export const DEPARTURE_SKIP_CHANCE = 0.6; // 60% chance to do something else before leaving
 
+// --- Dialogue System ---
+
+export const DIALOGUE_TRIGGER_CHANCE: Record<string, number> = {
+  emotion: 0.08,
+  bedtime: 0.25,
+  daily: 0.05,
+  request: 0.06,
+};
+
+export const DIALOGUE_COOLDOWNS: Record<string, number> = {
+  emotion: 60,   // game seconds
+  bedtime: 120,
+  daily: 40,
+  request: 120,
+};
+
+export const DIALOGUE_AUTO_DISMISS = 20; // game seconds before auto-dismiss
+export const MAX_ACTIVE_QUESTS = 2;
+export const MOOD_DECAY_INTERVAL = 120; // game seconds per mood decay
+
 // --- Adventure ---
 
 export const ADVENTURE_LETTER_INTERVAL_MIN = 30_000; // 30s in ms
@@ -542,6 +562,18 @@ export const INITIAL_GAME_STATE: GameState = {
     adventureLog: [],
     dialogue: null,
     tempBuffs: [],
+    dialogueState: {
+      activeDialogue: null,
+      cooldowns: { emotion: 0, bedtime: 0, daily: 0, request: 0 },
+      counts: { emotion: 0, bedtime: 0, daily: 0, request: 0 },
+      mood: 70,
+      ticksSinceReturn: 999,
+    },
+    questState: {
+      activeQuests: [],
+      completedQuests: [],
+      lastQuestOfferedAt: 0,
+    },
   },
   inventory: {
     materials: {

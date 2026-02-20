@@ -41,6 +41,109 @@ export interface SonState {
   adventureLog: string[];
   dialogue: string | null;
   tempBuffs: TempBuff[];
+  dialogueState: DialogueState;
+  questState: QuestState;
+}
+
+// --- Dialogue System ---
+
+export type DialogueType = 'emotion' | 'bedtime' | 'daily' | 'request';
+
+export type FurnitureKey = 'bed' | 'desk' | 'potionShelf' | 'chair' | 'equipmentRack' | 'dummy' | 'table' | 'door';
+
+export interface DialogueEffect {
+  type: 'buff' | 'heal' | 'hunger' | 'mood' | 'exp';
+  stat?: StatType | 'all' | 'hp';
+  value: number;
+  duration?: number;   // game seconds for buffs
+  source: string;
+}
+
+export interface DialogueChoice {
+  id: string;
+  text: string;
+  effect?: DialogueEffect;
+}
+
+export interface DialogueTriggerCondition {
+  sonAction?: SonAction[];
+  hpRange?: [number, number];       // percentage 0-100
+  hungerRange?: [number, number];   // absolute 0-100
+  minLevel?: number;
+  isInjured?: boolean;
+  justReturned?: boolean;
+  nearFurniture?: FurnitureKey[];
+}
+
+export interface QuestData {
+  objectives: Omit<QuestObjective, 'currentAmount'>[];
+  deadlineSeconds: number;
+  reward: QuestReward;
+  failPenalty: QuestPenalty;
+}
+
+export interface DialogueTemplate {
+  id: string;
+  type: DialogueType;
+  sonText: string;
+  choices: DialogueChoice[];
+  conditions: DialogueTriggerCondition;
+  priority: number;
+  questData?: QuestData;
+}
+
+export interface ActiveDialogue {
+  template: DialogueTemplate;
+  startedAt: number;   // gameTime
+  responded: boolean;
+}
+
+export interface DialogueState {
+  activeDialogue: ActiveDialogue | null;
+  cooldowns: Record<DialogueType, number>;  // gameTime when cooldown expires
+  counts: Record<DialogueType, number>;
+  mood: number;              // 0-100
+  ticksSinceReturn: number;
+}
+
+// --- Quest System ---
+
+export interface QuestObjective {
+  type: 'craft_food' | 'craft_equipment' | 'brew_potion' | 'gather_material' | 'place_food' | 'place_potion' | 'place_book' | 'place_equipment' | 'place_any_food';
+  targetId?: string;
+  targetAmount: number;
+  currentAmount: number;
+}
+
+export interface QuestReward {
+  type: 'buff' | 'exp' | 'mood' | 'materials';
+  description: string;
+  stat?: StatType | 'all';
+  value: number;
+}
+
+export interface QuestPenalty {
+  type: 'mood';
+  description: string;
+  value: number;
+}
+
+export interface Quest {
+  id: string;
+  requestText: string;
+  description: string;
+  objectives: QuestObjective[];
+  deadline: number;      // absolute gameTime
+  acceptedAt: number;    // gameTime
+  status: 'active' | 'completed' | 'failed';
+  reward: QuestReward;
+  failPenalty: QuestPenalty;
+}
+
+export interface QuestState {
+  activeQuests: Quest[];
+  completedQuests: Quest[];
+  lastQuestOfferedAt: number;
 }
 
 export interface EquippedGear {
@@ -325,5 +428,9 @@ export type GameAction =
   | { type: 'SELL_FOOD'; foodIndex: number }
   | { type: 'SELL_POTION'; potionIndex: number }
   | { type: 'SELL_EQUIPMENT'; equipmentId: string }
+  | { type: 'RESPOND_DIALOGUE'; choiceId: string }
+  | { type: 'DISMISS_DIALOGUE' }
+  | { type: 'ACCEPT_QUEST'; questId: string }
+  | { type: 'DECLINE_QUEST' }
   | { type: 'LOAD_STATE'; state: GameState }
   | { type: 'RESET_GAME' };

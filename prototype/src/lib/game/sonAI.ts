@@ -26,6 +26,8 @@ import {
   HUNGER_DECAY_PER_TICK,
   SON_DIALOGUES,
 } from '../constants';
+import { evaluateDialogueTriggers } from './dialogue';
+import { checkQuestDeadlines } from './quest';
 
 /** Pick a random element from an array */
 function pick<T>(arr: T[]): T {
@@ -81,8 +83,21 @@ export function processSonTick(state: GameState): GameState {
     }
   }
 
+  // Track ticks since return (for dialogue triggers)
+  if (son.dialogueState) {
+    son.dialogueState.ticksSinceReturn += 1;
+  }
+
+  // Check quest deadlines
+  newState = checkQuestDeadlines(newState);
+
   // Decision tree: pick next action
-  return decideNextAction(newState);
+  newState = decideNextAction(newState);
+
+  // Evaluate dialogue triggers (after action decided, so we know furniture)
+  newState = evaluateDialogueTriggers(newState);
+
+  return newState;
 }
 
 // -----------------------------------------------------------------

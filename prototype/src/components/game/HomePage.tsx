@@ -3,13 +3,16 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { SonAction } from '@/lib/types';
-import type { Food, Potion, Book, Equipment } from '@/lib/types';
+import type { Food, Potion, Book, Equipment, FurnitureKey } from '@/lib/types';
 import {
   EMOJI_MAP,
   MAX_TABLE_FOOD,
 } from '@/lib/constants';
 import Modal from '@/components/ui/Modal';
 import ReturnModal from './ReturnModal';
+import DialogueBubble from './DialogueBubble';
+import QuestPanel from './QuestPanel';
+import QuestBadge from './QuestBadge';
 
 // ============================================================
 // Son character emoji states
@@ -44,8 +47,6 @@ const ACTION_INDICATOR: Record<string, { emoji: string; label: string }> = {
 // ============================================================
 // Spatial Layout: Furniture Positions (% based)
 // ============================================================
-
-type FurnitureKey = 'bed' | 'dummy' | 'desk' | 'chair' | 'table' | 'potionShelf' | 'equipmentRack' | 'door';
 
 interface Position { top: number; left: number }
 
@@ -562,8 +563,16 @@ export default function HomePage() {
   const equipmentItems = home.equipmentRack.map((e) => ({ emoji: EMOJI_MAP[e.slot] ?? '\u2694\uFE0F', name: e.name }));
 
   const dialogue = son.dialogue;
+  const activeDialogue = son.dialogueState?.activeDialogue ?? null;
+  const quests = son.questState?.activeQuests ?? [];
+  const completedQuests = son.questState?.completedQuests ?? [];
+  const allQuests = [...quests, ...completedQuests.filter(q => state.gameTime - q.deadline < 10)];
   const actionInfo = ACTION_INDICATOR[currentAction] ?? ACTION_INDICATOR[SonAction.IDLE];
   const isDoorOpen = currentAction === SonAction.DEPARTING;
+
+  const [showQuestPanel, setShowQuestPanel] = useState(false);
+
+  const { respondDialogue, dismissDialogue: dismissDlg } = useGameActions();
 
   return (
     <>
@@ -724,8 +733,22 @@ export default function HomePage() {
               transform: 'translate(-50%, -50%)',
             }}
           >
-            {/* Speech bubble above son */}
-            {dialogue && (
+            {/* Interactive dialogue or simple speech bubble */}
+            {activeDialogue ? (
+              <div className="absolute bottom-full mb-1" style={{
+                left: bubbleAlign === 'left' ? '0' : bubbleAlign === 'right' ? 'auto' : '50%',
+                right: bubbleAlign === 'right' ? '0' : 'auto',
+                transform: bubbleAlign === 'center' ? 'translateX(-50%)' : 'none',
+              }}>
+                <DialogueBubble
+                  activeDialogue={activeDialogue}
+                  onRespond={respondDialogue}
+                  onDismiss={dismissDlg}
+                  align={bubbleAlign}
+                  gameTime={state.gameTime}
+                />
+              </div>
+            ) : dialogue ? (
               <div className="absolute bottom-full mb-1 w-[180px]" style={{
                 left: bubbleAlign === 'left' ? '0' : bubbleAlign === 'right' ? 'auto' : '50%',
                 right: bubbleAlign === 'right' ? '0' : 'auto',
@@ -733,7 +756,7 @@ export default function HomePage() {
               }}>
                 <SpeechBubble text={dialogue} align={bubbleAlign} />
               </div>
-            )}
+            ) : null}
 
             {/* Action indicator chip */}
             <div className="flex items-center justify-center gap-1 mb-1">
@@ -802,6 +825,19 @@ export default function HomePage() {
                 아들이 모험을 떠났습니다...
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Quest Badge (top-right) */}
+        <QuestBadge
+          count={quests.length}
+          onClick={() => setShowQuestPanel(prev => !prev)}
+        />
+
+        {/* Quest Panel (bottom) */}
+        {showQuestPanel && (
+          <div className="absolute bottom-0 left-0 right-0 z-30">
+            <QuestPanel quests={allQuests} gameTime={state.gameTime} />
           </div>
         )}
       </div>
