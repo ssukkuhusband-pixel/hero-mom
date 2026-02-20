@@ -214,6 +214,11 @@ export function processAdventureTick(state: GameState): GameState {
     newState.letters.push(letter);
   }
 
+  // Limit stored letters to last 50 to prevent localStorage bloat
+  if (newState.letters.length > 50) {
+    newState.letters = newState.letters.slice(-50);
+  }
+
   return newState;
 }
 
@@ -267,10 +272,10 @@ function completeAdventure(state: GameState): GameState {
     son.stats.hp = 1; // return with 1 HP on failure
     son.stats.hunger = Math.max(10, son.stats.hunger - 30);
   } else {
-    // Successful return: always come back battered (HP ≤ 30)
-    // This ensures the son stays home long enough for the parent to care for them
-    const returnHp = randInt(5, 30);
-    son.stats.hp = Math.min(returnHp, son.stats.maxHp);
+    // Successful return: come back at 25~40% of maxHP
+    // Scales properly with level so recovery time stays manageable
+    const hpPercent = randInt(25, 40) / 100;
+    son.stats.hp = Math.max(1, Math.floor(son.stats.maxHp * hpPercent));
     son.stats.hunger = Math.max(20, son.stats.hunger - 30);
   }
 

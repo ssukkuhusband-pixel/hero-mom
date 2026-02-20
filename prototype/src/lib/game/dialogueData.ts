@@ -136,7 +136,7 @@ export const DAILY_DIALOGUES: DialogueTemplate[] = [
       { id: 'careful', text: '함부로 만지면 안 돼~', effect: { type: 'mood', value: 2, source: '주의' } },
     ] },
   { id: 'daily-equip', type: 'daily', sonText: '이 갑옷 멋있다!', priority: 3,
-    conditions: { nearFurniture: ['equipmentRack'] }, choices: [
+    conditions: { sonAction: [SonAction.TRAINING, SonAction.IDLE] }, choices: [
       { id: 'wear', text: '잘 입고 다녀~', effect: { type: 'mood', value: 5, source: '기대' } },
       { id: 'made', text: '엄마가 만든 거야!', effect: { type: 'mood', value: 8, source: '자부심' } },
     ] },
@@ -146,7 +146,7 @@ export const DAILY_DIALOGUES: DialogueTemplate[] = [
       { id: 'wash', text: '곧 빨래해야겠다~', effect: { type: 'mood', value: 2, source: '일상' } },
     ] },
   { id: 'daily-door', type: 'daily', sonText: '밖에 뭐가 있을까?', priority: 3,
-    conditions: { sonAction: [SonAction.IDLE], nearFurniture: ['door'] }, choices: [
+    conditions: { sonAction: [SonAction.DEPARTING] }, choices: [
       { id: 'adventure', text: '모험이 기다리고 있지!', effect: { type: 'mood', value: 5, source: '설렘' } },
       { id: 'careful', text: '조심해야 해~', effect: { type: 'mood', value: 3, source: '당부' } },
     ] },

@@ -56,22 +56,40 @@ export function createQuestFromTemplate(state: GameState, template: DialogueTemp
 
 // --- Progress Counting ---
 
+/** Resolve a recipe targetId to its display name for matching */
+function getRecipeName(targetId: string): string | null {
+  // Lazy import to avoid circular — look up name from all recipe arrays
+  const { FOOD_RECIPES, EQUIPMENT_RECIPES, POTION_RECIPES } = require('../constants');
+  const all = [...FOOD_RECIPES, ...EQUIPMENT_RECIPES, ...POTION_RECIPES];
+  const recipe = all.find((r: { id: string }) => r.id === targetId);
+  return recipe?.name ?? null;
+}
+
 function countObjectiveProgress(state: GameState, obj: QuestObjective): number {
+  const targetName = obj.targetId ? getRecipeName(obj.targetId) : null;
+
   switch (obj.type) {
     case 'craft_food':
     case 'place_food':
-      return state.home.table.filter((f) => obj.targetId && f.id.startsWith(obj.targetId)).length;
+      // Match by recipe name (since item.id is a uid, not the recipe id)
+      if (!targetName) return state.home.table.length;
+      return state.home.table.filter((f) => f.name === targetName).length
+        + state.inventory.food.filter((f) => f.name === targetName).length;
 
     case 'place_any_food':
       return state.home.table.length;
 
     case 'craft_equipment':
     case 'place_equipment':
-      return state.home.equipmentRack.filter((e) => obj.targetId && e.id.startsWith(obj.targetId)).length;
+      if (!targetName) return state.home.equipmentRack.length;
+      return state.home.equipmentRack.filter((e) => e.name === targetName).length
+        + state.inventory.equipment.filter((e) => e.name === targetName).length;
 
     case 'brew_potion':
     case 'place_potion':
-      return state.home.potionShelf.filter((p) => obj.targetId && p.id.startsWith(obj.targetId)).length;
+      if (!targetName) return state.home.potionShelf.length;
+      return state.home.potionShelf.filter((p) => p.name === targetName).length
+        + state.inventory.potions.filter((p) => p.name === targetName).length;
 
     case 'place_book':
       return state.home.desk.length;

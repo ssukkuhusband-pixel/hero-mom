@@ -19,8 +19,8 @@ import { SonAction } from './types';
 // --- Son Behavior ---
 
 export const SON_TICK_INTERVAL = 2000; // 2 seconds in ms
-export const HUNGER_DECAY_PER_MINUTE = 5;
-export const HUNGER_DECAY_PER_TICK = HUNGER_DECAY_PER_MINUTE / 30; // ~0.167 per 2s tick (60s / 2s = 30 ticks/min)
+export const HUNGER_DECAY_PER_MINUTE = 3;
+export const HUNGER_DECAY_PER_TICK = HUNGER_DECAY_PER_MINUTE / 30; // ~0.1 per 2s tick (60s / 2s = 30 ticks/min)
 
 export const DEPARTURE_HUNGER_THRESHOLD = 80;
 export const DEPARTURE_HP_THRESHOLD = 0.8; // 80% of maxHP
@@ -37,8 +37,8 @@ export const ACTION_DURATIONS: Record<string, [number, number]> = {
 };
 
 // Action effects (HP restore is now per-tick, not lump sum)
-export const SLEEP_HP_PER_TICK = 1;  // 2초마다 1 HP 회복
-export const REST_HP_PER_TICK = 1;   // 2초마다 1 HP 회복
+export const SLEEP_HP_PER_TICK = 3;  // 2초마다 3 HP 회복 (레벨 비례 추가는 sonAI에서)
+export const REST_HP_PER_TICK = 2;   // 2초마다 2 HP 회복
 
 // Legacy (kept for reference, no longer used)
 export const SLEEP_HP_RESTORE = 15;
@@ -595,11 +595,11 @@ export const INITIAL_GAME_STATE: GameState = {
       redHerb: 0,
       blueHerb: 0,
       yellowHerb: 0,
-      wheatSeed: 5,
-      potatoSeed: 3,
+      wheatSeed: 8,
+      potatoSeed: 4,
       carrotSeed: 0,
       appleSeed: 0,
-      redHerbSeed: 3,
+      redHerbSeed: 4,
       blueHerbSeed: 0,
       yellowHerbSeed: 0,
     },

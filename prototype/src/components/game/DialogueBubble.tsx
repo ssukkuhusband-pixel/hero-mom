@@ -60,7 +60,7 @@ export default function DialogueBubble({ activeDialogue, onRespond, onDismiss, a
               >
                 {choice.text}
                 {choice.effect && (
-                  <span className="ml-1 hidden group-hover:inline text-[9px] text-cozy-forest font-medium">
+                  <span className="ml-1 text-[9px] text-cozy-forest/70 font-medium">
                     {effectHint(choice.effect)}
                   </span>
                 )}

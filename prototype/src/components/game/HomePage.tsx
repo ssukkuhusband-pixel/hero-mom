@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { SonAction } from '@/lib/types';
 import type { FurnitureKey } from '@/lib/types';
-import { EMOJI_MAP } from '@/lib/constants';
+import { EMOJI_MAP, DEPARTURE_HUNGER_THRESHOLD, DEPARTURE_HP_THRESHOLD } from '@/lib/constants';
 import ReturnModal from './ReturnModal';
 import QuestPanel from './QuestPanel';
 import QuestBadge from './QuestBadge';
@@ -123,6 +123,34 @@ function RoomTabs({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// ============================================================
+// Departure Readiness Indicator
+// ============================================================
+
+function DepartureIndicator({ hp, maxHp, hunger }: { hp: number; maxHp: number; hunger: number }) {
+  const hpOk = hp >= maxHp * DEPARTURE_HP_THRESHOLD;
+  const hungerOk = hunger >= DEPARTURE_HUNGER_THRESHOLD;
+  const ready = hpOk && hungerOk;
+
+  return (
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-sm text-[10px] font-medium transition-all ${
+      ready
+        ? 'bg-green-500/20 border border-green-400/40 text-green-300'
+        : 'bg-black/20 border border-white/10 text-cream-300'
+    }`}>
+      <span>{ready ? '🚀' : '⏳'}</span>
+      <span className={hpOk ? 'text-green-300' : 'text-red-400'}>
+        HP {Math.round((hp / maxHp) * 100)}%/{Math.round(DEPARTURE_HP_THRESHOLD * 100)}%
+      </span>
+      <span className="text-cream-500">·</span>
+      <span className={hungerOk ? 'text-green-300' : 'text-red-400'}>
+        포만감 {hunger}/{DEPARTURE_HUNGER_THRESHOLD}
+      </span>
+      {ready && <span className="text-green-300 animate-pulse">출발 준비 완료!</span>}
     </div>
   );
 }
@@ -256,6 +284,11 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+
+          {/* Departure readiness indicator */}
+          {sonIsHome && !isAdventuring && currentAction !== SonAction.DEPARTING && (
+            <DepartureIndicator hp={son.stats.hp} maxHp={son.stats.maxHp} hunger={son.stats.hunger} />
+          )}
 
           {/* Son character area */}
           <div className="w-full min-h-[140px] flex flex-col items-center justify-end">

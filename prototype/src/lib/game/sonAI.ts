@@ -62,10 +62,12 @@ export function processSonTick(state: GameState): GameState {
   // If son is currently performing an action, tick it down
   if (son.actionTimer > 0) {
     // Apply per-tick effects for continuous actions (healing per tick)
+    // Level bonus: +1 HP per 5 levels to keep recovery time manageable at higher levels
+    const levelBonus = Math.floor(son.stats.level / 5);
     if (son.currentAction === Action.SLEEPING) {
-      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + SLEEP_HP_PER_TICK);
+      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + SLEEP_HP_PER_TICK + levelBonus);
     } else if (son.currentAction === Action.RESTING) {
-      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + REST_HP_PER_TICK);
+      son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + REST_HP_PER_TICK + levelBonus);
     }
 
     son.actionTimer = Math.max(0, son.actionTimer - 2); // 2s tick
@@ -235,11 +237,14 @@ function applyActionEffect(state: GameState): GameState {
           son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + food.hpRestore);
         }
         if (food.tempBuff) {
-          son.tempBuffs.push({
-            stat: food.tempBuff.stat,
-            value: food.tempBuff.value,
-            source: food.name,
-          });
+          // Replace existing buff from same source instead of stacking
+          const existingIdx = son.tempBuffs.findIndex(b => b.source === food.name);
+          const newBuff = { stat: food.tempBuff.stat, value: food.tempBuff.value, source: food.name };
+          if (existingIdx !== -1) {
+            son.tempBuffs[existingIdx] = newBuff;
+          } else {
+            son.tempBuffs.push(newBuff);
+          }
         }
       }
       break;
