@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <radialGradient id="skinGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" style="stop-color:#FDDCB5"/>
+      <stop offset="100%" style="stop-color:#F0C49B"/>
+    </radialGradient>
+    <radialGradient id="hairGrad" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#8B6914"/>
+      <stop offset="100%" style="stop-color:#5C4A1E"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="100" cy="390" rx="45" ry="8" fill="rgba(0,0,0,0.1)"/>
+  <!-- Boots -->
+  <rect x="62" y="340" width="30" height="50" rx="5" fill="#5C3A1E"/>
+  <rect x="108" y="340" width="30" height="50" rx="5" fill="#5C3A1E"/>
+  <rect x="58" y="370" width="38" height="20" rx="6" fill="#4A2E15"/>
+  <rect x="104" y="370" width="38" height="20" rx="6" fill="#4A2E15"/>
+  <!-- Pants -->
+  <rect x="68" y="240" width="28" height="105" rx="8" fill="#7A5C3A"/>
+  <rect x="104" y="240" width="28" height="105" rx="8" fill="#7A5C3A"/>
+  <!-- Belt -->
+  <rect x="60" y="230" width="80" height="15" rx="3" fill="#4A2E15"/>
+  <rect x="95" y="228" width="12" height="19" rx="2" fill="#C9A84C"/>
+  <!-- Tunic body -->
+  <rect x="60" y="140" width="80" height="100" rx="8" fill="#F5E6C8"/>
+  <!-- Leather vest -->
+  <path d="M60 145 L60 235 L85 240 L85 145 Z" fill="#8B5E3C"/>
+  <path d="M115 145 L115 235 L140 240 L140 145 Z" fill="#8B5E3C"/>
+  <path d="M60 145 L75 140 L85 145 Z" fill="#7A5233"/>
+  <path d="M115 145 L125 140 L140 145 Z" fill="#7A5233"/>
+  <!-- Vest stitching -->
+  <line x1="63" y1="160" x2="63" y2="230" stroke="#6B4A2E" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="137" y1="160" x2="137" y2="230" stroke="#6B4A2E" stroke-width="1" stroke-dasharray="3,3"/>
+  <!-- Arms -->
+  <rect x="38" y="150" width="22" height="80" rx="10" fill="#F5E6C8"/>
+  <rect x="140" y="150" width="22" height="80" rx="10" fill="#F5E6C8"/>
+  <!-- Hands -->
+  <circle cx="49" cy="235" r="10" fill="url(#skinGrad)"/>
+  <circle cx="151" cy="235" r="10" fill="url(#skinGrad)"/>
+  <!-- Sword at side -->
+  <rect x="148" y="200" width="3" height="70" rx="1" fill="#A0A0A0"/>
+  <rect x="143" y="195" width="13" height="8" rx="2" fill="#8B6914"/>
+  <rect x="147" y="270" width="5" height="8" rx="1" fill="#C9A84C"/>
+  <!-- Neck -->
+  <rect x="88" y="120" width="24" height="25" rx="5" fill="url(#skinGrad)"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="95" rx="38" ry="42" fill="url(#skinGrad)"/>
+  <!-- Hair (messy brown) -->
+  <ellipse cx="100" cy="70" rx="42" ry="35" fill="url(#hairGrad)"/>
+  <ellipse cx="68" cy="80" rx="12" ry="20" fill="#6B4E1B"/>
+  <ellipse cx="132" cy="80" rx="12" ry="20" fill="#6B4E1B"/>
+  <path d="M62 65 Q70 45 85 55 Q75 40 95 48 Q90 35 110 45 Q105 32 125 48 Q120 38 138 60" fill="#7A5A1E"/>
+  <!-- Spiky hair bits -->
+  <path d="M70 55 L60 35 L80 50 Z" fill="#6B4E1B"/>
+  <path d="M90 48 L85 25 L100 42 Z" fill="#7A5A1E"/>
+  <path d="M115 45 L120 22 L125 42 Z" fill="#6B4E1B"/>
+  <path d="M130 52 L142 35 L135 55 Z" fill="#7A5A1E"/>
+  <!-- Eyes -->
+  <ellipse cx="85" cy="95" rx="7" ry="8" fill="white"/>
+  <ellipse cx="115" cy="95" rx="7" ry="8" fill="white"/>
+  <circle cx="87" cy="96" r="4" fill="#4A3520"/>
+  <circle cx="117" cy="96" r="4" fill="#4A3520"/>
+  <circle cx="88" cy="94" r="1.5" fill="white"/>
+  <circle cx="118" cy="94" r="1.5" fill="white"/>
+  <!-- Eyebrows -->
+  <path d="M78 85 Q85 80 93 84" stroke="#5C4A1E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M107 84 Q115 80 122 85" stroke="#5C4A1E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M100 100 Q97 108 100 110 Q103 108 100 100" fill="#E8B88A"/>
+  <!-- Warm smile -->
+  <path d="M88 115 Q100 128 112 115" stroke="#C07050" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Cheek blush -->
+  <ellipse cx="75" cy="110" rx="8" ry="5" fill="rgba(255,150,120,0.3)"/>
+  <ellipse cx="125" cy="110" rx="8" ry="5" fill="rgba(255,150,120,0.3)"/>
+  <!-- Ears -->
+  <ellipse cx="60" cy="95" rx="7" ry="10" fill="url(#skinGrad)"/>
+  <ellipse cx="140" cy="95" rx="7" ry="10" fill="url(#skinGrad)"/>
+</svg>

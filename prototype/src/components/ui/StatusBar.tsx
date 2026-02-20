@@ -25,9 +25,10 @@ const ACTION_DISPLAY: Record<
 
 interface StatusBarProps {
   onOpenInventory?: () => void;
+  onOpenSonStatus?: () => void;
 }
 
-export default function StatusBar({ onOpenInventory }: StatusBarProps) {
+export default function StatusBar({ onOpenInventory, onOpenSonStatus }: StatusBarProps) {
   const { state } = useGameState();
   const { son, inventory, adventure } = state;
   const { stats, currentAction, isInjured } = son;
@@ -65,12 +66,26 @@ export default function StatusBar({ onOpenInventory }: StatusBarProps) {
     >
       {/* Top row: name/level + gold + bag */}
       <div className="flex items-center justify-between mb-1.5">
-        {/* Left: Son name + level */}
-        <div className="flex items-center gap-1.5">
+        {/* Left: Son avatar + name + level (tappable to open status) */}
+        <button
+          onClick={onOpenSonStatus}
+          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity active:scale-95"
+        >
+          <div className="w-7 h-7 rounded-lg bg-amber-100/15 border border-amber-300/30 flex items-center justify-center overflow-hidden">
+            <img
+              src="/hero-mom/assets/characters/son.png"
+              alt=""
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-sm">🧑</span>';
+              }}
+            />
+          </div>
           <span className="text-sm font-bold text-cozy-gold">
-            {EMOJI_MAP.level} Lv.{stats.level}
+            Lv.{stats.level}
           </span>
-          <span className="text-sm font-serif font-bold text-cream-100">
+          <span className="text-sm font-bold text-cream-100">
             아들
           </span>
           {isInjured && (
@@ -78,7 +93,7 @@ export default function StatusBar({ onOpenInventory }: StatusBarProps) {
               {'\uD83E\uDE79'}
             </span>
           )}
-        </div>
+        </button>
 
         {/* Right: Gold + current action + bag */}
         <div className="flex items-center gap-2.5">

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 350" width="250" height="350">
+  <defs>
+    <radialGradient id="skinGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" style="stop-color:#FDDCB5"/>
+      <stop offset="100%" style="stop-color:#F0C49B"/>
+    </radialGradient>
+    <radialGradient id="hairGrad" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#8B6914"/>
+      <stop offset="100%" style="stop-color:#5C4A1E"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="125" cy="335" rx="60" ry="10" fill="rgba(0,0,0,0.08)"/>
+  <!-- Legs (sitting, bent) -->
+  <rect x="80" y="260" width="26" height="60" rx="10" fill="#7A5C3A" transform="rotate(-15 93 260)"/>
+  <rect x="130" y="260" width="26" height="60" rx="10" fill="#7A5C3A" transform="rotate(15 143 260)"/>
+  <!-- Boots (resting) -->
+  <rect x="55" y="305" width="35" height="18" rx="6" fill="#4A2E15" transform="rotate(-10 72 314)"/>
+  <rect x="150" y="305" width="35" height="18" rx="6" fill="#4A2E15" transform="rotate(10 167 314)"/>
+  <!-- Tunic body (sitting/leaning) -->
+  <rect x="75" y="155" width="80" height="115" rx="10" fill="#F5E6C8" transform="rotate(-3 115 210)"/>
+  <!-- Vest -->
+  <path d="M75 160 L75 265 L98 268 L98 160 Z" fill="#8B5E3C" transform="rotate(-3 86 210)"/>
+  <path d="M132 160 L132 265 L155 268 L155 160 Z" fill="#8B5E3C" transform="rotate(-3 143 210)"/>
+  <!-- Belt -->
+  <rect x="73" y="250" width="84" height="14" rx="3" fill="#4A2E15" transform="rotate(-3 115 257)"/>
+  <!-- Arms (resting on lap) -->
+  <rect x="55" y="170" width="20" height="70" rx="10" fill="#F5E6C8" transform="rotate(15 65 170)"/>
+  <rect x="155" y="170" width="20" height="70" rx="10" fill="#F5E6C8" transform="rotate(-10 165 170)"/>
+  <!-- Hands on lap -->
+  <circle cx="78" cy="248" r="9" fill="url(#skinGrad)"/>
+  <circle cx="148" cy="248" r="9" fill="url(#skinGrad)"/>
+  <!-- Sword resting beside -->
+  <rect x="185" y="200" width="3" height="80" rx="1" fill="#A0A0A0" transform="rotate(15 186 200)"/>
+  <rect x="180" y="195" width="13" height="8" rx="2" fill="#8B6914" transform="rotate(15 186 199)"/>
+  <!-- Neck (head tilted) -->
+  <rect x="98" y="130" width="24" height="25" rx="5" fill="url(#skinGrad)" transform="rotate(-8 110 142)"/>
+  <!-- Head (tilted to side, sleeping) -->
+  <ellipse cx="108" cy="100" rx="38" ry="40" fill="url(#skinGrad)" transform="rotate(-12 108 100)"/>
+  <!-- Hair -->
+  <ellipse cx="108" cy="73" rx="42" ry="33" fill="url(#hairGrad)" transform="rotate(-12 108 73)"/>
+  <ellipse cx="74" cy="83" rx="12" ry="18" fill="#6B4E1B"/>
+  <ellipse cx="138" cy="78" rx="12" ry="18" fill="#6B4E1B"/>
+  <path d="M76 55 L66 38 L86 50 Z" fill="#6B4E1B"/>
+  <path d="M98 48 L93 28 L108 42 Z" fill="#7A5A1E"/>
+  <path d="M122 43 L128 25 L132 42 Z" fill="#6B4E1B"/>
+  <!-- Closed eyes (sleeping - peaceful curved lines) -->
+  <path d="M90 98 Q97 103 104 98" stroke="#4A3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M116 95 Q123 100 130 95" stroke="#4A3520" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Peaceful mouth (small gentle smile) -->
+  <path d="M100 118 Q108 123 116 119" stroke="#C07050" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Gentle blush -->
+  <ellipse cx="87" cy="110" rx="7" ry="4" fill="rgba(255,150,120,0.25)"/>
+  <ellipse cx="133" cy="107" rx="7" ry="4" fill="rgba(255,150,120,0.25)"/>
+  <!-- Ears -->
+  <ellipse cx="68" cy="98" rx="7" ry="10" fill="url(#skinGrad)"/>
+  <ellipse cx="145" cy="93" rx="7" ry="10" fill="url(#skinGrad)"/>
+  <!-- Zzz sleep bubbles -->
+  <text x="150" y="65" font-size="18" font-family="serif" fill="#C9A84C" opacity="0.7" font-weight="bold">Z</text>
+  <text x="165" y="45" font-size="14" font-family="serif" fill="#C9A84C" opacity="0.5" font-weight="bold">z</text>
+  <text x="175" y="30" font-size="10" font-family="serif" fill="#C9A84C" opacity="0.3" font-weight="bold">z</text>
+</svg>

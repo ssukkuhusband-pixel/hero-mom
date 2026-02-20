@@ -10,6 +10,7 @@ import KitchenPage from '@/components/game/KitchenPage';
 import AlchemyPage from '@/components/game/AlchemyPage';
 import FarmPage from '@/components/game/FarmPage';
 import InventoryModal from '@/components/game/InventoryModal';
+import SonStatusPanel from '@/components/game/SonStatusPanel';
 
 interface GameLayoutProps {
   /** Optional: override pages externally. If not provided, uses internal state. */
@@ -49,6 +50,7 @@ export default function GameLayout({
   const onNavigate = controlledNavigate ?? setInternalPage;
 
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [sonStatusOpen, setSonStatusOpen] = useState(false);
 
   // Determine what to render in the content area
   // Priority: explicit pages prop > children > default built-in pages
@@ -65,7 +67,10 @@ export default function GameLayout({
   return (
     <div className="game-container max-w-[480px] mx-auto min-h-screen bg-cream-100 relative overflow-hidden">
       {/* Status bar */}
-      <StatusBar onOpenInventory={() => setInventoryOpen(!inventoryOpen)} />
+      <StatusBar
+        onOpenInventory={() => setInventoryOpen(!inventoryOpen)}
+        onOpenSonStatus={() => setSonStatusOpen(true)}
+      />
 
       {/* Content area: padded for top bar (60px) and bottom nav (64px) */}
       <main className="pt-[68px] pb-[72px] min-h-screen overflow-y-auto">
@@ -79,6 +84,12 @@ export default function GameLayout({
       <InventoryModal
         isOpen={inventoryOpen}
         onClose={() => setInventoryOpen(false)}
+      />
+
+      {/* Son status panel */}
+      <SonStatusPanel
+        isOpen={sonStatusOpen}
+        onClose={() => setSonStatusOpen(false)}
       />
     </div>
   );
