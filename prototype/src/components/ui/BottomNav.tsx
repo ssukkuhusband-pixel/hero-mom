@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { useGameState } from '@/lib/gameState';
-import { UNLOCK_LEVELS } from '@/lib/constants';
 
-export type PageId = 'home' | 'mailbox' | 'blacksmith' | 'kitchen' | 'alchemy' | 'farm';
+export type PageId = 'home' | 'blacksmith' | 'village' | 'mailbox';
 
 interface NavTab {
   id: PageId;
@@ -17,20 +16,17 @@ interface NavTab {
 
 const TABS: NavTab[] = [
   { id: 'home', label: '집', emoji: '\uD83C\uDFE0' },
+  { id: 'blacksmith', label: '대장간', emoji: '\u2692\uFE0F' },
+  { id: 'village', label: '마을', emoji: '\uD83C\uDFD8\uFE0F' },
   {
     id: 'mailbox',
     label: '우편함',
-    emoji: '\uD83D\uDCEC',
+    emoji: '\u2709\uFE0F',
     badgeCount: (state) => {
-      // Count adventure letters (unread = from current adventure)
       const adventureLetterCount = state.adventure?.active ? (state.adventure.letters?.length ?? 0) : 0;
       return adventureLetterCount;
     },
   },
-  { id: 'blacksmith', label: '대장간', emoji: '\u2692\uFE0F' },
-  { id: 'kitchen', label: '주방', emoji: '\uD83C\uDF73' },
-  { id: 'alchemy', label: '연금술', emoji: '\u2697\uFE0F', unlockLevel: UNLOCK_LEVELS.alchemy },
-  { id: 'farm', label: '농장', emoji: '\uD83C\uDF3E' },
 ];
 
 interface BottomNavProps {

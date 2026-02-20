@@ -5,8 +5,9 @@ import { useGameState, useGameActions } from '@/lib/gameState';
 import { SonAction } from '@/lib/types';
 import type { FurnitureKey } from '@/lib/types';
 import { EMOJI_MAP, DEPARTURE_HUNGER_THRESHOLD, DEPARTURE_HP_THRESHOLD } from '@/lib/constants';
-import { canDoJob, getJobCooldownRemaining, getJobReward, getJobCooldownDuration } from '@/lib/game/job';
 import ReturnModal from './ReturnModal';
+import KitchenPage from './KitchenPage';
+import FarmPage from './FarmPage';
 import QuestPanel from './QuestPanel';
 import QuestBadge from './QuestBadge';
 import AdventureStatusIndicator from './AdventureStatusIndicator';
@@ -18,7 +19,7 @@ import { FurnitureSlot } from './RoomFurniture';
 // Room Definitions
 // ============================================================
 
-type RoomId = 'living' | 'kitchen' | 'study' | 'sonRoom';
+type RoomId = 'living' | 'kitchen' | 'study' | 'sonRoom' | 'backyard';
 
 interface RoomDef {
   id: RoomId;
@@ -40,7 +41,7 @@ const ROOMS: RoomDef[] = [
     id: 'kitchen',
     name: '주방',
     emoji: '🍳',
-    furniture: ['table'],
+    furniture: ['table', 'stove'],
     bgGradient: 'from-orange-900/80 via-orange-800/60 to-amber-950/80',
   },
   {
@@ -57,6 +58,13 @@ const ROOMS: RoomDef[] = [
     furniture: ['bed', 'potionShelf', 'equipmentRack'],
     bgGradient: 'from-indigo-900/80 via-blue-900/60 to-slate-900/80',
   },
+  {
+    id: 'backyard',
+    name: '뒷마당',
+    emoji: '🌿',
+    furniture: ['farm'],
+    bgGradient: 'from-green-900/80 via-emerald-800/60 to-stone-900/80',
+  },
 ];
 
 // Map each furniture to its room
@@ -65,10 +73,12 @@ const FURNITURE_TO_ROOM: Record<FurnitureKey, RoomId> = {
   dummy: 'living',
   door: 'living',
   table: 'kitchen',
+  stove: 'kitchen',
   desk: 'study',
   bed: 'sonRoom',
   potionShelf: 'sonRoom',
   equipmentRack: 'sonRoom',
+  farm: 'backyard',
 };
 
 // Map SonAction to which furniture he's using
@@ -80,6 +90,7 @@ const ACTION_TO_FURNITURE: Partial<Record<SonAction, FurnitureKey>> = {
   [SonAction.RESTING]: 'chair',
   [SonAction.DRINKING_POTION]: 'potionShelf',
   [SonAction.DEPARTING]: 'door',
+  [SonAction.FARMING]: 'farm',
 };
 
 // ============================================================
@@ -157,81 +168,6 @@ function DepartureIndicator({ hp, maxHp, hunger }: { hp: number; maxHp: number; 
 }
 
 // ============================================================
-// Job Panel (알바)
-// ============================================================
-
-function JobPanel() {
-  const { state } = useGameState();
-  const actions = useGameActions();
-  const mom = state.mom;
-  const ready = canDoJob(state);
-  const reward = getJobReward(state);
-  const cooldownDuration = getJobCooldownDuration(state);
-
-  const [cooldownMs, setCooldownMs] = React.useState(getJobCooldownRemaining(state));
-
-  React.useEffect(() => {
-    if (ready) { setCooldownMs(0); return; }
-    const update = () => setCooldownMs(getJobCooldownRemaining(state));
-    update();
-    const interval = setInterval(update, 200);
-    return () => clearInterval(interval);
-  }, [state.mom.lastJobAt, ready]);
-
-  const cooldownSec = Math.ceil(cooldownMs / 1000);
-  const cooldownPct = cooldownDuration > 0 ? Math.max(0, 100 - (cooldownMs / (cooldownDuration * 1000)) * 100) : 100;
-
-  const handleJob = () => {
-    if (!ready) return;
-    actions.doJob();
-  };
-
-  return (
-    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 w-full max-w-[300px]">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">💼</span>
-        <span className="text-xs font-bold text-cream-100">알바</span>
-        <span className="text-[10px] text-cream-300 ml-auto">Lv.{mom.jobLevel}</span>
-      </div>
-
-      {/* EXP bar */}
-      <div className="flex items-center gap-1.5 mb-2">
-        <div className="flex-1 h-1.5 bg-white/15 rounded-full overflow-hidden">
-          <div className="h-full bg-cozy-amber rounded-full transition-all" style={{ width: `${mom.jobMaxExp > 0 ? (mom.jobExp / mom.jobMaxExp) * 100 : 0}%` }} />
-        </div>
-        <span className="text-[9px] text-cream-400 tabular-nums">{mom.jobExp}/{mom.jobMaxExp}</span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] text-cream-300">보수: <span className="text-cozy-amber font-bold">{reward}G</span></span>
-        <span className="text-[10px] text-cream-400">쿨다운: {cooldownDuration}초</span>
-      </div>
-
-      <button
-        onClick={handleJob}
-        disabled={!ready}
-        className={`w-full mt-2 py-2 rounded-lg text-sm font-bold transition-all active:scale-95 ${
-          ready
-            ? 'bg-cozy-amber text-cream-50 shadow-md hover:bg-cozy-amber-dark'
-            : 'bg-white/10 text-cream-400 cursor-not-allowed'
-        }`}
-      >
-        {ready ? (
-          <span>💰 일하기 (+{reward}G)</span>
-        ) : (
-          <span className="flex items-center justify-center gap-1.5">
-            <span className="text-cream-400">⏳ {cooldownSec}초</span>
-            <div className="w-12 h-1 bg-white/15 rounded-full overflow-hidden">
-              <div className="h-full bg-cream-400/60 rounded-full transition-all" style={{ width: `${cooldownPct}%` }} />
-            </div>
-          </span>
-        )}
-      </button>
-    </div>
-  );
-}
-
-// ============================================================
 // Main HomePage Component
 // ============================================================
 
@@ -244,6 +180,8 @@ export default function HomePage() {
   const [placementModal, setPlacementModal] = useState<PlacementType | null>(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [showQuestPanel, setShowQuestPanel] = useState(false);
+  const [showCookingModal, setShowCookingModal] = useState(false);
+  const [showFarmModal, setShowFarmModal] = useState(false);
 
   // Track when son returns from adventure
   const prevAdventureRef = useRef(adventure?.active ?? false);
@@ -336,13 +274,6 @@ export default function HomePage() {
             <span className="text-xs text-cream-100 font-medium">{currentRoomDef.name}</span>
           </div>
 
-          {/* Job panel (living room only) */}
-          {activeRoom === 'living' && (
-            <div className="flex justify-center w-full">
-              <JobPanel />
-            </div>
-          )}
-
           {/* Furniture grid */}
           <div className="flex-1 flex items-center justify-center w-full">
             <div className={`flex flex-wrap gap-3 justify-center items-center ${
@@ -362,7 +293,15 @@ export default function HomePage() {
                   deskItems={deskItems}
                   equipmentItems={equipmentItems}
                   potionSlots={state.unlocks.potionSlots}
-                  onOpenPlacement={setPlacementModal}
+                  onOpenPlacement={(type) => {
+                    if (type === 'cooking' as PlacementType) {
+                      setShowCookingModal(true);
+                    } else if (type === 'farming' as PlacementType) {
+                      setShowFarmModal(true);
+                    } else {
+                      setPlacementModal(type);
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -442,6 +381,42 @@ export default function HomePage() {
         isOpen={showReturnModal}
         onClose={() => setShowReturnModal(false)}
       />
+
+      {/* Cooking Modal (KitchenPage) */}
+      {showCookingModal && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/80 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-4 py-3 bg-orange-900/90 border-b border-white/10">
+            <span className="text-sm font-bold text-cream-100">{'🍳'} 조리</span>
+            <button
+              onClick={() => setShowCookingModal(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-cream-100 hover:bg-white/30 transition-colors"
+            >
+              {'✕'}
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto max-w-[480px] mx-auto w-full">
+            <KitchenPage />
+          </div>
+        </div>
+      )}
+
+      {/* Farm Modal (FarmPage) */}
+      {showFarmModal && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/80 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-4 py-3 bg-green-900/90 border-b border-white/10">
+            <span className="text-sm font-bold text-cream-100">{'🌾'} 농장</span>
+            <button
+              onClick={() => setShowFarmModal(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-cream-100 hover:bg-white/30 transition-colors"
+            >
+              {'✕'}
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto max-w-[480px] mx-auto w-full">
+            <FarmPage />
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -21,7 +21,6 @@ import { SonAction } from './types';
 import { INITIAL_GAME_STATE, SON_TICK_INTERVAL, MAX_TABLE_FOOD, SHOP_INVENTORY, SELL_PRICES, DURABILITY_MAX } from './constants';
 import { processSonTick, checkLevelUp } from './game/sonAI';
 import {
-  craftEquipment,
   cookFood,
   brewPotion,
   enhanceEquipment,
@@ -146,9 +145,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'TICK':
       return processTick(state, action.now);
-
-    case 'CRAFT_EQUIPMENT':
-      return checkQuestProgress(craftEquipment(state, action.recipeId));
 
     case 'COOK_FOOD':
       return checkQuestProgress(cookFood(state, action.recipeId));
@@ -483,10 +479,6 @@ export function useGameActions() {
   const { dispatch } = useGameState();
 
   return {
-    craftEquipment: useCallback(
-      (recipeId: string) => dispatch({ type: 'CRAFT_EQUIPMENT', recipeId }),
-      [dispatch]
-    ),
     cookFood: useCallback(
       (recipeId: string) => dispatch({ type: 'COOK_FOOD', recipeId }),
       [dispatch]

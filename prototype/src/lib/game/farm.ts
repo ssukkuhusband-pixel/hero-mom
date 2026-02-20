@@ -9,7 +9,7 @@ function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function rollRandomCrop(farmLevel: number): CropType {
+export function rollRandomCrop(farmLevel: number): CropType {
   const levelData = getFarmLevelData(farmLevel);
   const rates = levelData.cropRates;
   const roll = Math.random();

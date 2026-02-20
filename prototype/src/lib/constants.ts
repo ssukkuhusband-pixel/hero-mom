@@ -36,6 +36,7 @@ export const ACTION_DURATIONS: Record<string, [number, number]> = {
   [SonAction.RESTING]: [5, 8],
   [SonAction.DRINKING_POTION]: [3, 4],
   [SonAction.DEPARTING]: [3, 4],
+  [SonAction.FARMING]: [8, 12],
 };
 
 // Action effects (HP restore is now per-tick, not lump sum)
@@ -515,6 +516,7 @@ export const EMOJI_MAP: Record<string, string> = {
   potion: '\uD83E\uDDEA',
   departing: '\uD83D\uDEB6',
   adventuring: '\u2694\uFE0F',
+  farming: '🌱',
   // Equipment slots
   weapon: '\u2694\uFE0F',
   armor: '\uD83D\uDEE1\uFE0F',
@@ -539,6 +541,7 @@ export const SON_DIALOGUES = {
   injured: ['으으... 조금 아파', '괜찮아, 이 정도 쯤이야!', '약간... 쓰리네'],
   drinkingPotion: ['꿀꺽! 힘이 솟는다!', '맛은 좀 그렇지만...', '우웩... 근데 효과 좋다!'],
   idle: ['뭐하지~?', '심심한데...', '음~'],
+  farming: ['씨앗 심어야지~', '뒷마당에 뭐 좀 심을까?', '농사도 재밌다!'],
 };
 
 // --- Adventure Letter Templates ---

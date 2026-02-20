@@ -12,7 +12,6 @@ export function getQuestObjectiveDescription(obj: QuestObjective): string {
     craft_food: '음식 만들기',
     place_food: '식탁에 음식 놓기',
     place_any_food: '식탁에 아무 음식 놓기',
-    craft_equipment: '장비 제작하기',
     place_equipment: '장비대에 장비 놓기',
     brew_potion: '포션 만들기',
     place_potion: '포션 선반에 놓기',
@@ -79,8 +78,14 @@ function countObjectiveProgress(state: GameState, obj: QuestObjective): number {
     case 'place_any_food':
       return state.home.table.length;
 
-    case 'craft_equipment':
     case 'place_equipment':
+      // targetId can be a slot name (weapon/armor/accessory) or a recipe name
+      if (!obj.targetId) return state.home.equipmentRack.length;
+      // Check if targetId is a slot name
+      if (['weapon', 'armor', 'accessory'].includes(obj.targetId)) {
+        return state.home.equipmentRack.filter((e) => e.slot === obj.targetId).length
+          + state.inventory.equipment.filter((e) => e.slot === obj.targetId).length;
+      }
       if (!targetName) return state.home.equipmentRack.length;
       return state.home.equipmentRack.filter((e) => e.name === targetName).length
         + state.inventory.equipment.filter((e) => e.name === targetName).length;

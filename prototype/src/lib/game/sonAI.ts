@@ -28,6 +28,8 @@ import {
 } from '../constants';
 import { evaluateDialogueTriggers } from './dialogue';
 import { checkQuestDeadlines } from './quest';
+import { rollRandomCrop } from './farm';
+import { UNIVERSAL_GROWTH_TIME } from '../constants';
 
 /** Pick a random element from an array */
 function pick<T>(arr: T[]): T {
@@ -164,12 +166,17 @@ function decideNextAction(state: GameState): GameState {
     return startAction(state, Action.READING);
   }
 
-  // 7. Train at dummy
+  // 7. Farm: if seeds > 0 and empty plots exist, 20% chance
+  if (state.inventory.materials.seed > 0 && state.farm.plots.some(p => p.crop === null) && Math.random() < 0.2) {
+    return startAction(state, Action.FARMING);
+  }
+
+  // 8. Train at dummy
   if (Math.random() < 0.6) {
     return startAction(state, Action.TRAINING);
   }
 
-  // 8. Default: rest
+  // 9. Default: rest
   return startAction(state, Action.RESTING);
 }
 
@@ -202,6 +209,9 @@ function startAction(state: GameState, action: SonAction): GameState {
       break;
     case Action.DRINKING_POTION:
       son.dialogue = pick(SON_DIALOGUES.drinkingPotion);
+      break;
+    case Action.FARMING:
+      son.dialogue = pick(SON_DIALOGUES.farming);
       break;
     default:
       break;
@@ -286,6 +296,24 @@ function applyActionEffect(state: GameState): GameState {
         home.potionShelf.splice(potionIdx, 1);
         if (potion.value) {
           son.stats.hp = Math.min(son.stats.maxHp, son.stats.hp + potion.value);
+        }
+      }
+      break;
+    }
+
+    case Action.FARMING: {
+      // Plant seed in first empty plot
+      if (state.inventory.materials.seed > 0) {
+        const emptyIdx = state.farm.plots.findIndex(p => p.crop === null);
+        if (emptyIdx !== -1) {
+          state.inventory.materials.seed -= 1;
+          const crop = rollRandomCrop(state.farm.farmLevel);
+          state.farm.plots[emptyIdx] = {
+            crop,
+            plantedAt: Date.now(),
+            growthTime: UNIVERSAL_GROWTH_TIME,
+            ready: false,
+          };
         }
       }
       break;

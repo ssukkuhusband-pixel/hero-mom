@@ -29,6 +29,7 @@ export enum SonAction {
   DRINKING_POTION = 'DRINKING_POTION',
   DEPARTING = 'DEPARTING',
   ADVENTURING = 'ADVENTURING',
+  FARMING = 'FARMING',
 }
 
 export interface SonState {
@@ -49,7 +50,7 @@ export interface SonState {
 
 export type DialogueType = 'emotion' | 'bedtime' | 'daily' | 'request';
 
-export type FurnitureKey = 'bed' | 'desk' | 'potionShelf' | 'chair' | 'equipmentRack' | 'dummy' | 'table' | 'door';
+export type FurnitureKey = 'bed' | 'desk' | 'potionShelf' | 'chair' | 'equipmentRack' | 'dummy' | 'table' | 'door' | 'stove' | 'farm';
 
 export interface DialogueEffect {
   type: 'buff' | 'heal' | 'hunger' | 'mood' | 'exp';
@@ -109,7 +110,7 @@ export interface DialogueState {
 // --- Quest System ---
 
 export interface QuestObjective {
-  type: 'craft_food' | 'craft_equipment' | 'brew_potion' | 'gather_material' | 'place_food' | 'place_potion' | 'place_book' | 'place_equipment' | 'place_any_food';
+  type: 'craft_food' | 'brew_potion' | 'gather_material' | 'place_food' | 'place_potion' | 'place_book' | 'place_equipment' | 'place_any_food';
   targetId?: string;
   targetAmount: number;
   currentAmount: number;
@@ -424,7 +425,6 @@ export interface GameState {
 
 export type GameAction =
   | { type: 'TICK'; now: number }
-  | { type: 'CRAFT_EQUIPMENT'; recipeId: string }
   | { type: 'COOK_FOOD'; recipeId: string }
   | { type: 'BREW_POTION'; recipeId: string }
   | { type: 'PLANT_CROP'; plotIndex: number }

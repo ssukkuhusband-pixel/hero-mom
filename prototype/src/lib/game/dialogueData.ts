@@ -169,7 +169,7 @@ export const REQUEST_DIALOGUES: DialogueTemplate[] = [
   { id: 'req-stew', type: 'request', sonText: '고기 스튜 먹고 싶어요...', priority: 6, choices: rc(), conditions: { sonAction: [SonAction.IDLE, SonAction.RESTING] },
     questData: { objectives: [{ type: 'craft_food', targetId: 'meat_stew', targetAmount: 1 }], deadlineSeconds: 180, reward: { type: 'buff', description: 'STR+2', stat: 'str', value: 2 }, failPenalty: { type: 'mood', description: '실망', value: -5 } } },
   { id: 'req-sword', type: 'request', sonText: '새 검이 있으면 좋겠어요', priority: 6, choices: rc(), conditions: { sonAction: [SonAction.TRAINING, SonAction.IDLE] },
-    questData: { objectives: [{ type: 'craft_equipment', targetId: 'iron_sword', targetAmount: 1 }], deadlineSeconds: 240, reward: { type: 'exp', description: 'EXP+15', value: 15 }, failPenalty: { type: 'mood', description: '실망', value: -8 } } },
+    questData: { objectives: [{ type: 'place_equipment', targetId: 'weapon', targetAmount: 1 }], deadlineSeconds: 240, reward: { type: 'exp', description: 'EXP+15', value: 15 }, failPenalty: { type: 'mood', description: '실망', value: -8 } } },
   { id: 'req-potion', type: 'request', sonText: '체력 포션이 떨어졌어요', priority: 7, choices: rc(), conditions: { sonAction: [SonAction.IDLE, SonAction.RESTING] },
     questData: { objectives: [{ type: 'brew_potion', targetId: 'health_potion', targetAmount: 1 }], deadlineSeconds: 120, reward: { type: 'mood', description: '기쁨+10', value: 10 }, failPenalty: { type: 'mood', description: '불안', value: -5 } } },
   { id: 'req-book', type: 'request', sonText: '책 읽고 싶은데 없어요', priority: 5, choices: rc(), conditions: { sonAction: [SonAction.IDLE], nearFurniture: ['desk'] },
@@ -179,7 +179,7 @@ export const REQUEST_DIALOGUES: DialogueTemplate[] = [
   { id: 'req-herb', type: 'request', sonText: '약초가 좀 필요해요', priority: 5, choices: rc(), conditions: { sonAction: [SonAction.IDLE, SonAction.RESTING] },
     questData: { objectives: [{ type: 'gather_material', targetId: 'redHerb', targetAmount: 3 }], deadlineSeconds: 300, reward: { type: 'materials', description: '금화 20', value: 20 }, failPenalty: { type: 'mood', description: '실망', value: -5 } } },
   { id: 'req-armor', type: 'request', sonText: '갑옷이 좀 약한 것 같아요...', priority: 6, choices: rc(), conditions: { sonAction: [SonAction.IDLE, SonAction.TRAINING] },
-    questData: { objectives: [{ type: 'craft_equipment', targetId: 'leather_armor', targetAmount: 1 }], deadlineSeconds: 240, reward: { type: 'buff', description: 'DEF+2', stat: 'def', value: 2 }, failPenalty: { type: 'mood', description: '불안', value: -8 } } },
+    questData: { objectives: [{ type: 'place_equipment', targetId: 'armor', targetAmount: 1 }], deadlineSeconds: 240, reward: { type: 'buff', description: 'DEF+2', stat: 'def', value: 2 }, failPenalty: { type: 'mood', description: '불안', value: -8 } } },
   { id: 'req-place-potion', type: 'request', sonText: '물약을 좀 챙겨주세요', priority: 5, choices: rc(), conditions: { sonAction: [SonAction.IDLE] },
     questData: { objectives: [{ type: 'place_potion', targetAmount: 1 }], deadlineSeconds: 90, reward: { type: 'mood', description: '안심+8', value: 8 }, failPenalty: { type: 'mood', description: '아쉬움', value: -3 } } },
 ];

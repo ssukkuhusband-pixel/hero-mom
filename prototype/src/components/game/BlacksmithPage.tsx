@@ -1,10 +1,9 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
-import { canCraftEquipment, canEnhance, canMaintainEquipment, canRefineEquipment, calculateEquipmentStats, enhanceEquipment as enhanceEquipmentFn, getAllEquipment } from '@/lib/game/crafting';
-import { EQUIPMENT_RECIPES, ENHANCEMENT_TABLE, EMOJI_MAP, GRADE_COLORS, UNLOCK_LEVELS, SHOP_INVENTORY, SELL_PRICES, MAINTENANCE_RECIPES, DURABILITY_MAX, DURABILITY_PENALTY_THRESHOLD, REFINING_COST, REFINING_GRADE_RATES, getSmeltingStones } from '@/lib/constants';
-import type { Equipment, EquipmentSlot, EquipmentGrade, MaterialKey, EquipmentRecipe } from '@/lib/types';
-import type { ShopItem } from '@/lib/constants';
+import { canEnhance, canMaintainEquipment, canRefineEquipment, calculateEquipmentStats, enhanceEquipment as enhanceEquipmentFn, getAllEquipment } from '@/lib/game/crafting';
+import { ENHANCEMENT_TABLE, EMOJI_MAP, GRADE_COLORS, UNLOCK_LEVELS, MAINTENANCE_RECIPES, DURABILITY_MAX, DURABILITY_PENALTY_THRESHOLD, REFINING_COST, REFINING_GRADE_RATES, getSmeltingStones } from '@/lib/constants';
+import type { Equipment, EquipmentSlot, EquipmentGrade, MaterialKey } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
 const SLOT_EMOJI: Record<EquipmentSlot, string> = { weapon: '\u2694\uFE0F', armor: '\uD83D\uDEE1\uFE0F', accessory: '\uD83D\uDC8D' };
@@ -14,9 +13,7 @@ const GB: Record<EquipmentGrade, string> = { common: 'border-gray-400/40', uncom
 const GRADE_TEXT_COLOR: Record<EquipmentGrade, string> = { common: 'text-gray-400', uncommon: 'text-green-400', rare: 'text-blue-400', epic: 'text-purple-400' };
 const GRADE_BG: Record<EquipmentGrade, string> = { common: 'bg-gray-400', uncommon: 'bg-green-400', rare: 'bg-blue-400', epic: 'bg-purple-400' };
 const GRADE_LABEL: Record<EquipmentGrade, string> = { common: '일반', uncommon: '고급', rare: '희귀', epic: '전설' };
-type TabType = 'craft' | 'refine' | 'maintain' | 'enhance' | 'shop';
-const sellCls = "flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg border border-cream-500 bg-cream-100 hover:border-red-300 hover:bg-red-50 active:scale-[0.98] transition-all";
-const gridCls = (off: boolean) => `flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-all active:scale-95 ${off ? 'opacity-40 border-white/10 bg-white/5' : 'border-white/20 bg-white/10 hover:border-cozy-amber'}`;
+type TabType = 'refine' | 'maintain' | 'enhance';
 
 function Overlay({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   return (
@@ -53,63 +50,7 @@ function DurabilityBar({ dur, max, small }: { dur: number; max?: number; small?:
   );
 }
 
-/* ===== CRAFT TAB ===== */
-function CraftTab() {
-  const { state } = useGameState();
-  const actions = useGameActions();
-  const { addToast } = useToast();
-  const [sel, setSel] = useState<EquipmentRecipe | null>(null);
-
-  const allEq = useMemo(() => getAllEquipment(state), [state.inventory.equipment, state.home.equipmentRack, state.son.equipment]);
-  const slotHas = (slot: EquipmentSlot) => allEq.some(e => e.slot === slot);
-
-  const craft = (r: EquipmentRecipe) => { actions.craftEquipment(r.id); addToast(`${r.name} 제작 완료!`, 'success'); setSel(null); };
-
-  return (<>
-    {/* Base recipes */}
-    <div className="grid grid-cols-3 gap-2.5">
-      {EQUIPMENT_RECIPES.map((r) => {
-        const owned = slotHas(r.slot);
-        const can = canCraftEquipment(state, r.id);
-        return (
-          <button key={r.id} onClick={() => !owned && setSel(r)} className={`relative flex flex-col items-center justify-center gap-1 w-full aspect-square rounded-xl border-2 transition-all active:scale-95 bg-white/10 backdrop-blur-sm ${owned ? 'opacity-50 border-white/10' : can ? GB[r.grade] + ' shadow-[0_0_8px_rgba(74,222,128,0.25)]' : GB[r.grade]}`}>
-            {owned && <span className="absolute top-1 right-1 text-[8px] bg-cream-600 text-cream-100 px-1.5 rounded-full font-bold">보유 중</span>}
-            {can && !owned && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-green-400 shadow-[0_0_4px_rgba(74,222,128,0.6)]" />}
-            <span className="text-[28px] leading-none">{SLOT_EMOJI[r.slot]}</span>
-            <span className="text-[10px] font-medium text-cream-100 leading-tight text-center line-clamp-2 px-1">{r.name}</span>
-          </button>
-        );
-      })}
-    </div>
-
-    {/* Recipe detail modal */}
-    {sel && (
-      <Overlay onClose={() => setSel(null)}>
-        <div className="bg-gradient-to-b from-[#2a1f14] to-[#1a1209] border border-white/20 rounded-2xl p-5 shadow-2xl">
-          <button onClick={() => setSel(null)} className="absolute top-3 right-3 text-cream-400 hover:text-cream-100 text-lg">{'✕'}</button>
-          <div className="flex flex-col items-center gap-1 mb-4">
-            <span className="text-5xl">{SLOT_EMOJI[sel.slot]}</span>
-            <p className="font-serif font-bold text-cream-100 text-lg drop-shadow">{sel.name}</p>
-            <p className="text-[11px] text-cream-400 capitalize">{sel.grade}</p>
-          </div>
-          <div className="text-xs text-cream-100 bg-white/10 rounded-lg px-3 py-2 mb-3 text-center">
-            {Object.entries(sel.baseStats).filter(([, v]) => v !== undefined && v > 0).map(([k, v]) => `${STAT_EMOJI[k] ?? ''} ${STAT_LABEL[k] ?? k}+${v}`).join('  ')}
-          </div>
-          <p className="text-[10px] text-cream-400 mb-1.5">{'📦'} 필요 재료</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-4">
-            {(Object.entries(sel.materials) as [MaterialKey, number][]).map(([k, amt]) => {
-              const has = state.inventory.materials[k] ?? 0;
-              return <div key={k} className="flex items-center gap-1 text-xs"><span className="text-sm">{EMOJI_MAP[k] ?? '?'}</span><span className={`tabular-nums font-medium ${has >= amt ? 'text-cream-200' : 'text-red-400'}`}>{has}/{amt}</span></div>;
-            })}
-          </div>
-          <button onClick={() => craft(sel)} disabled={!canCraftEquipment(state, sel.id)} className="btn-wood w-full text-sm !py-2.5">{'🔨'} 제작</button>
-        </div>
-      </Overlay>
-    )}
-  </>);
-}
-
-/* ===== REFINE TAB ===== */
+/* ===== REFINE TAB (제련 + 용해 합침) ===== */
 function RefineTab() {
   const { state } = useGameState();
   const actions = useGameActions();
@@ -262,6 +203,63 @@ function RefineTab() {
           </div>
         </div>
       )}
+
+      {/* Smelting Section (용해) */}
+      {state.unlocks.systems.smelting && (
+        <SmeltSection />
+      )}
+    </div>
+  );
+}
+
+/* ===== SMELT SECTION (inline in refine tab) ===== */
+function SmeltSection() {
+  const { state } = useGameState();
+  const actions = useGameActions();
+  const { addToast } = useToast();
+
+  const doSmelt = (eq: Equipment) => {
+    const stones = getSmeltingStones(eq.grade, eq.level ?? 1);
+    actions.smeltEquipment(eq.id);
+    addToast(`${eq.name} 용해! ⚗️ x${stones}`, 'success');
+  };
+
+  if (state.inventory.equipment.length === 0) {
+    return (
+      <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">{'🔥'}</span>
+          <span className="font-serif font-bold text-cream-100 text-sm">용해</span>
+        </div>
+        <p className="text-xs text-cream-400 italic text-center py-2">용해할 장비가 없습니다</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">{'🔥'}</span>
+        <span className="font-serif font-bold text-cream-100 text-sm">용해</span>
+        <span className="text-[10px] text-cream-400 ml-auto">불필요한 장비를 녹여 제련석 회수</span>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {state.inventory.equipment.map((eq) => (
+          <button
+            key={eq.id}
+            onClick={() => doSmelt(eq)}
+            className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg border border-white/15 bg-white/5 hover:border-orange-400/40 hover:bg-orange-900/20 active:scale-[0.98] transition-all"
+          >
+            <span className="text-lg">{SLOT_EMOJI[eq.slot]}</span>
+            <span className="flex-1 text-xs font-medium text-cream-100 truncate">
+              {eq.name}{eq.enhanceLevel > 0 ? ` +${eq.enhanceLevel}` : ''}
+            </span>
+            <span className="text-[10px] text-blue-300 font-medium shrink-0">
+              {'⚗️'} x{getSmeltingStones(eq.grade, eq.level ?? 1)}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -403,98 +401,15 @@ function EnhanceTab() {
   );
 }
 
-/* ===== SHOP TAB ===== */
-function ShopTab() {
-  const { state } = useGameState();
-  const actions = useGameActions();
-  const { addToast } = useToast();
-  const [sub, setSub] = useState<'buy' | 'sell'>('buy');
-  const gold = state.inventory.materials.gold;
-  const smeltUnlocked = state.unlocks.systems.smelting;
-  const buy = (it: ShopItem) => { actions.buyItem(it.id); addToast(`${it.name} 구매!`, 'success'); };
-
-  const doSellOrSmelt = (eq: Equipment) => {
-    if (smeltUnlocked) {
-      actions.smeltEquipment(eq.id);
-      const stones = getSmeltingStones(eq.grade, eq.level ?? 1);
-      addToast(`${eq.name} 용해! ⚗️ x${stones}`, 'success');
-    } else {
-      actions.sellEquipment(eq.id);
-      addToast(`${eq.name} 판매! +${SELL_PRICES.equipment[eq.grade]}G`, 'success');
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex gap-2">
-        {(['buy', 'sell'] as const).map((t) => (
-          <button key={t} onClick={() => setSub(t)} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${sub === t ? 'bg-cozy-amber text-cream-50 shadow-md' : 'bg-cream-200 text-cream-700 hover:bg-cream-300'}`}>{t === 'buy' ? '\uD83D\uDED2 구매' : '\uD83D\uDCB0 판매'}</button>
-        ))}
-      </div>
-      {sub === 'buy' ? (
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-bold text-cream-200">{'📚'} 서적</p>
-          <div className="grid grid-cols-3 gap-2">
-            {SHOP_INVENTORY.filter(i => i.category === 'book').map((it) => (
-              <button key={it.id} onClick={() => buy(it)} disabled={gold < it.goldCost} className={gridCls(gold < it.goldCost)}>
-                <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-1 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'💰'}{it.goldCost}</span>
-              </button>
-            ))}
-          </div>
-          <p className="text-xs font-bold text-cream-200">{'🌱'} 씨앗</p>
-          <div className="grid grid-cols-3 gap-2">
-            {SHOP_INVENTORY.filter(i => i.category === 'seed').map((it) => (
-              <button key={it.id} onClick={() => buy(it)} disabled={gold < it.goldCost} className={gridCls(gold < it.goldCost)}>
-                <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-2 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'💰'}{it.goldCost}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {state.inventory.food.length > 0 && (<>
-            <p className="text-xs font-bold text-cream-200">{'🍖'} 음식 (개당 {SELL_PRICES.food}G)</p>
-            {state.inventory.food.map((f, i) => <button key={`f-${i}`} onClick={() => actions.sellFood(i)} className={sellCls}><span className="text-lg">{'🍖'}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{f.name}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.food}G</span></button>)}
-          </>)}
-          {state.inventory.potions.length > 0 && (<>
-            <p className="text-xs font-bold text-cream-200 mt-1">{'🧪'} 포션 (개당 {SELL_PRICES.potion}G)</p>
-            {state.inventory.potions.map((p, i) => <button key={`p-${i}`} onClick={() => actions.sellPotion(i)} className={sellCls}><span className="text-lg">{'🧪'}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{p.name}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.potion}G</span></button>)}
-          </>)}
-          {state.inventory.equipment.length > 0 && (<>
-            <p className="text-xs font-bold text-cream-200 mt-1">{smeltUnlocked ? '\u2697\uFE0F 용해 (제련석 회수)' : '\u2694\uFE0F 장비 (등급별 가격)'}</p>
-            {state.inventory.equipment.map((eq) => (
-              <button key={`e-${eq.id}`} onClick={() => doSellOrSmelt(eq)} className={sellCls}>
-                <span className="text-lg">{SLOT_EMOJI[eq.slot]}</span>
-                <span className="flex-1 text-sm font-medium text-cream-900 truncate">{eq.name}{eq.enhanceLevel > 0 ? ` +${eq.enhanceLevel}` : ''}</span>
-                {smeltUnlocked ? (
-                  <span className="text-[10px] text-blue-600 font-medium shrink-0">
-                    {'⚗️'} x{getSmeltingStones(eq.grade, eq.level ?? 1)}
-                  </span>
-                ) : (
-                  <span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.equipment[eq.grade]}G</span>
-                )}
-              </button>
-            ))}
-          </>)}
-          {state.inventory.food.length === 0 && state.inventory.potions.length === 0 && state.inventory.equipment.length === 0 && <p className="text-sm text-cream-500 italic text-center py-4">판매할 아이템이 없습니다</p>}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ===== MAIN PAGE ===== */
 export default function BlacksmithPage() {
-  const { state } = useGameState();
-  const [activeTab, setActiveTab] = useState<TabType>('craft');
+  const [activeTab, setActiveTab] = useState<TabType>('refine');
   const tabs: { key: TabType; label: string }[] = [
-    { key: 'craft', label: '\uD83D\uDD28 제작' },
-    { key: 'refine', label: '\u2697\uFE0F 제련' },
+    { key: 'refine', label: '\u2697\uFE0F 제련/용해' },
     { key: 'maintain', label: '\uD83D\uDD27 정비' },
     { key: 'enhance', label: '\uD83D\uDD2E 강화' },
-    { key: 'shop', label: '\uD83D\uDED2 상점' },
   ];
-  const mats: MaterialKey[] = ['gold', 'wood', 'ironOre', 'mithril', 'leather', 'gems', 'enhancementStones', 'specialOre', 'refiningStone'];
+  const mats: MaterialKey[] = ['gold', 'ironOre', 'mithril', 'leather', 'gems', 'enhancementStones', 'specialOre', 'refiningStone'];
   return (
     <div className="relative min-h-[calc(100vh-140px)]">
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/blacksmith.png')" }} />
@@ -506,11 +421,9 @@ export default function BlacksmithPage() {
             <button key={t.key} onClick={() => setActiveTab(t.key)} className={`flex-1 py-2 px-1 rounded-lg text-[11px] font-medium transition-all ${activeTab === t.key ? 'bg-white/20 text-cream-100 shadow-sm' : 'text-cream-300 hover:bg-white/10'}`}>{t.label}</button>
           ))}
         </div>
-        {activeTab === 'craft' && <CraftTab />}
         {activeTab === 'refine' && <RefineTab />}
         {activeTab === 'maintain' && <MaintainTab />}
         {activeTab === 'enhance' && <EnhanceTab />}
-        {activeTab === 'shop' && <ShopTab />}
         <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30"><MaterialBar mk={mats} /></div>
       </div>
     </div>
