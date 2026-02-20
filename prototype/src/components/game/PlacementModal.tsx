@@ -94,7 +94,7 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
     <Modal isOpen={isOpen} onClose={onClose} title={config.title}>
       <div className="mb-4">
         <p className="text-xs text-cream-700 mb-2">
-          \uBC30\uCE58\uB428 ({config.placed.length}/{config.maxSlots})
+          {'📦'} {config.placed.length} / {config.maxSlots}칸
         </p>
         <div className="flex flex-wrap gap-2">
           {config.placed.map((item, i) => (
