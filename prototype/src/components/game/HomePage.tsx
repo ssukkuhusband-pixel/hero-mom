@@ -368,6 +368,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
           getDesc: (item: Food) =>
             `배고픔 +${item.hungerRestore}${item.hpRestore ? ` HP +${item.hpRestore}` : ''}${item.tempBuff ? ` ${item.tempBuff.stat === 'all' ? '전스탯' : item.tempBuff.stat.toUpperCase()} +${item.tempBuff.value}` : ''}`,
           onPlace: (idx: number) => { actions.placeFood(idx); },
+          onRemove: (idx: number) => { actions.removeFood(idx); },
         };
       case 'potion':
         return {
@@ -382,6 +383,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
               ? `HP +${item.value} (즉시)`
               : `${item.stat === 'all' ? '전스탯' : (item.stat ?? '').toUpperCase()} +${item.value} (1모험)`,
           onPlace: (idx: number) => { actions.placePotion(idx); },
+          onRemove: (idx: number) => { actions.removePotion(idx); },
         };
       case 'book':
         return {
@@ -394,6 +396,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
           getDesc: (item: Book) =>
             `${item.statEffect.stat.toUpperCase()} +${item.statEffect.value}`,
           onPlace: (idx: number) => { actions.placeBook(idx); },
+          onRemove: (idx: number) => { actions.removeBook(idx); },
         };
       case 'equipment':
         return {
@@ -414,6 +417,10 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
             const eq = state.inventory.equipment[idx];
             if (eq) actions.placeEquipment(eq.id);
           },
+          onRemove: (idx: number) => {
+            const eq = state.home.equipmentRack[idx];
+            if (eq) actions.removeEquipment(eq.id);
+          },
         };
     }
   }, [type, state.inventory, state.home, state.unlocks.potionSlots, actions]);
@@ -428,10 +435,16 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
         </p>
         <div className="flex flex-wrap gap-2">
           {config.placed.map((item, i) => (
-            <div key={i} className="flex items-center gap-1.5 bg-cream-200 border border-cream-500 rounded-lg px-2.5 py-1.5">
+            <button
+              key={i}
+              onClick={() => config.onRemove(i)}
+              className="flex items-center gap-1.5 bg-cream-200 border border-cream-500 rounded-lg px-2.5 py-1.5 hover:bg-red-50 hover:border-red-300 transition-colors group cursor-pointer"
+              title="클릭하여 회수"
+            >
               <span className="text-lg">{config.getEmoji(item as never)}</span>
-              <span className="text-xs font-medium text-cream-800">{config.getName(item as never)}</span>
-            </div>
+              <span className="text-xs font-medium text-cream-800 group-hover:text-red-600">{config.getName(item as never)}</span>
+              <span className="text-xs text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5">{'\u2715'}</span>
+            </button>
           ))}
           {config.placed.length === 0 && (
             <p className="text-xs text-cream-500 italic">아직 배치된 아이템이 없습니다</p>

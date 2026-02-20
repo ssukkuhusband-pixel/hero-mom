@@ -19,7 +19,7 @@ import type {
   CropType,
 } from './types';
 import { SonAction } from './types';
-import { INITIAL_GAME_STATE, SON_TICK_INTERVAL, MAX_TABLE_FOOD } from './constants';
+import { INITIAL_GAME_STATE, SON_TICK_INTERVAL, MAX_TABLE_FOOD, SHOP_INVENTORY, SELL_PRICES } from './constants';
 import { processSonTick, checkLevelUp } from './game/sonAI';
 import {
   craftEquipment,
@@ -102,6 +102,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'PLACE_BOOK': {
       return placeBook(state, action.bookIndex);
     }
+
+    case 'REMOVE_FOOD':
+      return removeFood(state, action.placedIndex);
+
+    case 'REMOVE_POTION':
+      return removePotion(state, action.placedIndex);
+
+    case 'REMOVE_EQUIPMENT':
+      return removeEquipmentFromRack(state, action.equipmentId);
+
+    case 'REMOVE_BOOK':
+      return removeBook(state, action.placedIndex);
+
+    case 'BUY_ITEM':
+      return buyItem(state, action.shopItemId);
+
+    case 'SELL_FOOD':
+      return sellFood(state, action.foodIndex);
+
+    case 'SELL_POTION':
+      return sellPotion(state, action.potionIndex);
+
+    case 'SELL_EQUIPMENT':
+      return sellEquipment(state, action.equipmentId);
 
     case 'LOAD_STATE':
       return action.state;
@@ -187,6 +211,95 @@ function placeBook(state: GameState, bookIndex: number): GameState {
   const newState = structuredClone(state);
   const book = newState.inventory.books.splice(bookIndex, 1)[0];
   newState.home.desk.push(book);
+  return newState;
+}
+
+// -----------------------------------------------------------------
+// Removal actions
+// -----------------------------------------------------------------
+
+function removeFood(state: GameState, placedIndex: number): GameState {
+  if (placedIndex < 0 || placedIndex >= state.home.table.length) return state;
+  const newState = structuredClone(state);
+  const food = newState.home.table.splice(placedIndex, 1)[0];
+  newState.inventory.food.push(food);
+  return newState;
+}
+
+function removePotion(state: GameState, placedIndex: number): GameState {
+  if (placedIndex < 0 || placedIndex >= state.home.potionShelf.length) return state;
+  const newState = structuredClone(state);
+  const potion = newState.home.potionShelf.splice(placedIndex, 1)[0];
+  newState.inventory.potions.push(potion);
+  return newState;
+}
+
+function removeEquipmentFromRack(state: GameState, equipmentId: string): GameState {
+  const eqIndex = state.home.equipmentRack.findIndex(e => e.id === equipmentId);
+  if (eqIndex === -1) return state;
+  const newState = structuredClone(state);
+  const eq = newState.home.equipmentRack.splice(eqIndex, 1)[0];
+  newState.inventory.equipment.push(eq);
+  return newState;
+}
+
+function removeBook(state: GameState, placedIndex: number): GameState {
+  if (placedIndex < 0 || placedIndex >= state.home.desk.length) return state;
+  const newState = structuredClone(state);
+  const book = newState.home.desk.splice(placedIndex, 1)[0];
+  newState.inventory.books.push(book);
+  return newState;
+}
+
+// -----------------------------------------------------------------
+// Shop actions
+// -----------------------------------------------------------------
+
+function buyItem(state: GameState, shopItemId: string): GameState {
+  const shopItem = SHOP_INVENTORY.find(s => s.id === shopItemId);
+  if (!shopItem) return state;
+  if (state.inventory.materials.gold < shopItem.goldCost) return state;
+
+  const newState = structuredClone(state);
+  newState.inventory.materials.gold -= shopItem.goldCost;
+
+  if (shopItem.book) {
+    newState.inventory.books.push({
+      id: `book_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      name: shopItem.book.name,
+      statEffect: { stat: shopItem.book.stat, value: shopItem.book.value },
+    });
+  } else if (shopItem.material) {
+    newState.inventory.materials[shopItem.material.key] =
+      (newState.inventory.materials[shopItem.material.key] ?? 0) + shopItem.material.amount;
+  }
+
+  return newState;
+}
+
+function sellFood(state: GameState, foodIndex: number): GameState {
+  if (foodIndex < 0 || foodIndex >= state.inventory.food.length) return state;
+  const newState = structuredClone(state);
+  newState.inventory.food.splice(foodIndex, 1);
+  newState.inventory.materials.gold += SELL_PRICES.food;
+  return newState;
+}
+
+function sellPotion(state: GameState, potionIndex: number): GameState {
+  if (potionIndex < 0 || potionIndex >= state.inventory.potions.length) return state;
+  const newState = structuredClone(state);
+  newState.inventory.potions.splice(potionIndex, 1);
+  newState.inventory.materials.gold += SELL_PRICES.potion;
+  return newState;
+}
+
+function sellEquipment(state: GameState, equipmentId: string): GameState {
+  const eqIndex = state.inventory.equipment.findIndex(e => e.id === equipmentId);
+  if (eqIndex === -1) return state;
+  const newState = structuredClone(state);
+  const eq = newState.inventory.equipment[eqIndex];
+  newState.inventory.equipment.splice(eqIndex, 1);
+  newState.inventory.materials.gold += SELL_PRICES.equipment[eq.grade];
   return newState;
 }
 
@@ -304,6 +417,38 @@ export function useGameActions() {
     ),
     placeBook: useCallback(
       (bookIndex: number) => dispatch({ type: 'PLACE_BOOK', bookIndex }),
+      [dispatch]
+    ),
+    removeFood: useCallback(
+      (placedIndex: number) => dispatch({ type: 'REMOVE_FOOD', placedIndex }),
+      [dispatch]
+    ),
+    removePotion: useCallback(
+      (placedIndex: number) => dispatch({ type: 'REMOVE_POTION', placedIndex }),
+      [dispatch]
+    ),
+    removeEquipment: useCallback(
+      (equipmentId: string) => dispatch({ type: 'REMOVE_EQUIPMENT', equipmentId }),
+      [dispatch]
+    ),
+    removeBook: useCallback(
+      (placedIndex: number) => dispatch({ type: 'REMOVE_BOOK', placedIndex }),
+      [dispatch]
+    ),
+    buyItem: useCallback(
+      (shopItemId: string) => dispatch({ type: 'BUY_ITEM', shopItemId }),
+      [dispatch]
+    ),
+    sellFood: useCallback(
+      (foodIndex: number) => dispatch({ type: 'SELL_FOOD', foodIndex }),
+      [dispatch]
+    ),
+    sellPotion: useCallback(
+      (potionIndex: number) => dispatch({ type: 'SELL_POTION', potionIndex }),
+      [dispatch]
+    ),
+    sellEquipment: useCallback(
+      (equipmentId: string) => dispatch({ type: 'SELL_EQUIPMENT', equipmentId }),
       [dispatch]
     ),
     resetGame: useCallback(

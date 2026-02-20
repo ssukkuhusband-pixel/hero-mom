@@ -12,6 +12,7 @@ import type {
   MaterialKey,
   CropType,
   EquipmentGrade,
+  StatType,
 } from './types';
 import { SonAction } from './types';
 
@@ -653,4 +654,79 @@ export const UNLOCK_LEVELS = {
   farmExpansion: 10,
   mithrilEquipment: 12,
   potionShelfExpansion: 15,
+};
+
+// ============================================================
+// Book Templates (for adventure drops & shop)
+// ============================================================
+
+export interface BookTemplate {
+  name: string;
+  stat: StatType;
+  value: number;
+  minLevel: number;
+}
+
+export const BOOK_TEMPLATES: BookTemplate[] = [
+  { name: '초급 전사 가이드', stat: 'str', value: 1, minLevel: 1 },
+  { name: '방어의 기초', stat: 'def', value: 1, minLevel: 1 },
+  { name: '순발력 훈련법', stat: 'agi', value: 1, minLevel: 1 },
+  { name: '마법 입문서', stat: 'int', value: 1, minLevel: 1 },
+  { name: '중급 검술 교본', stat: 'str', value: 2, minLevel: 5 },
+  { name: '철벽 수비론', stat: 'def', value: 2, minLevel: 5 },
+  { name: '속도의 비밀', stat: 'agi', value: 2, minLevel: 8 },
+  { name: '고급 마법서', stat: 'int', value: 2, minLevel: 8 },
+  { name: '영웅전', stat: 'str', value: 3, minLevel: 12 },
+  { name: '불멸의 방패술', stat: 'def', value: 3, minLevel: 12 },
+];
+
+export const BOOK_DROP_CHANCE = 0.12;       // 12% per battle
+export const BOOK_DROP_BOSS_CHANCE = 0.35;  // 35% from boss battles
+
+// ============================================================
+// Shop System
+// ============================================================
+
+export interface ShopItem {
+  id: string;
+  category: 'book' | 'seed';
+  name: string;
+  emoji: string;
+  description: string;
+  goldCost: number;
+  book?: { name: string; stat: StatType; value: number };
+  material?: { key: MaterialKey; amount: number };
+}
+
+export const SHOP_INVENTORY: ShopItem[] = [
+  // Books
+  { id: 'shop_str_book', category: 'book', name: '전사 가이드', emoji: '📕', description: 'STR +1', goldCost: 80, book: { name: '전사 가이드', stat: 'str', value: 1 } },
+  { id: 'shop_def_book', category: 'book', name: '방어의 기초', emoji: '📘', description: 'DEF +1', goldCost: 80, book: { name: '방어의 기초', stat: 'def', value: 1 } },
+  { id: 'shop_agi_book', category: 'book', name: '순발력 훈련법', emoji: '📗', description: 'AGI +1', goldCost: 80, book: { name: '순발력 훈련법', stat: 'agi', value: 1 } },
+  { id: 'shop_int_book', category: 'book', name: '마법 입문서', emoji: '📙', description: 'INT +1', goldCost: 80, book: { name: '마법 입문서', stat: 'int', value: 1 } },
+  // Seeds
+  { id: 'shop_wheat', category: 'seed', name: '밀 씨앗 x3', emoji: '🌾', description: '밀을 재배할 수 있습니다', goldCost: 15, material: { key: 'wheatSeed', amount: 3 } },
+  { id: 'shop_potato', category: 'seed', name: '감자 씨앗 x3', emoji: '🥔', description: '감자를 재배할 수 있습니다', goldCost: 15, material: { key: 'potatoSeed', amount: 3 } },
+  { id: 'shop_carrot', category: 'seed', name: '당근 씨앗 x3', emoji: '🥕', description: '당근을 재배할 수 있습니다', goldCost: 20, material: { key: 'carrotSeed', amount: 3 } },
+  { id: 'shop_apple', category: 'seed', name: '사과 씨앗 x2', emoji: '🍎', description: '사과를 재배할 수 있습니다', goldCost: 25, material: { key: 'appleSeed', amount: 2 } },
+  { id: 'shop_red_herb', category: 'seed', name: '붉은 약초 씨앗 x2', emoji: '🌺', description: '붉은 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'redHerbSeed', amount: 2 } },
+  { id: 'shop_blue_herb', category: 'seed', name: '푸른 약초 씨앗 x2', emoji: '💙', description: '푸른 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'blueHerbSeed', amount: 2 } },
+  { id: 'shop_yellow_herb', category: 'seed', name: '노란 약초 씨앗 x2', emoji: '💛', description: '노란 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'yellowHerbSeed', amount: 2 } },
+];
+
+export const SELL_PRICES: {
+  food: number;
+  potion: number;
+  book: number;
+  equipment: Record<EquipmentGrade, number>;
+} = {
+  food: 5,
+  potion: 10,
+  book: 15,
+  equipment: {
+    common: 15,
+    uncommon: 40,
+    rare: 100,
+    epic: 250,
+  },
 };

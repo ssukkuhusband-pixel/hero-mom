@@ -10,6 +10,7 @@ import type {
   MaterialKey,
   Equipment,
   TempBuff,
+  Book,
 } from '../types';
 import { SonAction } from '../types';
 import {
@@ -29,6 +30,9 @@ import {
   GRADE_MULTIPLIERS,
   ENHANCEMENT_TABLE,
   ADVENTURE_IMAGES,
+  BOOK_TEMPLATES,
+  BOOK_DROP_CHANCE,
+  BOOK_DROP_BOSS_CHANCE,
 } from '../constants';
 
 function uid(): string {
@@ -41,6 +45,24 @@ function randInt(min: number, max: number): number {
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// -----------------------------------------------------------------
+// Book drop generation
+// -----------------------------------------------------------------
+
+function generateBookDrop(level: number, isBoss: boolean, outcome: string): Book | undefined {
+  if (outcome === 'defeat') return undefined;
+  const chance = isBoss ? BOOK_DROP_BOSS_CHANCE : BOOK_DROP_CHANCE;
+  if (Math.random() >= chance) return undefined;
+  const eligible = BOOK_TEMPLATES.filter(b => level >= b.minLevel);
+  if (eligible.length === 0) return undefined;
+  const template = eligible[Math.floor(Math.random() * eligible.length)];
+  return {
+    id: `book_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    name: template.name,
+    statEffect: { stat: template.stat, value: template.value },
+  };
 }
 
 // -----------------------------------------------------------------
@@ -66,6 +88,7 @@ export function startAdventure(state: GameState): GameState {
   // Calculate total rewards and exp
   let totalRewards: Partial<Record<MaterialKey, number>> = {};
   let totalExp = 0;
+  let bookRewards: Book[] = [];
   let sonHp = son.stats.hp;
   let failed = false;
 
@@ -77,6 +100,11 @@ export function startAdventure(state: GameState): GameState {
     for (const [key, val] of Object.entries(battle.rewards)) {
       const mk = key as MaterialKey;
       totalRewards[mk] = (totalRewards[mk] ?? 0) + (val ?? 0);
+    }
+
+    // Accumulate book drops
+    if (battle.bookDrop) {
+      bookRewards.push(battle.bookDrop);
     }
 
     // Apply HP loss
@@ -102,6 +130,7 @@ export function startAdventure(state: GameState): GameState {
     totalBattles,
     currentBattle: 0,
     rewards: totalRewards,
+    bookRewards,
     expGained: totalExp,
     failed,
     sonHpPercent: failed ? 0 : Math.max(0, (sonHp / son.stats.maxHp) * 100),
@@ -201,6 +230,7 @@ function completeAdventure(state: GameState): GameState {
     battleResults: adventure.battleResults,
     totalBattles: adventure.totalBattles,
     rewards: { ...adventure.rewards },
+    bookRewards: adventure.bookRewards ?? [],
     expGained: adventure.expGained,
     failed: adventure.failed,
     sonHpPercent: adventure.sonHpPercent,
@@ -210,6 +240,11 @@ function completeAdventure(state: GameState): GameState {
   for (const [key, val] of Object.entries(adventure.rewards)) {
     const mk = key as MaterialKey;
     state.inventory.materials[mk] = (state.inventory.materials[mk] ?? 0) + (val ?? 0);
+  }
+
+  // Apply book rewards to inventory
+  for (const book of adventure.bookRewards ?? []) {
+    state.inventory.books.push(book);
   }
 
   // Apply EXP
@@ -305,8 +340,9 @@ function resolveBattle(
   const hpLost = Math.floor(maxHp * hpLostPercent);
   const expGained = calculateBattleExp(outcome, level);
   const rewards = generateBattleLoot(level, rewardMultiplier, isBoss, outcome);
+  const bookDrop = generateBookDrop(level, isBoss, outcome);
 
-  return { outcome, isBoss, hpLost, expGained, rewards };
+  return { outcome, isBoss, hpLost, expGained, rewards, bookDrop };
 }
 
 // -----------------------------------------------------------------

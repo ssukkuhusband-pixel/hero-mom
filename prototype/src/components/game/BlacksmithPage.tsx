@@ -17,6 +17,8 @@ import {
   EMOJI_MAP,
   GRADE_COLORS,
   UNLOCK_LEVELS,
+  SHOP_INVENTORY,
+  SELL_PRICES,
 } from '@/lib/constants';
 import type {
   Equipment,
@@ -25,6 +27,7 @@ import type {
   MaterialKey,
   EquipmentRecipe,
 } from '@/lib/types';
+import type { ShopItem } from '@/lib/constants';
 import { useToast } from '@/components/ui/Toast';
 
 // ============================================================
@@ -67,7 +70,7 @@ const GRADE_BG: Record<EquipmentGrade, string> = {
   epic: 'bg-purple-50 border-purple-300',
 };
 
-type TabType = 'craft' | 'enhance' | 'gacha';
+type TabType = 'craft' | 'enhance' | 'gacha' | 'shop';
 
 // ============================================================
 // Material Bar Component
@@ -561,6 +564,161 @@ function GachaTab() {
 }
 
 // ============================================================
+// Shop Tab Content
+// ============================================================
+
+function ShopTab() {
+  const { state } = useGameState();
+  const actions = useGameActions();
+  const [subTab, setSubTab] = useState<'buy' | 'sell'>('buy');
+  const gold = state.inventory.materials.gold;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Sub-tab toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setSubTab('buy')}
+          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+            subTab === 'buy'
+              ? 'bg-cozy-amber text-cream-50 shadow-md'
+              : 'bg-cream-200 text-cream-700 hover:bg-cream-300'
+          }`}
+        >
+          {'\uD83D\uDED2'} 구매
+        </button>
+        <button
+          onClick={() => setSubTab('sell')}
+          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+            subTab === 'sell'
+              ? 'bg-cozy-amber text-cream-50 shadow-md'
+              : 'bg-cream-200 text-cream-700 hover:bg-cream-300'
+          }`}
+        >
+          {'\uD83D\uDCB0'} 판매
+        </button>
+      </div>
+
+      {subTab === 'buy' ? (
+        <div className="flex flex-col gap-2">
+          {/* Books section */}
+          <p className="text-xs font-bold text-cream-700">{'\uD83D\uDCDA'} 서적</p>
+          {SHOP_INVENTORY.filter(i => i.category === 'book').map((item) => (
+            <button
+              key={item.id}
+              onClick={() => actions.buyItem(item.id)}
+              disabled={gold < item.goldCost}
+              className={`flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg border transition-all ${
+                gold < item.goldCost
+                  ? 'border-cream-400 bg-cream-300 opacity-50 cursor-not-allowed'
+                  : 'border-cream-500 bg-cream-100 hover:border-cozy-amber hover:bg-cream-50 active:scale-[0.98]'
+              }`}
+            >
+              <span className="text-xl">{item.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-cream-900">{item.name}</p>
+                <p className="text-[11px] text-cream-600">{item.description}</p>
+              </div>
+              <span className="text-xs font-bold text-cozy-amber shrink-0">{'\uD83D\uDCB0'}{item.goldCost}</span>
+            </button>
+          ))}
+
+          {/* Seeds section */}
+          <p className="text-xs font-bold text-cream-700 mt-2">{'\uD83C\uDF31'} 씨앗</p>
+          {SHOP_INVENTORY.filter(i => i.category === 'seed').map((item) => (
+            <button
+              key={item.id}
+              onClick={() => actions.buyItem(item.id)}
+              disabled={gold < item.goldCost}
+              className={`flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg border transition-all ${
+                gold < item.goldCost
+                  ? 'border-cream-400 bg-cream-300 opacity-50 cursor-not-allowed'
+                  : 'border-cream-500 bg-cream-100 hover:border-cozy-amber hover:bg-cream-50 active:scale-[0.98]'
+              }`}
+            >
+              <span className="text-xl">{item.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-cream-900">{item.name}</p>
+                <p className="text-[11px] text-cream-600">{item.description}</p>
+              </div>
+              <span className="text-xs font-bold text-cozy-amber shrink-0">{'\uD83D\uDCB0'}{item.goldCost}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {/* Sell Food */}
+          {state.inventory.food.length > 0 && (
+            <>
+              <p className="text-xs font-bold text-cream-700">{'\uD83C\uDF56'} 음식 (개당 {SELL_PRICES.food}G)</p>
+              {state.inventory.food.map((food, idx) => (
+                <button
+                  key={`food-${idx}`}
+                  onClick={() => actions.sellFood(idx)}
+                  className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg border border-cream-500 bg-cream-100 hover:border-red-300 hover:bg-red-50 active:scale-[0.98] transition-all"
+                >
+                  <span className="text-xl">{'\uD83C\uDF56'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-cream-900">{food.name}</p>
+                  </div>
+                  <span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.food}G</span>
+                </button>
+              ))}
+            </>
+          )}
+
+          {/* Sell Potions */}
+          {state.inventory.potions.length > 0 && (
+            <>
+              <p className="text-xs font-bold text-cream-700 mt-1">{'\uD83E\uDDEA'} 포션 (개당 {SELL_PRICES.potion}G)</p>
+              {state.inventory.potions.map((potion, idx) => (
+                <button
+                  key={`potion-${idx}`}
+                  onClick={() => actions.sellPotion(idx)}
+                  className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg border border-cream-500 bg-cream-100 hover:border-red-300 hover:bg-red-50 active:scale-[0.98] transition-all"
+                >
+                  <span className="text-xl">{'\uD83E\uDDEA'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-cream-900">{potion.name}</p>
+                  </div>
+                  <span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.potion}G</span>
+                </button>
+              ))}
+            </>
+          )}
+
+          {/* Sell Equipment */}
+          {state.inventory.equipment.length > 0 && (
+            <>
+              <p className="text-xs font-bold text-cream-700 mt-1">{'\u2694\uFE0F'} 장비 (등급별 가격)</p>
+              {state.inventory.equipment.map((eq) => (
+                <button
+                  key={`eq-${eq.id}`}
+                  onClick={() => actions.sellEquipment(eq.id)}
+                  className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg border border-cream-500 bg-cream-100 hover:border-red-300 hover:bg-red-50 active:scale-[0.98] transition-all"
+                >
+                  <span className="text-xl">{'\u2694\uFE0F'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-cream-900">{eq.name}{eq.enhanceLevel > 0 ? ` +${eq.enhanceLevel}` : ''}</p>
+                    <p className="text-[11px] text-cream-600">{eq.grade}</p>
+                  </div>
+                  <span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.equipment[eq.grade]}G</span>
+                </button>
+              ))}
+            </>
+          )}
+
+          {/* Empty state */}
+          {state.inventory.food.length === 0 && state.inventory.potions.length === 0 && state.inventory.equipment.length === 0 && (
+            <p className="text-sm text-cream-500 italic text-center py-4">판매할 아이템이 없습니다</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Main BlacksmithPage Component
 // ============================================================
 
@@ -575,6 +733,7 @@ export default function BlacksmithPage() {
     { key: 'craft', label: '\u2692\uFE0F 제작' },
     { key: 'enhance', label: '\uD83D\uDD2E 강화' },
     { key: 'gacha', label: '\uD83C\uDFB0 가챠', locked: gachaLocked },
+    { key: 'shop', label: '\uD83D\uDED2 상점' },
   ];
 
   // Material keys relevant to blacksmith
@@ -645,6 +804,8 @@ export default function BlacksmithPage() {
             </p>
           </div>
         )}
+
+        {activeTab === 'shop' && <ShopTab />}
 
         {/* Bottom material bar */}
         <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">

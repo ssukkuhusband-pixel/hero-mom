@@ -248,6 +248,7 @@ export interface AdventureState {
   totalBattles: number;
   currentBattle: number;
   rewards: Partial<Materials>;
+  bookRewards: Book[];    // books found during adventure
   expGained: number;
   failed: boolean;
   sonHpPercent: number;
@@ -259,6 +260,7 @@ export interface BattleResult {
   hpLost: number;
   expGained: number;
   rewards: Partial<Materials>;
+  bookDrop?: Book;  // rare book drop from battle
 }
 
 /** Snapshot of adventure results stored after completion for display in ReturnModal */
@@ -266,6 +268,7 @@ export interface AdventureResult {
   battleResults: BattleResult[];
   totalBattles: number;
   rewards: Partial<Materials>;
+  bookRewards: Book[];  // books found during adventure
   expGained: number;
   failed: boolean;
   sonHpPercent: number;
@@ -314,5 +317,13 @@ export type GameAction =
   | { type: 'PLACE_POTION'; potionIndex: number }
   | { type: 'PLACE_EQUIPMENT'; equipmentId: string }
   | { type: 'PLACE_BOOK'; bookIndex: number }
+  | { type: 'REMOVE_FOOD'; placedIndex: number }
+  | { type: 'REMOVE_POTION'; placedIndex: number }
+  | { type: 'REMOVE_EQUIPMENT'; equipmentId: string }
+  | { type: 'REMOVE_BOOK'; placedIndex: number }
+  | { type: 'BUY_ITEM'; shopItemId: string }
+  | { type: 'SELL_FOOD'; foodIndex: number }
+  | { type: 'SELL_POTION'; potionIndex: number }
+  | { type: 'SELL_EQUIPMENT'; equipmentId: string }
   | { type: 'LOAD_STATE'; state: GameState }
   | { type: 'RESET_GAME' };

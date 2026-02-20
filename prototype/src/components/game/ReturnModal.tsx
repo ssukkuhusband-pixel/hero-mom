@@ -225,6 +225,18 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
           </div>
         )}
 
+        {/* Book rewards */}
+        {(adventureData?.bookRewards ?? []).length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {(adventureData?.bookRewards ?? []).map((book) => (
+              <span key={book.id} className="inline-flex items-center gap-1 bg-cream-100 border border-cream-500 rounded-lg px-2 py-1 text-xs">
+                <span>{EMOJI_MAP.book ?? '📚'}</span>
+                <span className="font-medium text-cream-900">{book.name}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Close button */}
         <button
           onClick={onClose}
