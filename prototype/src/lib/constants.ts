@@ -12,6 +12,8 @@ import type {
   MaterialKey,
   CropType,
   EquipmentGrade,
+  EquipmentSlot,
+  EquipmentStats,
   StatType,
 } from './types';
 import { SonAction } from './types';
@@ -92,7 +94,66 @@ export const ENEMY_POWER_TABLE: { minLevel: number; maxLevel: number; enemyPower
   { minLevel: 18, maxLevel: 20, enemyPower: [150, 250], bossChance: 0.30 },
 ];
 
-// --- Equipment Recipes ---
+// --- Durability System ---
+
+export const DURABILITY_MAX = 100;
+export const DURABILITY_LOSS_PER_ADVENTURE = 15;
+export const DURABILITY_LOSS_BOSS_BONUS = 5;
+export const DURABILITY_PENALTY_THRESHOLD = 30; // below this, stats decrease
+
+// --- Basic Crops (no seed required) ---
+
+export const BASIC_CROPS: CropType[] = ['wheat', 'potato', 'carrot'];
+
+// --- Maintenance Recipes (per equipment slot) ---
+
+export const MAINTENANCE_RECIPES: Record<EquipmentSlot, { materials: Partial<Record<MaterialKey, number>>; restore: number }> = {
+  weapon:    { materials: { ironOre: 1, wood: 1, gold: 10 }, restore: 40 },
+  armor:     { materials: { leather: 1, ironOre: 1, gold: 10 }, restore: 40 },
+  accessory: { materials: { gems: 1, gold: 15 }, restore: 40 },
+};
+
+// --- Promotion Chains (upgrade existing equipment) ---
+
+export const PROMOTION_CHAINS: {
+  from: string; to: string; tier: number;
+  materials: Partial<Record<MaterialKey, number>>; reqLevel: number;
+}[] = [
+  // Weapon: wooden sword → iron sword → mithril sword
+  { from: 'wooden_sword', to: 'iron_sword', tier: 1, materials: { ironOre: 3, wood: 1, gold: 30 }, reqLevel: 5 },
+  { from: 'iron_sword', to: 'mithril_sword', tier: 2, materials: { mithril: 2, ironOre: 2, gold: 80 }, reqLevel: 12 },
+  // Armor: leather → iron → mithril
+  { from: 'leather_armor', to: 'iron_armor', tier: 1, materials: { ironOre: 4, leather: 1, gold: 40 }, reqLevel: 5 },
+  { from: 'iron_armor', to: 'mithril_armor', tier: 2, materials: { mithril: 3, ironOre: 2, gold: 100 }, reqLevel: 12 },
+  // Accessory: amulet → agility ring → life pendant
+  { from: 'amulet', to: 'agility_ring', tier: 1, materials: { gems: 2, gold: 35 }, reqLevel: 5 },
+  { from: 'agility_ring', to: 'life_pendant', tier: 2, materials: { gems: 3, redHerb: 3, gold: 60 }, reqLevel: 12 },
+];
+
+// --- Equipment Tier Data (referenced during promotion) ---
+
+export const EQUIPMENT_TIER_DATA: Record<string, { name: string; baseStats: EquipmentStats }> = {
+  wooden_sword:  { name: '나무 검',       baseStats: { str: 3 } },
+  iron_sword:    { name: '철 검',         baseStats: { str: 7 } },
+  mithril_sword: { name: '미스릴 검',     baseStats: { str: 14, agi: 3 } },
+  leather_armor: { name: '가죽 갑옷',     baseStats: { def: 3 } },
+  iron_armor:    { name: '철 갑옷',       baseStats: { def: 8 } },
+  mithril_armor: { name: '미스릴 갑옷',   baseStats: { def: 16, hp: 20 } },
+  amulet:        { name: '부적',          baseStats: { int: 3 } },
+  agility_ring:  { name: '민첩의 반지',   baseStats: { agi: 5 } },
+  life_pendant:  { name: '생명의 펜던트', baseStats: { hp: 30, def: 2 } },
+};
+
+// --- Smelting Output (equipment → materials) ---
+
+export const SMELTING_OUTPUT: Record<EquipmentGrade, Partial<Record<MaterialKey, number>>> = {
+  common:   { ironOre: 1, wood: 1, gold: 5 },
+  uncommon: { ironOre: 2, leather: 1, gold: 15 },
+  rare:     { mithril: 1, gems: 1, gold: 40 },
+  epic:     { mithril: 2, gems: 2, specialOre: 1, gold: 80 },
+};
+
+// --- Equipment Recipes (base tier only, others via promotion) ---
 
 export const EQUIPMENT_RECIPES: EquipmentRecipe[] = [
   {
@@ -105,24 +166,6 @@ export const EQUIPMENT_RECIPES: EquipmentRecipe[] = [
     unlockLevel: 0,
   },
   {
-    id: 'iron_sword',
-    name: '철 검',
-    slot: 'weapon',
-    grade: 'common',
-    baseStats: { str: 7 },
-    materials: { ironOre: 3, wood: 1, gold: 30 },
-    unlockLevel: 5,
-  },
-  {
-    id: 'mithril_sword',
-    name: '미스릴 검',
-    slot: 'weapon',
-    grade: 'common',
-    baseStats: { str: 14, agi: 3 },
-    materials: { mithril: 2, ironOre: 2, gold: 80 },
-    unlockLevel: 12,
-  },
-  {
     id: 'leather_armor',
     name: '가죽 갑옷',
     slot: 'armor',
@@ -130,24 +173,6 @@ export const EQUIPMENT_RECIPES: EquipmentRecipe[] = [
     baseStats: { def: 3 },
     materials: { leather: 3, gold: 15 },
     unlockLevel: 0,
-  },
-  {
-    id: 'iron_armor',
-    name: '철 갑옷',
-    slot: 'armor',
-    grade: 'common',
-    baseStats: { def: 8 },
-    materials: { ironOre: 4, leather: 1, gold: 40 },
-    unlockLevel: 5,
-  },
-  {
-    id: 'mithril_armor',
-    name: '미스릴 갑옷',
-    slot: 'armor',
-    grade: 'common',
-    baseStats: { def: 16, hp: 20 },
-    materials: { mithril: 3, ironOre: 2, gold: 100 },
-    unlockLevel: 12,
   },
   {
     id: 'amulet',
@@ -503,16 +528,6 @@ export const RARE_LOOT = {
   specialOre:    { chance: 0.30, minLevel: 8 }, // boss kill at Lv8+
 };
 
-// --- Gacha probabilities ---
-
-export const GACHA_COST: Partial<Record<MaterialKey, number>> = { specialOre: 3 };
-export const GACHA_RATES: { grade: EquipmentGrade; chance: number }[] = [
-  { grade: 'common',   chance: 0.60 },
-  { grade: 'uncommon', chance: 0.25 },
-  { grade: 'rare',     chance: 0.12 },
-  { grade: 'epic',     chance: 0.03 },
-];
-
 // --- Max placement slots ---
 
 export const MAX_TABLE_FOOD = 5;
@@ -544,14 +559,20 @@ export const INITIAL_GAME_STATE: GameState = {
         grade: 'common',
         baseStats: { str: 3 },
         enhanceLevel: 0,
+        durability: 100,
+        maxDurability: 100,
+        tier: 0,
       },
       armor: {
         id: 'starter_armor',
-        name: '낡은 가죽옷',
+        name: '가죽 갑옷',
         slot: 'armor',
         grade: 'common',
-        baseStats: { def: 1 },
+        baseStats: { def: 3 },
         enhanceLevel: 0,
+        durability: 100,
+        maxDurability: 100,
+        tier: 0,
       },
       accessory: null,
     },
@@ -647,7 +668,7 @@ export const INITIAL_GAME_STATE: GameState = {
     systems: {
       alchemy: false,
       enhancement: false,
-      gacha: false,
+      smelting: false,
     },
     farmSlots: 4,
     potionSlots: 3,
@@ -677,7 +698,7 @@ export const UNLOCK_LEVELS = {
   fruitPie: 5,
   guardianElixir: 5,
   swiftnessElixir: 5,
-  gacha: 8,
+  smelting: 8,
   advancedRecipes: 8,
   meatStew: 8,
   heroLunchbox: 8,
@@ -736,10 +757,7 @@ export const SHOP_INVENTORY: ShopItem[] = [
   { id: 'shop_def_book', category: 'book', name: '방어의 기초', emoji: '📘', description: 'DEF +1', goldCost: 80, book: { name: '방어의 기초', stat: 'def', value: 1 } },
   { id: 'shop_agi_book', category: 'book', name: '순발력 훈련법', emoji: '📗', description: 'AGI +1', goldCost: 80, book: { name: '순발력 훈련법', stat: 'agi', value: 1 } },
   { id: 'shop_int_book', category: 'book', name: '마법 입문서', emoji: '📙', description: 'INT +1', goldCost: 80, book: { name: '마법 입문서', stat: 'int', value: 1 } },
-  // Seeds
-  { id: 'shop_wheat', category: 'seed', name: '밀 씨앗 x3', emoji: '🌾', description: '밀을 재배할 수 있습니다', goldCost: 15, material: { key: 'wheatSeed', amount: 3 } },
-  { id: 'shop_potato', category: 'seed', name: '감자 씨앗 x3', emoji: '🥔', description: '감자를 재배할 수 있습니다', goldCost: 15, material: { key: 'potatoSeed', amount: 3 } },
-  { id: 'shop_carrot', category: 'seed', name: '당근 씨앗 x3', emoji: '🥕', description: '당근을 재배할 수 있습니다', goldCost: 20, material: { key: 'carrotSeed', amount: 3 } },
+  // Seeds (basic crops don't need seeds - only special crops)
   { id: 'shop_apple', category: 'seed', name: '사과 씨앗 x2', emoji: '🍎', description: '사과를 재배할 수 있습니다', goldCost: 25, material: { key: 'appleSeed', amount: 2 } },
   { id: 'shop_red_herb', category: 'seed', name: '붉은 약초 씨앗 x2', emoji: '🌺', description: '붉은 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'redHerbSeed', amount: 2 } },
   { id: 'shop_blue_herb', category: 'seed', name: '푸른 약초 씨앗 x2', emoji: '💙', description: '푸른 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'blueHerbSeed', amount: 2 } },

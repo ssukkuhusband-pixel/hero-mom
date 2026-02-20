@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { GameState, CropType, MaterialKey } from '../types';
-import { CROP_DATA } from '../constants';
+import { CROP_DATA, BASIC_CROPS } from '../constants';
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -24,6 +24,9 @@ export function canPlantCrop(state: GameState, plotIndex: number, crop: CropType
   const cropInfo = CROP_DATA[crop];
   if (!cropInfo) return false;
 
+  // Basic crops don't need seeds
+  if (BASIC_CROPS.includes(crop)) return true;
+
   // Check if player has seeds
   const seedKey = cropInfo.seedKey;
   return (state.inventory.materials[seedKey] ?? 0) >= 1;
@@ -35,8 +38,10 @@ export function plantCrop(state: GameState, plotIndex: number, crop: CropType): 
   const newState = structuredClone(state);
   const cropInfo = CROP_DATA[crop];
 
-  // Consume seed
-  newState.inventory.materials[cropInfo.seedKey] -= 1;
+  // Consume seed (basic crops don't require seeds)
+  if (!BASIC_CROPS.includes(crop)) {
+    newState.inventory.materials[cropInfo.seedKey] -= 1;
+  }
 
   // Plant
   newState.farm.plots[plotIndex] = {
@@ -94,8 +99,8 @@ export function harvestCrop(state: GameState, plotIndex: number): GameState {
   newState.inventory.materials[cropInfo.produceKey] =
     (newState.inventory.materials[cropInfo.produceKey] ?? 0) + yield_;
 
-  // 50% chance to get a bonus seed back
-  if (Math.random() < 0.5) {
+  // 50% chance to get a bonus seed back (non-basic crops only)
+  if (!BASIC_CROPS.includes(crop) && Math.random() < 0.5) {
     newState.inventory.materials[cropInfo.seedKey] =
       (newState.inventory.materials[cropInfo.seedKey] ?? 0) + 1;
   }

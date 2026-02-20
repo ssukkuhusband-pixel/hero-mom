@@ -178,6 +178,9 @@ export interface Equipment {
   grade: EquipmentGrade;
   baseStats: EquipmentStats;
   enhanceLevel: number;
+  durability: number;     // 현재 내구도 (0~100)
+  maxDurability: number;  // 최대 내구도 (100)
+  tier: number;           // 승급 단계 (0=기본, 1=철, 2=미스릴)
 }
 
 // --- Items ---
@@ -383,7 +386,7 @@ export interface UnlockState {
   systems: {
     alchemy: boolean;
     enhancement: boolean;
-    gacha: boolean;
+    smelting: boolean;
   };
   farmSlots: number;
   potionSlots: number;
@@ -415,7 +418,9 @@ export type GameAction =
   | { type: 'PLANT_CROP'; plotIndex: number; crop: CropType }
   | { type: 'HARVEST_CROP'; plotIndex: number }
   | { type: 'ENHANCE_EQUIPMENT'; equipmentId: string }
-  | { type: 'PERFORM_GACHA' }
+  | { type: 'PROMOTE_EQUIPMENT'; equipmentId: string }
+  | { type: 'MAINTAIN_EQUIPMENT'; equipmentId: string }
+  | { type: 'SMELT_EQUIPMENT'; equipmentId: string }
   | { type: 'PLACE_FOOD'; foodIndex: number }
   | { type: 'PLACE_POTION'; potionIndex: number }
   | { type: 'PLACE_EQUIPMENT'; equipmentId: string }

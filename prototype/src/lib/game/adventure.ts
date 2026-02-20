@@ -33,6 +33,9 @@ import {
   BOOK_TEMPLATES,
   BOOK_DROP_CHANCE,
   BOOK_DROP_BOSS_CHANCE,
+  DURABILITY_PENALTY_THRESHOLD,
+  DURABILITY_LOSS_PER_ADVENTURE,
+  DURABILITY_LOSS_BOSS_BONUS,
 } from '../constants';
 
 function uid(): string {
@@ -279,6 +282,18 @@ function completeAdventure(state: GameState): GameState {
     son.stats.hunger = Math.max(20, son.stats.hunger - 30);
   }
 
+  // Reduce durability on equipped gear
+  const hasBossBattle = adventure.battleResults.some(r => r.isBoss);
+  const equipSlots: (keyof typeof son.equipment)[] = ['weapon', 'armor', 'accessory'];
+  for (const slot of equipSlots) {
+    const eq = son.equipment[slot];
+    if (!eq) continue;
+    let loss = DURABILITY_LOSS_PER_ADVENTURE;
+    if (hasBossBattle) loss += DURABILITY_LOSS_BOSS_BONUS;
+    if (adventure.failed) loss = Math.ceil(loss * 1.5);
+    eq.durability = Math.max(0, eq.durability - loss);
+  }
+
   // Clear adventure
   state.adventure = null;
 
@@ -403,10 +418,18 @@ function getEquipmentFinalStats(eq: Equipment): Record<string, number> {
   const enhanceEntry = ENHANCEMENT_TABLE.find(e => e.level === eq.enhanceLevel);
   const enhanceBonus = enhanceEntry ? enhanceEntry.statBonus : 0;
 
+  // Durability scaling: 0 durability = 0 stats, below threshold = proportional reduction
+  let durabilityScale = 1;
+  if (eq.durability <= 0) {
+    durabilityScale = 0;
+  } else if (eq.durability < DURABILITY_PENALTY_THRESHOLD) {
+    durabilityScale = eq.durability / DURABILITY_PENALTY_THRESHOLD;
+  }
+
   const result: Record<string, number> = {};
   for (const [stat, val] of Object.entries(eq.baseStats)) {
     if (val !== undefined) {
-      result[stat] = Math.floor(val * gradeMultiplier * (1 + enhanceBonus));
+      result[stat] = Math.floor(val * gradeMultiplier * (1 + enhanceBonus) * durabilityScale);
     }
   }
   return result;

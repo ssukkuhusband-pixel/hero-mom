@@ -367,7 +367,11 @@ function autoEquipBestGear(state: GameState): void {
 
 function equipmentStatTotal(eq: Equipment): number {
   const s = eq.baseStats;
-  return (s.str ?? 0) + (s.def ?? 0) + (s.agi ?? 0) + (s.int ?? 0) + (s.hp ?? 0) / 5;
+  const raw = (s.str ?? 0) + (s.def ?? 0) + (s.agi ?? 0) + (s.int ?? 0) + (s.hp ?? 0) / 5;
+  // Apply durability penalty
+  if (eq.durability <= 0) return 0;
+  if (eq.durability < 30) return raw * (eq.durability / 30);
+  return raw;
 }
 
 // -----------------------------------------------------------------
@@ -408,7 +412,7 @@ function checkUnlocks(state: GameState): void {
 
   if (level >= UNLOCK_LEVELS.alchemy) unlocks.systems.alchemy = true;
   if (level >= UNLOCK_LEVELS.enhancement) unlocks.systems.enhancement = true;
-  if (level >= UNLOCK_LEVELS.gacha) unlocks.systems.gacha = true;
+  if (level >= UNLOCK_LEVELS.smelting) unlocks.systems.smelting = true;
   if (level >= UNLOCK_LEVELS.farmExpansion && unlocks.farmSlots < 6) {
     unlocks.farmSlots = 6;
     // Expand farm plots

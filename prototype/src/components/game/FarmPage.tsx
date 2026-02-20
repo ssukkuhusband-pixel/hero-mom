@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { canPlantCrop, canHarvestCrop, getCropProgress } from '@/lib/game/farm';
-import { CROP_DATA, EMOJI_MAP } from '@/lib/constants';
+import { CROP_DATA, EMOJI_MAP, BASIC_CROPS } from '@/lib/constants';
 import type { MaterialKey, CropType, FarmPlot } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
@@ -53,13 +53,22 @@ function SeedSelectionPopup({
     onClose();
   };
 
-  const seedOptions = SEED_KEYS.map((seedKey) => {
+  // Separate basic crops (no seed needed) from special crops
+  const basicCropOptions = (BASIC_CROPS as CropType[]).map((crop) => {
+    const cropInfo = CROP_DATA[crop];
+    return { crop, isBasic: true as const, count: Infinity, growthTime: cropInfo.growthTimeSeconds, canPlant: canPlantCrop(state, plotIndex, crop) };
+  });
+
+  const specialSeedKeys: MaterialKey[] = ['appleSeed', 'redHerbSeed', 'blueHerbSeed', 'yellowHerbSeed'];
+  const specialCropOptions = specialSeedKeys.map((seedKey) => {
     const crop = SEED_TO_CROP[seedKey];
     if (!crop) return null;
     const count = state.inventory.materials[seedKey];
     const cropInfo = CROP_DATA[crop];
-    return { seedKey, crop, count, growthTime: cropInfo.growthTimeSeconds, canPlant: canPlantCrop(state, plotIndex, crop) };
-  }).filter(Boolean) as { seedKey: MaterialKey; crop: CropType; count: number; growthTime: number; canPlant: boolean }[];
+    return { crop, isBasic: false as const, count, seedKey, growthTime: cropInfo.growthTimeSeconds, canPlant: canPlantCrop(state, plotIndex, crop) };
+  }).filter(Boolean) as { crop: CropType; isBasic: false; count: number; seedKey: MaterialKey; growthTime: number; canPlant: boolean }[];
+
+  const allOptions = [...basicCropOptions, ...specialCropOptions];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={onClose}>
@@ -74,31 +83,37 @@ function SeedSelectionPopup({
 
         <div className="flex flex-col items-center gap-1 mb-4">
           <span className="text-4xl">🌱</span>
-          <h3 className="font-serif font-bold text-lg text-cream-100 drop-shadow">씨앗 선택</h3>
+          <h3 className="font-serif font-bold text-lg text-cream-100 drop-shadow">작물 선택</h3>
         </div>
 
         <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
-          {seedOptions.map(({ seedKey, crop, count, growthTime, canPlant }) => (
+          {allOptions.map((opt) => (
             <button
-              key={seedKey}
-              onClick={() => handlePlant(crop)}
-              disabled={!canPlant}
+              key={opt.crop}
+              onClick={() => handlePlant(opt.crop)}
+              disabled={!opt.canPlant}
               className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl border transition-all active:scale-[0.98] ${
-                canPlant
+                opt.canPlant
                   ? 'border-green-400/40 bg-white/10 hover:bg-white/20'
                   : 'border-white/10 bg-white/5 opacity-40 cursor-not-allowed'
               }`}
             >
-              <span className="text-2xl">{CROP_EMOJI[crop]}</span>
+              <span className="text-2xl">{CROP_EMOJI[opt.crop]}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-cream-100">{CROP_NAME[crop]}</p>
-                <p className="text-[10px] text-cream-400">성장: {growthTime}초</p>
+                <p className="text-sm font-medium text-cream-100">{CROP_NAME[opt.crop]}</p>
+                <p className="text-[10px] text-cream-400">성장: {opt.growthTime}초</p>
               </div>
-              <span className={`text-sm font-bold tabular-nums px-2 py-0.5 rounded-lg ${
-                count > 0 ? 'text-cream-200 bg-white/15' : 'text-red-400 bg-red-500/15'
-              }`}>
-                x{count}
-              </span>
+              {opt.isBasic ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg text-green-300 bg-green-500/20 border border-green-400/30">
+                  {'🌱'} 기본
+                </span>
+              ) : (
+                <span className={`text-sm font-bold tabular-nums px-2 py-0.5 rounded-lg ${
+                  opt.count > 0 ? 'text-cream-200 bg-white/15' : 'text-red-400 bg-red-500/15'
+                }`}>
+                  x{opt.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -252,7 +267,7 @@ export default function FarmPage() {
         {/* Bottom seed bar */}
         <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
           <div className="flex flex-wrap gap-2 px-3 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/20">
-            {SEED_KEYS.map((key) => {
+            {(['appleSeed', 'redHerbSeed', 'blueHerbSeed', 'yellowHerbSeed'] as MaterialKey[]).map((key) => {
               const crop = SEED_TO_CROP[key];
               return (
                 <div key={key} className="flex items-center gap-1 text-xs">

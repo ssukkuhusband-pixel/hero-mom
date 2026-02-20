@@ -19,14 +19,16 @@ import type {
   CropType,
 } from './types';
 import { SonAction } from './types';
-import { INITIAL_GAME_STATE, SON_TICK_INTERVAL, MAX_TABLE_FOOD, SHOP_INVENTORY, SELL_PRICES } from './constants';
+import { INITIAL_GAME_STATE, SON_TICK_INTERVAL, MAX_TABLE_FOOD, SHOP_INVENTORY, SELL_PRICES, DURABILITY_MAX } from './constants';
 import { processSonTick, checkLevelUp } from './game/sonAI';
 import {
   craftEquipment,
   cookFood,
   brewPotion,
   enhanceEquipment,
-  performGacha,
+  promoteEquipment,
+  maintainEquipment,
+  smeltEquipment,
 } from './game/crafting';
 import { startAdventure, processAdventureTick } from './game/adventure';
 import { plantCrop, harvestCrop, processFarmTick } from './game/farm';
@@ -69,6 +71,29 @@ function loadFromLocalStorage(): GameState | null {
         lastQuestOfferedAt: 0,
       };
     }
+
+    // Migrate: equipment durability/tier fields
+    const migrateEquipment = (eq: { durability?: number; maxDurability?: number; tier?: number }) => {
+      if (eq.durability === undefined) eq.durability = DURABILITY_MAX;
+      if (eq.maxDurability === undefined) eq.maxDurability = DURABILITY_MAX;
+      if (eq.tier === undefined) eq.tier = 0;
+    };
+    state.inventory.equipment.forEach(migrateEquipment);
+    state.home.equipmentRack.forEach(migrateEquipment);
+    if (state.son.equipment.weapon) migrateEquipment(state.son.equipment.weapon);
+    if (state.son.equipment.armor) migrateEquipment(state.son.equipment.armor);
+    if (state.son.equipment.accessory) migrateEquipment(state.son.equipment.accessory);
+
+    // Migrate: gacha → smelting unlock
+    const systems = state.unlocks.systems as Record<string, boolean>;
+    if ('gacha' in systems) {
+      systems.smelting = systems.gacha;
+      delete systems.gacha;
+    }
+    if (systems.smelting === undefined) {
+      systems.smelting = false;
+    }
+
     return state;
   } catch {
     return null;
@@ -104,8 +129,14 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return result.state;
     }
 
-    case 'PERFORM_GACHA':
-      return performGacha(state);
+    case 'PROMOTE_EQUIPMENT':
+      return promoteEquipment(state, action.equipmentId);
+
+    case 'MAINTAIN_EQUIPMENT':
+      return maintainEquipment(state, action.equipmentId);
+
+    case 'SMELT_EQUIPMENT':
+      return smeltEquipment(state, action.equipmentId);
 
     case 'PLACE_FOOD':
       return checkQuestProgress(placeFood(state, action.foodIndex));
@@ -433,8 +464,16 @@ export function useGameActions() {
       (equipmentId: string) => dispatch({ type: 'ENHANCE_EQUIPMENT', equipmentId }),
       [dispatch]
     ),
-    performGacha: useCallback(
-      () => dispatch({ type: 'PERFORM_GACHA' }),
+    promoteEquipment: useCallback(
+      (equipmentId: string) => dispatch({ type: 'PROMOTE_EQUIPMENT', equipmentId }),
+      [dispatch]
+    ),
+    maintainEquipment: useCallback(
+      (equipmentId: string) => dispatch({ type: 'MAINTAIN_EQUIPMENT', equipmentId }),
+      [dispatch]
+    ),
+    smeltEquipment: useCallback(
+      (equipmentId: string) => dispatch({ type: 'SMELT_EQUIPMENT', equipmentId }),
       [dispatch]
     ),
     placeFood: useCallback(
