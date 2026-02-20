@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { canDoJob, getJobCooldownRemaining, getJobReward, getJobCooldownDuration } from '@/lib/game/job';
-import { EMOJI_MAP, SHOP_INVENTORY, SELL_PRICES, UNLOCK_LEVELS, getSmeltingStones } from '@/lib/constants';
+import { EMOJI_MAP, SHOP_INVENTORY, SELL_PRICES, UNLOCK_LEVELS, getSmeltingStones, fmt } from '@/lib/constants';
 import type { MaterialKey, Equipment, EquipmentGrade } from '@/lib/types';
 import type { ShopItem } from '@/lib/constants';
 import { useToast } from '@/components/ui/Toast';
@@ -26,7 +26,7 @@ function MaterialBar({ mk }: { mk: MaterialKey[] }) {
       {mk.map((k) => (
         <div key={k} className="flex items-center gap-1 text-xs">
           <span className="text-sm">{EMOJI_MAP[k] ?? '?'}</span>
-          <span className="font-medium text-cream-200 tabular-nums">{state.inventory.materials[k]}</span>
+          <span className="font-medium text-cream-200 tabular-nums">{fmt(state.inventory.materials[k])}</span>
         </div>
       ))}
     </div>
@@ -77,7 +77,7 @@ function JobTab() {
           <div className="flex-1 h-2 bg-white/15 rounded-full overflow-hidden">
             <div className="h-full bg-cozy-amber rounded-full transition-all" style={{ width: `${mom.jobMaxExp > 0 ? (mom.jobExp / mom.jobMaxExp) * 100 : 0}%` }} />
           </div>
-          <span className="text-[10px] text-cream-400 tabular-nums">{mom.jobExp}/{mom.jobMaxExp}</span>
+          <span className="text-[10px] text-cream-400 tabular-nums">{fmt(mom.jobExp)}/{fmt(mom.jobMaxExp)}</span>
         </div>
 
         <div className="flex items-center gap-3 mb-3">
@@ -158,6 +158,14 @@ function ShopTab() {
           <p className="text-xs font-bold text-cream-200">{'🌱'} 씨앗</p>
           <div className="grid grid-cols-3 gap-2">
             {SHOP_INVENTORY.filter(i => i.category === 'seed').map((it) => (
+              <button key={it.id} onClick={() => buy(it)} disabled={gold < it.goldCost} className={gridCls(gold < it.goldCost)}>
+                <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-2 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'💰'}{it.goldCost}</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs font-bold text-cream-200">{'⚗️'} 재료</p>
+          <div className="grid grid-cols-3 gap-2">
+            {SHOP_INVENTORY.filter(i => i.category === 'material').map((it) => (
               <button key={it.id} onClick={() => buy(it)} disabled={gold < it.goldCost} className={gridCls(gold < it.goldCost)}>
                 <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-2 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'💰'}{it.goldCost}</span>
               </button>

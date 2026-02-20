@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { canCookFood } from '@/lib/game/crafting';
-import { FOOD_RECIPES, EMOJI_MAP } from '@/lib/constants';
+import { FOOD_RECIPES, EMOJI_MAP, fmt } from '@/lib/constants';
 import type { MaterialKey, FoodRecipe, Food } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
@@ -40,7 +40,7 @@ function MaterialBar({ materialKeys }: { materialKeys: MaterialKey[] }) {
         <div key={key} className="flex items-center gap-1 text-xs">
           <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
           <span className="font-medium text-cream-200 tabular-nums">
-            {state.inventory.materials[key]}
+            {fmt(state.inventory.materials[key])}
           </span>
         </div>
       ))}
@@ -76,14 +76,14 @@ function RecipeDetailPopup({
 
   // Build effects list
   const effects: { icon: string; label: string }[] = [];
-  effects.push({ icon: '🍖', label: `배고픔 +${recipe.hungerRestore}` });
+  effects.push({ icon: '🍖', label: `배고픔 +${fmt(recipe.hungerRestore)}` });
   if (recipe.hpRestore) {
-    effects.push({ icon: '❤️', label: `HP +${recipe.hpRestore}` });
+    effects.push({ icon: '❤️', label: `HP +${fmt(recipe.hpRestore)}` });
   }
   if (recipe.tempBuff) {
     effects.push({
       icon: '⭐',
-      label: `${STAT_LABEL[recipe.tempBuff.stat] ?? recipe.tempBuff.stat} +${recipe.tempBuff.value}`,
+      label: `${STAT_LABEL[recipe.tempBuff.stat] ?? recipe.tempBuff.stat} +${fmt(recipe.tempBuff.value)}`,
     });
   }
 

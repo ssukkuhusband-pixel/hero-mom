@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { canBrewPotion } from '@/lib/game/crafting';
-import { POTION_RECIPES, EMOJI_MAP, UNLOCK_LEVELS } from '@/lib/constants';
+import { POTION_RECIPES, EMOJI_MAP, UNLOCK_LEVELS, fmt } from '@/lib/constants';
 import type { MaterialKey, PotionRecipe, Potion } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
@@ -52,7 +52,7 @@ function MaterialBar({ materialKeys }: { materialKeys: MaterialKey[] }) {
         <div key={key} className="flex items-center gap-1 text-xs">
           <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
           <span className="font-medium text-cream-200 tabular-nums">
-            {state.inventory.materials[key]}
+            {fmt(state.inventory.materials[key])}
           </span>
         </div>
       ))}
@@ -94,9 +94,9 @@ function PotionDetailPopup({
     const statLabel = STAT_LABEL[recipe.stat] ?? recipe.stat;
     const statEmoji = STAT_EMOJI[recipe.stat] ?? '';
     if (recipe.effect === 'instant') {
-      effectDesc = `${statEmoji} ${statLabel} +${recipe.value} 회복`;
+      effectDesc = `${statEmoji} ${statLabel} +${fmt(recipe.value)} 회복`;
     } else {
-      effectDesc = `${statEmoji} ${statLabel} +${recipe.value} (모험 1회)`;
+      effectDesc = `${statEmoji} ${statLabel} +${fmt(recipe.value)} (모험 1회)`;
     }
   }
 

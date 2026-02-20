@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Quest } from '../../lib/types';
+import { fmt } from '@/lib/constants';
 
 interface QuestPanelProps {
   quests: Quest[];
@@ -95,7 +96,7 @@ function QuestCard({ quest, gameTime }: { quest: Quest; gameTime: number }) {
               </div>
               {/* Count */}
               <span className="text-[10px] text-cream-600 tabular-nums whitespace-nowrap">
-                {obj.currentAmount}/{obj.targetAmount}
+                {fmt(obj.currentAmount)}/{fmt(obj.targetAmount)}
               </span>
             </div>
           );

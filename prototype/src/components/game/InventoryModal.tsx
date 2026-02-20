@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useGameState } from '@/lib/gameState';
-import { EMOJI_MAP, GRADE_COLORS } from '@/lib/constants';
+import { EMOJI_MAP, GRADE_COLORS, fmt } from '@/lib/constants';
 import { calculateEquipmentStats } from '@/lib/game/crafting';
 import type {
   Equipment,
@@ -331,7 +331,7 @@ function EquipmentDetail({
           <div key={stat} className="flex items-center gap-1 text-sm">
             <span className="text-xs">{STAT_EMOJI[stat] ?? ''}</span>
             <span className="text-cream-600 text-xs">{STAT_LABEL[stat] ?? stat}</span>
-            <span className="font-bold text-cream-900">+{value}</span>
+            <span className="font-bold text-cream-900">+{fmt(value)}</span>
           </div>
         ))}
       </div>
@@ -411,16 +411,16 @@ function FoodTab() {
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
               <span className="text-xs text-cream-600">
-                {EMOJI_MAP.hunger} 포만감 +{food.hungerRestore}
+                {EMOJI_MAP.hunger} 포만감 +{fmt(food.hungerRestore)}
               </span>
               {food.hpRestore != null && food.hpRestore > 0 && (
                 <span className="text-xs text-cream-600">
-                  {EMOJI_MAP.hp} HP +{food.hpRestore}
+                  {EMOJI_MAP.hp} HP +{fmt(food.hpRestore)}
                 </span>
               )}
               {food.tempBuff && (
                 <span className="text-xs text-cozy-amber font-bold">
-                  {STAT_EMOJI[food.tempBuff.stat] ?? ''} {STAT_NAME_KR[food.tempBuff.stat] ?? food.tempBuff.stat} +{food.tempBuff.value}
+                  {STAT_EMOJI[food.tempBuff.stat] ?? ''} {STAT_NAME_KR[food.tempBuff.stat] ?? food.tempBuff.stat} +{fmt(food.tempBuff.value)}
                 </span>
               )}
             </div>
@@ -507,7 +507,7 @@ function PotionTab() {
               </span>
               {potion.stat && potion.value != null && (
                 <span className="text-xs text-cream-600">
-                  {STAT_EMOJI[potion.stat] ?? ''} {STAT_NAME_KR[potion.stat] ?? potion.stat} +{potion.value}
+                  {STAT_EMOJI[potion.stat] ?? ''} {STAT_NAME_KR[potion.stat] ?? potion.stat} +{fmt(potion.value)}
                 </span>
               )}
             </div>
@@ -552,7 +552,7 @@ function MaterialsTab() {
                     {MATERIAL_NAMES[key]}
                   </span>
                   <span className="text-sm font-bold text-cream-900 tabular-nums">
-                    {materials[key]}
+                    {fmt(materials[key])}
                   </span>
                 </div>
               ))}
@@ -616,7 +616,7 @@ function BooksTab() {
             </div>
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-xs text-cream-600">
-                {STAT_EMOJI[book.statEffect.stat] ?? ''} {STAT_NAME_KR[book.statEffect.stat] ?? book.statEffect.stat} +{book.statEffect.value}
+                {STAT_EMOJI[book.statEffect.stat] ?? ''} {STAT_NAME_KR[book.statEffect.stat] ?? book.statEffect.stat} +{fmt(book.statEffect.value)}
               </span>
             </div>
           </div>

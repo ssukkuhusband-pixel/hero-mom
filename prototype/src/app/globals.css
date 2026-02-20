@@ -198,31 +198,27 @@ body {
 }
 
 /* ---- Toast animation ---- */
-@keyframes toast-slide-in {
-  from {
-    transform: translateY(-20px);
+/* Toast appears at a fixed position, stays briefly, then floats up + fades out */
+@keyframes toast-float-up {
+  0% {
+    transform: translateY(8px);
     opacity: 0;
   }
-  to {
+  10% {
     transform: translateY(0);
     opacity: 1;
   }
-}
-@keyframes toast-slide-out {
-  from {
+  70% {
     transform: translateY(0);
     opacity: 1;
   }
-  to {
-    transform: translateY(-20px);
+  100% {
+    transform: translateY(-40px);
     opacity: 0;
   }
 }
-.toast-enter {
-  animation: toast-slide-in 0.3s ease forwards;
-}
-.toast-exit {
-  animation: toast-slide-out 0.3s ease forwards;
+.toast-float-up {
+  animation: toast-float-up 3s ease forwards;
 }
 
 /* ---- Modal animation ---- */

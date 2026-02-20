@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { canEnhance, canMaintainEquipment, canRefineEquipment, calculateEquipmentStats, enhanceEquipment as enhanceEquipmentFn, getAllEquipment } from '@/lib/game/crafting';
-import { ENHANCEMENT_TABLE, EMOJI_MAP, GRADE_COLORS, UNLOCK_LEVELS, MAINTENANCE_RECIPES, DURABILITY_MAX, DURABILITY_PENALTY_THRESHOLD, REFINING_COST, REFINING_GRADE_RATES, getSmeltingStones } from '@/lib/constants';
+import { ENHANCEMENT_TABLE, EMOJI_MAP, GRADE_COLORS, UNLOCK_LEVELS, MAINTENANCE_RECIPES, DURABILITY_MAX, DURABILITY_PENALTY_THRESHOLD, REFINING_COST, REFINING_GRADE_RATES, getSmeltingStones, fmt } from '@/lib/constants';
 import type { Equipment, EquipmentSlot, EquipmentGrade, MaterialKey } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
@@ -31,7 +31,7 @@ function MaterialBar({ mk }: { mk: MaterialKey[] }) {
       {mk.map((k) => (
         <div key={k} className="flex items-center gap-1 text-xs">
           <span className="text-sm">{EMOJI_MAP[k] ?? '?'}</span>
-          <span className="font-medium text-cream-200 tabular-nums">{state.inventory.materials[k]}</span>
+          <span className="font-medium text-cream-200 tabular-nums">{fmt(state.inventory.materials[k])}</span>
         </div>
       ))}
     </div>
@@ -137,7 +137,7 @@ function RefineTab() {
               style={{ width: `${expPct}%` }}
             />
           </div>
-          <span className="text-[10px] text-cream-300 tabular-nums shrink-0">{mom.refiningExp}/{mom.refiningMaxExp}</span>
+          <span className="text-[10px] text-cream-300 tabular-nums shrink-0">{fmt(mom.refiningExp)}/{fmt(mom.refiningMaxExp)}</span>
         </div>
       </div>
 
@@ -195,7 +195,7 @@ function RefineTab() {
               <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
                 {Object.entries(calculateEquipmentStats(lastResult)).map(([k, v]) => (
                   <span key={k} className="text-[10px] text-cream-200">
-                    {STAT_EMOJI[k] ?? ''} {STAT_LABEL[k] ?? k}+{v}
+                    {STAT_EMOJI[k] ?? ''} {STAT_LABEL[k] ?? k}+{fmt(v)}
                   </span>
                 ))}
               </div>
@@ -297,7 +297,7 @@ function MaintainTab() {
                 <p className="text-xs font-bold text-cream-100 truncate">{eq.name}{eq.enhanceLevel > 0 && <span className="text-cozy-amber ml-1">+{eq.enhanceLevel}</span>}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <DurabilityBar dur={eq.durability} max={maxDur} />
-                  <span className="text-[9px] text-cream-300 tabular-nums shrink-0">{eq.durability}/{maxDur}</span>
+                  <span className="text-[9px] text-cream-300 tabular-nums shrink-0">{fmt(eq.durability)}/{fmt(maxDur)}</span>
                 </div>
               </div>
             </div>
@@ -390,7 +390,7 @@ function EnhanceTab() {
             <div className="bg-white/10 rounded-lg px-2.5 py-2 mb-3 text-xs">
               <p className="text-cream-300 mb-1 text-[10px]">강화 시 스탯 변화:</p>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                {Object.keys(pre).map((s) => <span key={s} className="text-cream-100">{STAT_EMOJI[s] ?? ''} {STAT_LABEL[s] ?? s} <span className="text-cream-300">{cur[s] ?? 0}</span>{' \u2192 '}<span className="text-green-400 font-bold">{pre[s]}</span></span>)}
+                {Object.keys(pre).map((s) => <span key={s} className="text-cream-100">{STAT_EMOJI[s] ?? ''} {STAT_LABEL[s] ?? s} <span className="text-cream-300">{fmt(cur[s] ?? 0)}</span>{' \u2192 '}<span className="text-green-400 font-bold">{fmt(pre[s])}</span></span>)}
               </div>
             </div>
             <button onClick={doEnhance} disabled={!canDo} className="btn-wood w-full text-sm !py-2">{'🔮'} +{sel.enhanceLevel} {'\u2192'} +{sel.enhanceLevel + 1} 강화</button>

@@ -6,7 +6,6 @@ import React, {
   useState,
   useCallback,
   useRef,
-  useEffect,
 } from 'react';
 
 // --- Types ---
@@ -17,7 +16,8 @@ interface ToastItem {
   id: number;
   message: string;
   variant: ToastVariant;
-  exiting: boolean;
+  /** ms timestamp when this toast was created — drives float-up animation */
+  createdAt: number;
 }
 
 interface ToastContextValue {
@@ -44,69 +44,62 @@ const VARIANT_ICONS: Record<ToastVariant, string> = {
   error: '\u274C',
 };
 
+/** How long the toast is visible (ms) before it starts fading */
+const TOAST_DISPLAY_MS = 2200;
+/** How long the float-up + fade animation takes (ms) */
+const TOAST_FADE_MS = 800;
+/** Total lifetime = display + fade */
+const TOAST_LIFETIME_MS = TOAST_DISPLAY_MS + TOAST_FADE_MS;
+
 // --- Provider ---
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
 
-  const removeToast = useCallback((id: number) => {
-    // Mark as exiting for animation
-    setToasts((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, exiting: true } : t))
-    );
-    // Remove after animation completes
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 300);
-  }, []);
-
   const addToast = useCallback(
     (message: string, variant: ToastVariant = 'info') => {
       const id = nextId.current++;
-      setToasts((prev) => [...prev, { id, message, variant, exiting: false }]);
+      const createdAt = Date.now();
+      setToasts((prev) => [...prev, { id, message, variant, createdAt }]);
 
-      // Auto-dismiss after 3 seconds
+      // Remove after full lifetime
       setTimeout(() => {
-        removeToast(id);
-      }, 3000);
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, TOAST_LIFETIME_MS);
     },
-    [removeToast]
+    []
   );
 
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
 
-      {/* Toast container */}
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[90%] max-w-[400px] pointer-events-none">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`
-              pointer-events-auto
-              bg-cream-900 text-cream-100
-              rounded-xl px-4 py-3
-              shadow-[0_8px_24px_rgba(44,24,16,0.3)]
-              flex items-center gap-2.5
-              text-sm
-              ${VARIANT_STYLES[toast.variant]}
-              ${toast.exiting ? 'toast-exit' : 'toast-enter'}
-            `}
-          >
-            <span className="text-base shrink-0">
-              {VARIANT_ICONS[toast.variant]}
-            </span>
-            <span className="flex-1">{toast.message}</span>
-            <button
-              onClick={() => removeToast(toast.id)}
-              className="shrink-0 text-cream-500 hover:text-cream-200 transition-colors text-xs"
-              aria-label="Dismiss"
+      {/* Toast container — all toasts spawn at the same spot and float up */}
+      <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px] pointer-events-none">
+        <div className="relative">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`
+                absolute left-0 right-0
+                bg-cream-900/95 text-cream-100
+                rounded-xl px-4 py-2.5
+                shadow-[0_8px_24px_rgba(44,24,16,0.3)]
+                backdrop-blur-sm
+                flex items-center gap-2.5
+                text-sm
+                ${VARIANT_STYLES[toast.variant]}
+                toast-float-up
+              `}
             >
-              &times;
-            </button>
-          </div>
-        ))}
+              <span className="text-base shrink-0">
+                {VARIANT_ICONS[toast.variant]}
+              </span>
+              <span className="flex-1 line-clamp-2">{toast.message}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </ToastContext.Provider>
   );

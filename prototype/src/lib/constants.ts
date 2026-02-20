@@ -608,6 +608,7 @@ export const LOOT_TABLE: { item: MaterialKey; chance: number; min: number; max: 
   { item: 'leather',      chance: 0.30, min: 1,  max: 2 },
   { item: 'ironOre',      chance: 0.25, min: 1,  max: 2 },
   { item: 'meat',         chance: 0.35, min: 1,  max: 2 },
+  { item: 'refiningStone', chance: 0.20, min: 1,  max: 1 },
 ];
 
 // Herb drops are separate (random color)
@@ -850,7 +851,7 @@ export const BOOK_DROP_BOSS_CHANCE = 0.35;  // 35% from boss battles
 
 export interface ShopItem {
   id: string;
-  category: 'book' | 'seed';
+  category: 'book' | 'seed' | 'material';
   name: string;
   emoji: string;
   description: string;
@@ -867,6 +868,8 @@ export const SHOP_INVENTORY: ShopItem[] = [
   { id: 'shop_int_book', category: 'book', name: '마법 입문서', emoji: '📙', description: 'INT +1', goldCost: 80, book: { name: '마법 입문서', stat: 'int', value: 1 } },
   // Seeds
   { id: 'shop_seed', category: 'seed', name: '씨앗 x5', emoji: '🌱', description: '만능 씨앗 5개', goldCost: 50, material: { key: 'seed', amount: 5 } },
+  // Materials
+  { id: 'shop_refining_stone', category: 'material', name: '제련석 x3', emoji: '⚗️', description: '장비 제련용 광석 3개', goldCost: 120, material: { key: 'refiningStone', amount: 3 } },
 ];
 
 export const SELL_PRICES: {
@@ -885,3 +888,15 @@ export const SELL_PRICES: {
     epic: 250,
   },
 };
+
+// ============================================================
+// Number Formatting Utility
+// ============================================================
+
+/**
+ * Format a number for display: at most 2 decimal places, no trailing zeros.
+ * e.g. 49.2000000000002 → "49.2",  100.00 → "100",  3.14159 → "3.14"
+ */
+export function fmt(n: number): string {
+  return parseFloat(n.toFixed(2)).toString();
+}

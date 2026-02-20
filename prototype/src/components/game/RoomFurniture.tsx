@@ -254,6 +254,10 @@ export function FurnitureSlot({
 }) {
   const isHighlighted = activeFurniture === furnitureKey;
 
+  // Son-only furniture: dimmed when adventuring (son isn't home to use them)
+  // Mom-usable furniture: always active — mom can use these even while son is away
+  const sonOnlyDimmed = isAdventuring; // bed, chair, dummy, door
+
   switch (furnitureKey) {
     case 'bed':
       return (
@@ -263,7 +267,7 @@ export function FurnitureSlot({
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.SLEEPING}
           occupiedLabel={'💤'}
-          dimmed={isAdventuring}
+          dimmed={sonOnlyDimmed}
         >
           <BedIllustration />
         </FurnitureCard>
@@ -276,7 +280,7 @@ export function FurnitureSlot({
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.TRAINING}
           occupiedLabel={'⚔️'}
-          dimmed={isAdventuring}
+          dimmed={sonOnlyDimmed}
         >
           <DummyIllustration />
         </FurnitureCard>
@@ -290,7 +294,7 @@ export function FurnitureSlot({
           maxSlots={3}
           onClick={() => onOpenPlacement('book')}
           highlight={isHighlighted}
-          dimmed={isAdventuring}
+          dimmed={false}
         >
           <DeskIllustration />
         </FurnitureCard>
@@ -303,7 +307,7 @@ export function FurnitureSlot({
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.RESTING}
           occupiedLabel={'😌'}
-          dimmed={isAdventuring}
+          dimmed={sonOnlyDimmed}
         >
           <ChairIllustration />
         </FurnitureCard>
@@ -317,7 +321,7 @@ export function FurnitureSlot({
           maxSlots={MAX_TABLE_FOOD}
           onClick={() => onOpenPlacement('food')}
           highlight={isHighlighted}
-          dimmed={isAdventuring}
+          dimmed={false}
         >
           <TableIllustration />
         </FurnitureCard>
@@ -331,7 +335,7 @@ export function FurnitureSlot({
           maxSlots={potionSlots}
           onClick={() => onOpenPlacement('potion')}
           highlight={isHighlighted}
-          dimmed={isAdventuring}
+          dimmed={false}
         >
           <PotionShelfIllustration />
         </FurnitureCard>
@@ -345,7 +349,7 @@ export function FurnitureSlot({
           maxSlots={3}
           onClick={() => onOpenPlacement('equipment')}
           highlight={isHighlighted}
-          dimmed={isAdventuring}
+          dimmed={false}
         >
           <EquipmentRackIllustration />
         </FurnitureCard>
@@ -356,7 +360,7 @@ export function FurnitureSlot({
           label={isDoorOpen && sonIsHome ? '출발!' : '현관문'}
           furnitureKey={furnitureKey}
           highlight={isDoorOpen && sonIsHome}
-          dimmed={isAdventuring}
+          dimmed={sonOnlyDimmed}
         >
           <DoorIllustration isOpen={isDoorOpen && sonIsHome} />
         </FurnitureCard>
@@ -370,7 +374,7 @@ export function FurnitureSlot({
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.FARMING}
           occupiedLabel={'🌱'}
-          dimmed={isAdventuring}
+          dimmed={false}
         >
           <FarmIllustration />
         </FurnitureCard>

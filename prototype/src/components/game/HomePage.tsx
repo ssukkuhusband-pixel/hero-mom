@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { SonAction } from '@/lib/types';
 import type { FurnitureKey } from '@/lib/types';
-import { EMOJI_MAP, DEPARTURE_HUNGER_THRESHOLD, DEPARTURE_HP_THRESHOLD } from '@/lib/constants';
+import { EMOJI_MAP, DEPARTURE_HUNGER_THRESHOLD, DEPARTURE_HP_THRESHOLD, fmt } from '@/lib/constants';
 import ReturnModal from './ReturnModal';
 import KitchenPage from './KitchenPage';
 import FarmPage from './FarmPage';
@@ -166,7 +166,7 @@ function DepartureIndicator({ hp, maxHp, hunger }: { hp: number; maxHp: number; 
       </span>
       <span className="text-cream-500">·</span>
       <span className={hungerOk ? 'text-green-300' : 'text-red-400'}>
-        포만감 {hunger}/{DEPARTURE_HUNGER_THRESHOLD}
+        포만감 {fmt(hunger)}/{DEPARTURE_HUNGER_THRESHOLD}
       </span>
       {ready && <span className="text-green-300 animate-pulse">출발 준비 완료!</span>}
     </div>
@@ -292,9 +292,9 @@ export default function HomePage() {
           }}
         />
 
-        {/* Dim overlay for adventuring */}
+        {/* Dim overlay for adventuring — subtle tint only, does not block interaction */}
         {isAdventuring && (
-          <div className="absolute inset-0 bg-black/30 pointer-events-none z-10" />
+          <div className="absolute inset-0 bg-black/15 pointer-events-none z-10" />
         )}
 
         {/* Adventure status */}

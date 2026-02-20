@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { fmt } from '@/lib/constants';
 
 export type ProgressBarColor = 'hp' | 'hunger' | 'exp' | 'default';
 
@@ -62,7 +63,7 @@ export default function ProgressBar({
           )}
           {showValues && (
             <span className="text-xs tabular-nums text-cream-700">
-              {Math.floor(current)}/{max}
+              {fmt(current)}/{fmt(max)}
             </span>
           )}
         </div>

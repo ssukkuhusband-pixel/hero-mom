@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useGameState } from '@/lib/gameState';
-import { EMOJI_MAP, GRADE_COLORS } from '@/lib/constants';
+import { EMOJI_MAP, GRADE_COLORS, fmt } from '@/lib/constants';
 import { SonAction } from '@/lib/types';
 import type { Equipment, EquipmentSlot } from '@/lib/types';
 import { calculateEquipmentStats } from '@/lib/game/crafting';
@@ -234,7 +234,7 @@ export default function SonStatusPanel({ isOpen, onClose }: SonStatusPanelProps)
                 className="flex-1"
               />
               <span className="text-[10px] text-cream-400 tabular-nums">
-                {stats.exp}/{stats.maxExp}
+                {fmt(stats.exp)}/{fmt(stats.maxExp)}
               </span>
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function SonStatusPanel({ isOpen, onClose }: SonStatusPanelProps)
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-cream-300">❤️ HP</span>
               <span className="text-xs text-cream-200 tabular-nums font-medium">
-                {stats.hp}/{stats.maxHp}
+                {fmt(stats.hp)}/{fmt(stats.maxHp)}
               </span>
             </div>
             <ProgressBar current={stats.hp} max={stats.maxHp} color="hp" size="sm" showValues={false} />
@@ -255,7 +255,7 @@ export default function SonStatusPanel({ isOpen, onClose }: SonStatusPanelProps)
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-cream-300">🍖 포만감</span>
               <span className="text-xs text-cream-200 tabular-nums font-medium">
-                {Math.round(stats.hunger)}/{stats.maxHunger}
+                {fmt(stats.hunger)}/{fmt(stats.maxHunger)}
               </span>
             </div>
             <ProgressBar current={stats.hunger} max={stats.maxHunger} color="hunger" size="sm" showValues={false} />
@@ -291,7 +291,7 @@ export default function SonStatusPanel({ isOpen, onClose }: SonStatusPanelProps)
             <div className="flex-1">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-cream-200 font-medium">{moodLabel}</span>
-                <span className="text-xs text-cream-400 tabular-nums">{mood}/100</span>
+                <span className="text-xs text-cream-400 tabular-nums">{fmt(mood)}/100</span>
               </div>
               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
