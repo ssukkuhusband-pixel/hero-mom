@@ -22,20 +22,20 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
     switch (type) {
       case 'food':
         return {
-          title: '\uD83C\uDF7D\uFE0F \uC2DD\uD0C1\uC5D0 \uC74C\uC2DD \uBC30\uCE58',
+          title: '🍽️ 식탁에 음식 배치',
           items: state.inventory.food,
           placed: state.home.table,
           maxSlots: MAX_TABLE_FOOD,
           getEmoji: (item: Food) => EMOJI_MAP.food,
           getName: (item: Food) => item.name,
           getDesc: (item: Food) =>
-            `\uBC30\uACE0\uD514 +${item.hungerRestore}${item.hpRestore ? ` HP +${item.hpRestore}` : ''}${item.tempBuff ? ` ${item.tempBuff.stat === 'all' ? '\uC804\uC2A4\uD0EF' : item.tempBuff.stat.toUpperCase()} +${item.tempBuff.value}` : ''}`,
+            `배고픔 +${item.hungerRestore}${item.hpRestore ? ` HP +${item.hpRestore}` : ''}${item.tempBuff ? ` ${item.tempBuff.stat === 'all' ? '전스탯' : item.tempBuff.stat.toUpperCase()} +${item.tempBuff.value}` : ''}`,
           onPlace: (idx: number) => { actions.placeFood(idx); },
           onRemove: (idx: number) => { actions.removeFood(idx); },
         };
       case 'potion':
         return {
-          title: '\uD83E\uDDEA \uD3EC\uC158 \uC120\uBC18\uC5D0 \uBC30\uCE58',
+          title: '🧪 포션 선반에 배치',
           items: state.inventory.potions,
           placed: state.home.potionShelf,
           maxSlots: state.unlocks.potionSlots,
@@ -43,14 +43,14 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
           getName: (item: Potion) => item.name,
           getDesc: (item: Potion) =>
             item.effect === 'instant'
-              ? `HP +${item.value} (\uC989\uC2DC)`
-              : `${item.stat === 'all' ? '\uC804\uC2A4\uD0EF' : (item.stat ?? '').toUpperCase()} +${item.value} (1\uBAA8\uD5D8)`,
+              ? `HP +${item.value} (즉시)`
+              : `${item.stat === 'all' ? '전스탯' : (item.stat ?? '').toUpperCase()} +${item.value} (1모험)`,
           onPlace: (idx: number) => { actions.placePotion(idx); },
           onRemove: (idx: number) => { actions.removePotion(idx); },
         };
       case 'book':
         return {
-          title: '\uD83D\uDCDA \uCC45\uC0C1\uC5D0 \uCC45 \uBC30\uCE58',
+          title: '📚 책상에 책 배치',
           items: state.inventory.books,
           placed: state.home.desk,
           maxSlots: 3,
@@ -63,11 +63,11 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
         };
       case 'equipment':
         return {
-          title: '\u2694\uFE0F \uC7A5\uBE44\uB300\uC5D0 \uC7A5\uBE44 \uBC30\uCE58',
+          title: '⚔️ 장비대에 장비 배치',
           items: state.inventory.equipment,
           placed: state.home.equipmentRack,
           maxSlots: 10,
-          getEmoji: (item: Equipment) => EMOJI_MAP[item.slot] ?? '\u2694\uFE0F',
+          getEmoji: (item: Equipment) => EMOJI_MAP[item.slot] ?? '⚔️',
           getName: (item: Equipment) => `${item.name}${item.enhanceLevel > 0 ? ` +${item.enhanceLevel}` : ''}`,
           getDesc: (item: Equipment) => {
             const stats = Object.entries(item.baseStats)
@@ -102,15 +102,15 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
               key={i}
               onClick={() => config.onRemove(i)}
               className="flex items-center gap-1.5 bg-cream-200 border border-cream-500 rounded-lg px-2.5 py-1.5 hover:bg-red-50 hover:border-red-300 transition-colors group cursor-pointer"
-              title="\uD074\uB9AD\uD558\uC5EC \uD68C\uC218"
+              title="클릭하여 회수"
             >
               <span className="text-lg">{config.getEmoji(item as never)}</span>
               <span className="text-xs font-medium text-cream-800 group-hover:text-red-600">{config.getName(item as never)}</span>
-              <span className="text-xs text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5">{'\u2715'}</span>
+              <span className="text-xs text-red-400 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5">{'✕'}</span>
             </button>
           ))}
           {config.placed.length === 0 && (
-            <p className="text-xs text-cream-500 italic">\uC544\uC9C1 \uBC30\uCE58\uB41C \uC544\uC774\uD15C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</p>
+            <p className="text-xs text-cream-500 italic">아직 배치된 아이템이 없습니다</p>
           )}
         </div>
       </div>
@@ -118,9 +118,9 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
       <div className="border-t border-cream-400 my-3" />
 
       <div>
-        <p className="text-xs text-cream-700 mb-2">\uC778\uBCA4\uD1A0\uB9AC ({config.items.length}\uAC1C)</p>
+        <p className="text-xs text-cream-700 mb-2">인벤토리 ({config.items.length}개)</p>
         {config.items.length === 0 ? (
-          <p className="text-xs text-cream-500 italic">\uBC30\uCE58\uD560 \uC218 \uC788\uB294 \uC544\uC774\uD15C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</p>
+          <p className="text-xs text-cream-500 italic">배치할 수 있는 아이템이 없습니다</p>
         ) : (
           <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
             {config.items.map((item, idx) => (
@@ -142,7 +142,7 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
                   <p className="text-sm font-medium text-cream-900 truncate">{config.getName(item as never)}</p>
                   <p className="text-[11px] text-cream-600">{config.getDesc(item as never)}</p>
                 </div>
-                {!isFull && <span className="text-xs text-cozy-amber font-bold shrink-0">\uBC30\uCE58</span>}
+                {!isFull && <span className="text-xs text-cozy-amber font-bold shrink-0">배치</span>}
               </button>
             ))}
           </div>
@@ -150,7 +150,7 @@ export default function PlacementModal({ type, isOpen, onClose }: PlacementModal
       </div>
 
       {isFull && (
-        <p className="text-xs text-cozy-red mt-2 text-center">\uC2AC\uB86F\uC774 \uAC00\uB4DD \uCC3C\uC2B5\uB2C8\uB2E4</p>
+        <p className="text-xs text-cozy-red mt-2 text-center">슬롯이 가득 찼습니다</p>
       )}
     </Modal>
   );
