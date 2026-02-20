@@ -274,10 +274,10 @@ export default function HomePage() {
             <span className="text-xs text-cream-100 font-medium">{currentRoomDef.name}</span>
           </div>
 
-          {/* Furniture grid */}
+          {/* Furniture grid + Son character (attached to active furniture) */}
           <div className="flex-1 flex items-center justify-center w-full">
-            <div className={`flex flex-wrap gap-3 justify-center items-center ${
-              currentRoomDef.furniture.length === 1 ? 'max-w-[140px]' : 'max-w-[300px]'
+            <div className={`flex flex-wrap gap-3 justify-center items-start ${
+              currentRoomDef.furniture.length === 1 ? 'max-w-[160px]' : 'max-w-[320px]'
             }`}>
               {currentRoomDef.furniture.map((fKey) => (
                 <FurnitureSlot
@@ -302,19 +302,27 @@ export default function HomePage() {
                       setPlacementModal(type);
                     }
                   }}
+                  sonNode={
+                    <SonCharacter
+                      currentAction={currentAction}
+                      actionTimer={son.actionTimer}
+                      isInjured={son.isInjured}
+                      dialogue={dialogue}
+                      activeDialogue={activeDialogue}
+                      respondDialogue={respondDialogue}
+                      dismissDlg={dismissDlg}
+                      gameTime={state.gameTime}
+                    />
+                  }
                 />
               ))}
             </div>
           </div>
 
-          {/* Departure readiness indicator */}
-          {sonIsHome && !isAdventuring && currentAction !== SonAction.DEPARTING && (
-            <DepartureIndicator hp={son.stats.hp} maxHp={son.stats.maxHp} hunger={son.stats.hunger} />
-          )}
-
-          {/* Son character area */}
-          <div className="w-full min-h-[140px] flex flex-col items-center justify-end">
-            {sonInThisRoom && sonIsHome ? (
+          {/* Son character when IDLE (no furniture) or not in this room */}
+          <div className="w-full flex flex-col items-center justify-end min-h-[60px]">
+            {/* Son in this room but not at any furniture (IDLE) */}
+            {sonInThisRoom && sonIsHome && !activeFurniture && (
               <SonCharacter
                 currentAction={currentAction}
                 actionTimer={son.actionTimer}
@@ -325,14 +333,20 @@ export default function HomePage() {
                 dismissDlg={dismissDlg}
                 gameTime={state.gameTime}
               />
-            ) : isAdventuring ? (
+            )}
+
+            {/* Adventuring indicator */}
+            {isAdventuring && (
               <div className="text-center bg-black/30 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/10">
                 <span className="text-3xl drop-shadow-lg block mb-1">{'🚶'}</span>
                 <p className="text-xs text-cream-100 font-serif drop-shadow-sm">
                   {'아들이 모험을 떠났습니다...'}
                 </p>
               </div>
-            ) : sonIsHome && !sonInThisRoom ? (
+            )}
+
+            {/* Son in another room */}
+            {sonIsHome && !sonInThisRoom && (
               <button
                 onClick={() => sonRoom && setActiveRoom(sonRoom)}
                 className="flex items-center gap-2 bg-black/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/10 hover:bg-black/30 transition-colors"
@@ -342,15 +356,23 @@ export default function HomePage() {
                   {'아들은'} <strong className="text-cream-100">{sonRoomName}</strong>{'에 있습니다'}
                 </span>
               </button>
-            ) : !son.isHome && !isAdventuring ? (
+            )}
+
+            {/* Son left but not adventuring */}
+            {!son.isHome && !isAdventuring && (
               <div className="text-center">
                 <span className="text-3xl drop-shadow-lg">{'🚶'}</span>
                 <p className="text-xs text-cream-100 font-serif drop-shadow-sm mt-1">
                   {'아들이 모험을 떠났습니다...'}
                 </p>
               </div>
-            ) : null}
+            )}
           </div>
+
+          {/* Departure readiness indicator */}
+          {sonIsHome && !isAdventuring && currentAction !== SonAction.DEPARTING && (
+            <DepartureIndicator hp={son.stats.hp} maxHp={son.stats.maxHp} hunger={son.stats.hunger} />
+          )}
         </div>
 
         {/* Quest Badge */}
