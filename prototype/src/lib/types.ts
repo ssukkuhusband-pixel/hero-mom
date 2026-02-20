@@ -50,7 +50,7 @@ export interface SonState {
 
 export type DialogueType = 'emotion' | 'bedtime' | 'daily' | 'request';
 
-export type FurnitureKey = 'bed' | 'desk' | 'potionShelf' | 'chair' | 'equipmentRack' | 'dummy' | 'table' | 'door' | 'stove' | 'farm';
+export type FurnitureKey = 'bed' | 'desk' | 'potionShelf' | 'chair' | 'equipmentRack' | 'dummy' | 'table' | 'door' | 'farm';
 
 export interface DialogueEffect {
   type: 'buff' | 'heal' | 'hunger' | 'mood' | 'exp';

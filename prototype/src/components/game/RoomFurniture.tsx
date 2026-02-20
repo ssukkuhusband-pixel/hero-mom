@@ -107,19 +107,6 @@ export function EquipmentRackIllustration() {
   );
 }
 
-export function StoveIllustration() {
-  return (
-    <div className="relative w-20 h-16 drop-shadow-md">
-      <div className="absolute bottom-0 left-1 right-1 h-12 bg-gradient-to-b from-gray-600 to-gray-800 rounded-t-md rounded-b-sm border border-gray-500/50" />
-      <div className="absolute bottom-2 left-3 right-3 h-5 bg-gradient-to-b from-orange-500 to-red-600 rounded-sm" />
-      <div className="absolute bottom-3 left-4 w-3 h-4 bg-gradient-to-t from-yellow-400 to-orange-500 rounded-t-full opacity-80 animate-pulse" />
-      <div className="absolute bottom-3 right-4 w-2 h-3 bg-gradient-to-t from-yellow-300 to-red-400 rounded-t-full opacity-70 animate-pulse" style={{ animationDelay: '0.3s' }} />
-      <div className="absolute top-2 left-0 right-0 h-3 bg-gradient-to-b from-gray-500 to-gray-600 rounded-md" />
-      <span className="absolute -top-1 left-1/2 -translate-x-1/2 text-sm">{'\uD83C\uDF72'}</span>
-    </div>
-  );
-}
-
 export function FarmIllustration() {
   return (
     <div className="relative w-20 h-16 drop-shadow-md">
@@ -372,18 +359,6 @@ export function FurnitureSlot({
           dimmed={isAdventuring}
         >
           <DoorIllustration isOpen={isDoorOpen && sonIsHome} />
-        </FurnitureCard>
-      );
-    case 'stove':
-      return (
-        <FurnitureCard
-          label={'화덕'}
-          furnitureKey={furnitureKey}
-          onClick={() => onOpenPlacement('cooking' as PlacementType)}
-          highlight={isHighlighted}
-          dimmed={isAdventuring}
-        >
-          <StoveIllustration />
         </FurnitureCard>
       );
     case 'farm':

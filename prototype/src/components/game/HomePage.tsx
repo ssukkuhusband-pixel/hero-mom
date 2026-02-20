@@ -19,7 +19,7 @@ import { FurnitureSlot } from './RoomFurniture';
 // Room Definitions
 // ============================================================
 
-type RoomId = 'living' | 'kitchen' | 'study' | 'sonRoom' | 'backyard';
+type RoomId = 'living' | 'dining' | 'kitchen' | 'study' | 'sonRoom' | 'backyard';
 
 interface RoomDef {
   id: RoomId;
@@ -38,11 +38,18 @@ const ROOMS: RoomDef[] = [
     bgGradient: 'from-amber-900/80 via-amber-800/60 to-stone-900/80',
   },
   {
+    id: 'dining',
+    name: '식당',
+    emoji: '🍽️',
+    furniture: ['table'],
+    bgGradient: 'from-orange-900/80 via-orange-800/60 to-amber-950/80',
+  },
+  {
     id: 'kitchen',
     name: '주방',
     emoji: '🍳',
-    furniture: ['table', 'stove'],
-    bgGradient: 'from-orange-900/80 via-orange-800/60 to-amber-950/80',
+    furniture: [],
+    bgGradient: 'from-red-900/80 via-orange-900/60 to-amber-950/80',
   },
   {
     id: 'study',
@@ -72,8 +79,7 @@ const FURNITURE_TO_ROOM: Record<FurnitureKey, RoomId> = {
   chair: 'living',
   dummy: 'living',
   door: 'living',
-  table: 'kitchen',
-  stove: 'kitchen',
+  table: 'dining',
   desk: 'study',
   bed: 'sonRoom',
   potionShelf: 'sonRoom',
@@ -180,7 +186,6 @@ export default function HomePage() {
   const [placementModal, setPlacementModal] = useState<PlacementType | null>(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [showQuestPanel, setShowQuestPanel] = useState(false);
-  const [showCookingModal, setShowCookingModal] = useState(false);
   const [showFarmModal, setShowFarmModal] = useState(false);
 
   // Track when son returns from adventure
@@ -307,38 +312,42 @@ export default function HomePage() {
             <span className="text-xs text-cream-100 font-medium">{currentRoomDef.name}</span>
           </div>
 
-          {/* Furniture grid (layout fixed — never affected by son) */}
-          <div className="flex-1 flex items-center justify-center w-full">
-            <div className={`flex flex-wrap gap-3 justify-center items-center ${
-              currentRoomDef.furniture.length === 1 ? 'max-w-[140px]' : 'max-w-[300px]'
-            }`}>
-              {currentRoomDef.furniture.map((fKey) => (
-                <FurnitureSlot
-                  key={fKey}
-                  furnitureKey={fKey}
-                  activeFurniture={activeFurniture}
-                  sonIsHome={sonIsHome}
-                  currentAction={currentAction}
-                  isDoorOpen={isDoorOpen}
-                  isAdventuring={isAdventuring}
-                  tableItems={tableItems}
-                  potionItems={potionItems}
-                  deskItems={deskItems}
-                  equipmentItems={equipmentItems}
-                  potionSlots={state.unlocks.potionSlots}
-                  onOpenPlacement={(type) => {
-                    if (type === 'cooking' as PlacementType) {
-                      setShowCookingModal(true);
-                    } else if (type === 'farming' as PlacementType) {
-                      setShowFarmModal(true);
-                    } else {
-                      setPlacementModal(type);
-                    }
-                  }}
-                />
-              ))}
+          {/* Room body — kitchen renders KitchenPage inline, others show furniture grid */}
+          {activeRoom === 'kitchen' ? (
+            <div className="flex-1 overflow-y-auto w-full max-w-[480px] mx-auto -mx-3">
+              <KitchenPage />
             </div>
-          </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center w-full">
+              <div className={`flex flex-wrap gap-3 justify-center items-center ${
+                currentRoomDef.furniture.length === 1 ? 'max-w-[140px]' : 'max-w-[300px]'
+              }`}>
+                {currentRoomDef.furniture.map((fKey) => (
+                  <FurnitureSlot
+                    key={fKey}
+                    furnitureKey={fKey}
+                    activeFurniture={activeFurniture}
+                    sonIsHome={sonIsHome}
+                    currentAction={currentAction}
+                    isDoorOpen={isDoorOpen}
+                    isAdventuring={isAdventuring}
+                    tableItems={tableItems}
+                    potionItems={potionItems}
+                    deskItems={deskItems}
+                    equipmentItems={equipmentItems}
+                    potionSlots={state.unlocks.potionSlots}
+                    onOpenPlacement={(type) => {
+                      if (type === 'farming' as PlacementType) {
+                        setShowFarmModal(true);
+                      } else {
+                        setPlacementModal(type);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Departure readiness indicator */}
           {sonIsHome && !isAdventuring && currentAction !== SonAction.DEPARTING && (
@@ -428,24 +437,6 @@ export default function HomePage() {
         isOpen={showReturnModal}
         onClose={() => setShowReturnModal(false)}
       />
-
-      {/* Cooking Modal (KitchenPage) */}
-      {showCookingModal && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black/80 backdrop-blur-sm">
-          <div className="flex items-center justify-between px-4 py-3 bg-orange-900/90 border-b border-white/10">
-            <span className="text-sm font-bold text-cream-100">{'🍳'} 조리</span>
-            <button
-              onClick={() => setShowCookingModal(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-cream-100 hover:bg-white/30 transition-colors"
-            >
-              {'✕'}
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto max-w-[480px] mx-auto w-full">
-            <KitchenPage />
-          </div>
-        </div>
-      )}
 
       {/* Farm Modal (FarmPage) */}
       {showFarmModal && (
