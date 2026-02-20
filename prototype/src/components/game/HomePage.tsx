@@ -48,12 +48,11 @@ const ACTION_INDICATOR: Record<string, { emoji: string; label: string }> = {
 type PlacementType = 'food' | 'potion' | 'book' | 'equipment';
 
 // ============================================================
-// Furniture Item Component (glass-morphism style for overlay)
+// Furniture Visual Illustrations
+// Each furniture piece has a unique CSS + emoji illustration
 // ============================================================
 
-interface FurnitureProps {
-  emoji: string;
-  label: string;
+interface FurnitureBaseProps {
   items?: Array<{ emoji: string; name: string }>;
   maxSlots?: number;
   onClick?: () => void;
@@ -64,8 +63,8 @@ interface FurnitureProps {
   dimmed?: boolean;
 }
 
-function FurnitureItem({
-  emoji,
+function FurnitureWrapper({
+  children,
   label,
   items = [],
   maxSlots,
@@ -75,13 +74,13 @@ function FurnitureItem({
   occupiedLabel,
   className = '',
   dimmed = false,
-}: FurnitureProps) {
+}: FurnitureBaseProps & { children: React.ReactNode; label: string }) {
   return (
     <button
       onClick={onClick}
       disabled={!onClick}
       className={`
-        relative flex flex-col items-center gap-1 p-2 rounded-xl
+        relative flex flex-col items-center gap-0.5 p-2 rounded-xl
         backdrop-blur-sm transition-all duration-200
         ${dimmed
           ? 'bg-white/10 border-2 border-white/10 opacity-60'
@@ -93,13 +92,15 @@ function FurnitureItem({
         ${className}
       `}
     >
-      {/* Furniture emoji */}
-      <span className="text-2xl leading-none drop-shadow-md">{emoji}</span>
-      <span className="text-[10px] text-cream-100 font-medium drop-shadow-sm">{label}</span>
+      {/* Visual illustration */}
+      {children}
+
+      {/* Label */}
+      <span className="text-[10px] text-cream-100 font-medium drop-shadow-sm mt-0.5">{label}</span>
 
       {/* Occupied overlay */}
       {occupied && occupiedLabel && (
-        <span className="absolute -top-1 -right-1 text-[10px] bg-cozy-amber text-cream-50 px-1.5 py-0.5 rounded-full font-bold shadow-sm">
+        <span className="absolute -top-1.5 -right-1.5 text-sm bg-cozy-amber/90 text-cream-50 w-6 h-6 flex items-center justify-center rounded-full font-bold shadow-md border border-white/30 animate-pulse">
           {occupiedLabel}
         </span>
       )}
@@ -123,6 +124,183 @@ function FurnitureItem({
         </span>
       )}
     </button>
+  );
+}
+
+// --- Bed Illustration ---
+function BedIllustration() {
+  return (
+    <div className="relative w-14 h-10 drop-shadow-md">
+      {/* Bed frame */}
+      <div className="absolute bottom-0 left-0.5 right-0.5 h-6 bg-gradient-to-b from-amber-700 to-amber-900 rounded-t-md rounded-b-sm border border-amber-600/50" />
+      {/* Mattress */}
+      <div className="absolute bottom-1.5 left-1.5 right-1.5 h-4 bg-gradient-to-b from-cream-100 to-cream-200 rounded-sm" />
+      {/* Blanket */}
+      <div className="absolute bottom-1.5 left-1.5 right-4 h-4 bg-gradient-to-br from-blue-300 to-blue-500 rounded-sm opacity-90" />
+      {/* Pillow */}
+      <div className="absolute bottom-3 right-2 w-4 h-3 bg-gradient-to-b from-cream-50 to-cream-200 rounded-md border border-cream-300/50" />
+      {/* Headboard */}
+      <div className="absolute top-0 right-0.5 w-2 h-8 bg-gradient-to-b from-amber-600 to-amber-800 rounded-t-md" />
+      {/* Zzz */}
+      <span className="absolute -top-1 -left-0.5 text-[10px] opacity-60">
+        {'\uD83D\uDCA4'}
+      </span>
+    </div>
+  );
+}
+
+// --- Training Dummy Illustration ---
+function DummyIllustration() {
+  return (
+    <div className="relative w-14 h-12 drop-shadow-md flex items-end justify-center">
+      {/* Pole */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-10 bg-gradient-to-b from-amber-600 to-amber-800 rounded-full" />
+      {/* Base */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1.5 bg-gradient-to-b from-amber-700 to-amber-900 rounded-full" />
+      {/* Cross bar */}
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 rounded-full" />
+      {/* Straw body (circle) */}
+      <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-6 h-5 bg-gradient-to-b from-yellow-200 to-yellow-400 rounded-lg border border-yellow-500/40" />
+      {/* Head */}
+      <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-4 bg-gradient-to-b from-yellow-100 to-yellow-300 rounded-full border border-yellow-400/40" />
+      {/* Face marks */}
+      <span className="absolute top-0 left-1/2 -translate-x-1/2 text-[8px] leading-none">
+        {'\u00D7'}
+      </span>
+      {/* Hit sparks */}
+      <span className="absolute top-1 -right-0.5 text-[10px] animate-pulse">
+        {'\uD83D\uDCA5'}
+      </span>
+    </div>
+  );
+}
+
+// --- Desk Illustration ---
+function DeskIllustration() {
+  return (
+    <div className="relative w-14 h-10 drop-shadow-md">
+      {/* Desk surface */}
+      <div className="absolute bottom-2.5 left-0 right-0 h-2 bg-gradient-to-b from-amber-600 to-amber-800 rounded-sm border-t border-amber-500/50" />
+      {/* Front panel */}
+      <div className="absolute bottom-0 left-0.5 right-0.5 h-3 bg-gradient-to-b from-amber-700 to-amber-900 rounded-b-sm" />
+      {/* Book on desk */}
+      <div className="absolute bottom-4 left-2 w-4 h-3 bg-gradient-to-br from-red-400 to-red-600 rounded-sm transform -rotate-3" />
+      <div className="absolute bottom-4.5 left-2.5 w-3 h-0.5 bg-cream-100/50 rounded-full" />
+      {/* Quill/pen */}
+      <span className="absolute bottom-4 right-2 text-[10px] transform rotate-12">
+        {'\uD83D\uDD8A\uFE0F'}
+      </span>
+      {/* Candle */}
+      <span className="absolute -top-1 right-1 text-[10px]">
+        {'\uD83D\uDD6F\uFE0F'}
+      </span>
+    </div>
+  );
+}
+
+// --- Chair Illustration ---
+function ChairIllustration() {
+  return (
+    <div className="relative w-12 h-11 drop-shadow-md">
+      {/* Chair back */}
+      <div className="absolute top-0 left-2 right-2 h-5 bg-gradient-to-b from-amber-500 to-amber-700 rounded-t-lg border border-amber-400/30" />
+      {/* Back pattern (vertical slats) */}
+      <div className="absolute top-1 left-3.5 w-0.5 h-3 bg-amber-400/40 rounded-full" />
+      <div className="absolute top-1 left-5 w-0.5 h-3 bg-amber-400/40 rounded-full" />
+      <div className="absolute top-1 right-3.5 w-0.5 h-3 bg-amber-400/40 rounded-full" />
+      {/* Seat cushion */}
+      <div className="absolute top-5 left-1 right-1 h-2.5 bg-gradient-to-b from-red-400 to-red-600 rounded-sm border border-red-300/30" />
+      {/* Front legs */}
+      <div className="absolute bottom-0 left-2 w-1 h-3 bg-gradient-to-b from-amber-600 to-amber-800 rounded-b-sm" />
+      <div className="absolute bottom-0 right-2 w-1 h-3 bg-gradient-to-b from-amber-600 to-amber-800 rounded-b-sm" />
+      {/* Cushion detail */}
+      <span className="absolute top-4.5 left-1/2 -translate-x-1/2 text-[8px] opacity-50">
+        ~
+      </span>
+    </div>
+  );
+}
+
+// --- Dining Table Illustration ---
+function TableIllustration() {
+  return (
+    <div className="relative w-16 h-10 drop-shadow-md">
+      {/* Table top */}
+      <div className="absolute top-2 left-0 right-0 h-2.5 bg-gradient-to-b from-amber-500 to-amber-700 rounded-md border-t border-amber-400/50" />
+      {/* Table cloth edge */}
+      <div className="absolute top-4 left-0.5 right-0.5 h-1 bg-cream-100/30 rounded-b-sm" />
+      {/* Legs */}
+      <div className="absolute bottom-0 left-1.5 w-1.5 h-4 bg-gradient-to-b from-amber-600 to-amber-900 rounded-b-sm" />
+      <div className="absolute bottom-0 right-1.5 w-1.5 h-4 bg-gradient-to-b from-amber-600 to-amber-900 rounded-b-sm" />
+      {/* Plate */}
+      <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-5 h-3 bg-cream-100/80 rounded-full border border-cream-300/50" />
+      {/* Food emoji on plate */}
+      <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 text-[10px]">
+        {'\uD83C\uDF56'}
+      </span>
+    </div>
+  );
+}
+
+// --- Potion Shelf Illustration ---
+function PotionShelfIllustration() {
+  return (
+    <div className="relative w-14 h-12 drop-shadow-md">
+      {/* Back panel */}
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-800 to-amber-950 rounded-md border border-amber-700/30" />
+      {/* Top shelf */}
+      <div className="absolute top-3 left-0.5 right-0.5 h-0.5 bg-amber-600" />
+      {/* Bottom shelf */}
+      <div className="absolute top-7 left-0.5 right-0.5 h-0.5 bg-amber-600" />
+      {/* Potions on shelves */}
+      <span className="absolute top-0.5 left-1 text-[10px]">{'\uD83E\uDDEA'}</span>
+      <span className="absolute top-0.5 left-5 text-[10px] hue-rotate-90">{'\uD83E\uDDEA'}</span>
+      <span className="absolute top-0.5 right-1 text-[10px] hue-rotate-180">{'\uD83E\uDDEA'}</span>
+      <span className="absolute top-4 left-2 text-[10px] hue-rotate-60">{'\uD83E\uDDEA'}</span>
+      <span className="absolute top-4 right-2 text-[10px] hue-rotate-270">{'\uD83E\uDDEA'}</span>
+      {/* Glow effect */}
+      <div className="absolute top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-green-400/20 rounded-full blur-sm" />
+    </div>
+  );
+}
+
+// --- Equipment Rack Illustration ---
+function EquipmentRackIllustration() {
+  return (
+    <div className="relative w-14 h-12 drop-shadow-md">
+      {/* Rack frame */}
+      <div className="absolute bottom-0 left-1 w-1 h-11 bg-gradient-to-b from-gray-500 to-gray-700 rounded-t-sm" />
+      <div className="absolute bottom-0 right-1 w-1 h-11 bg-gradient-to-b from-gray-500 to-gray-700 rounded-t-sm" />
+      {/* Cross bar top */}
+      <div className="absolute top-0 left-1 right-1 h-1 bg-gradient-to-r from-gray-500 via-gray-400 to-gray-500 rounded-full" />
+      {/* Base */}
+      <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-b from-gray-600 to-gray-800 rounded-sm" />
+      {/* Hanging sword */}
+      <span className="absolute top-1 left-2 text-[12px] transform -rotate-12">{'\u2694\uFE0F'}</span>
+      {/* Shield */}
+      <span className="absolute top-1 right-1.5 text-[12px]">{'\uD83D\uDEE1\uFE0F'}</span>
+      {/* Armor */}
+      <span className="absolute top-5 left-1/2 -translate-x-1/2 text-[12px]">{'\uD83E\uDDBE'}</span>
+    </div>
+  );
+}
+
+// --- Door Illustration ---
+function DoorIllustration({ isOpen }: { isOpen: boolean }) {
+  return (
+    <div className="relative w-10 h-12 drop-shadow-md">
+      {/* Door frame */}
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-700 to-amber-900 rounded-t-lg border-2 border-amber-600/50" />
+      {/* Door panels */}
+      <div className="absolute top-1.5 left-1.5 right-1.5 h-4 bg-amber-600/60 rounded-sm border border-amber-500/30" />
+      <div className="absolute bottom-2 left-1.5 right-1.5 h-3.5 bg-amber-600/60 rounded-sm border border-amber-500/30" />
+      {/* Door knob */}
+      <div className="absolute top-1/2 right-2 w-1.5 h-1.5 bg-yellow-400 rounded-full border border-yellow-300 shadow-sm" />
+      {/* Light from outside when open */}
+      {isOpen && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-200/20 to-yellow-100/30 rounded-t-lg animate-pulse" />
+      )}
+    </div>
   );
 }
 
@@ -518,45 +696,48 @@ export default function HomePage() {
           {/* === Furniture Grid (bottom half, glass-morphism) === */}
           <div className="grid grid-cols-4 gap-2">
             {/* Row 1: Bed, Dummy, Desk, Chair */}
-            <FurnitureItem
-              emoji={'\uD83D\uDECF\uFE0F'}
+            <FurnitureWrapper
               label="침대"
               highlight={activeFurniture === 'bed'}
               occupied={sonIsHome && currentAction === SonAction.SLEEPING}
               occupiedLabel={'\uD83D\uDCA4'}
               dimmed={isAdventuring}
-            />
-            <FurnitureItem
-              emoji={'\uD83C\uDFAF'}
+            >
+              <BedIllustration />
+            </FurnitureWrapper>
+            <FurnitureWrapper
               label="허수아비"
               highlight={activeFurniture === 'dummy'}
               occupied={sonIsHome && currentAction === SonAction.TRAINING}
               occupiedLabel={'\u2694\uFE0F'}
               dimmed={isAdventuring}
-            />
-            <FurnitureItem
-              emoji={'\uD83D\uDCDA'}
+            >
+              <DummyIllustration />
+            </FurnitureWrapper>
+            <FurnitureWrapper
               label="책상"
               items={deskItems}
               maxSlots={3}
               onClick={() => setPlacementModal('book')}
               highlight={activeFurniture === 'desk'}
               dimmed={isAdventuring}
-            />
-            <FurnitureItem
-              emoji={'\uD83E\uDE91'}
+            >
+              <DeskIllustration />
+            </FurnitureWrapper>
+            <FurnitureWrapper
               label="의자"
               highlight={activeFurniture === 'chair'}
               occupied={sonIsHome && currentAction === SonAction.RESTING}
               occupiedLabel={'\uD83D\uDE0C'}
               dimmed={isAdventuring}
-            />
+            >
+              <ChairIllustration />
+            </FurnitureWrapper>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             {/* Row 2: Table, Potion Shelf, Equipment Rack */}
-            <FurnitureItem
-              emoji={'\uD83C\uDF7D\uFE0F'}
+            <FurnitureWrapper
               label="식탁"
               items={tableItems}
               maxSlots={MAX_TABLE_FOOD}
@@ -564,9 +745,10 @@ export default function HomePage() {
               highlight={activeFurniture === 'table'}
               className="col-span-1"
               dimmed={isAdventuring}
-            />
-            <FurnitureItem
-              emoji={'\uD83E\uDDEA'}
+            >
+              <TableIllustration />
+            </FurnitureWrapper>
+            <FurnitureWrapper
               label="포션 선반"
               items={potionItems}
               maxSlots={state.unlocks.potionSlots}
@@ -574,9 +756,10 @@ export default function HomePage() {
               highlight={activeFurniture === 'potionShelf'}
               className="col-span-1"
               dimmed={isAdventuring}
-            />
-            <FurnitureItem
-              emoji={'\u2694\uFE0F'}
+            >
+              <PotionShelfIllustration />
+            </FurnitureWrapper>
+            <FurnitureWrapper
               label="장비대"
               items={equipmentItems}
               maxSlots={3}
@@ -584,7 +767,9 @@ export default function HomePage() {
               highlight={false}
               className="col-span-1"
               dimmed={isAdventuring}
-            />
+            >
+              <EquipmentRackIllustration />
+            </FurnitureWrapper>
           </div>
 
           {/* Door (bottom-right) */}
@@ -600,9 +785,7 @@ export default function HomePage() {
                 ${isAdventuring ? 'opacity-60' : ''}
               `}
             >
-              <span className="text-2xl drop-shadow-md">
-                {'\uD83D\uDEAA'}
-              </span>
+              <DoorIllustration isOpen={isDoorOpen && sonIsHome} />
               <span className="text-xs text-cream-100 drop-shadow-sm">
                 {isDoorOpen && sonIsHome ? '출발 중...' : '현관문'}
               </span>
