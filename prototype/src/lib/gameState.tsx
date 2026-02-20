@@ -16,7 +16,6 @@ import React, {
 import type {
   GameState,
   GameAction,
-  CropType,
 } from './types';
 import { SonAction } from './types';
 import { INITIAL_GAME_STATE, SON_TICK_INTERVAL, MAX_TABLE_FOOD, SHOP_INVENTORY, SELL_PRICES, DURABILITY_MAX } from './constants';
@@ -26,10 +25,11 @@ import {
   cookFood,
   brewPotion,
   enhanceEquipment,
-  promoteEquipment,
   maintainEquipment,
   smeltEquipment,
+  refineEquipment,
 } from './game/crafting';
+import { doJob } from './game/job';
 import { startAdventure, processAdventureTick } from './game/adventure';
 import { plantCrop, harvestCrop, processFarmTick } from './game/farm';
 import { processDialogueResponse, dismissDialogue } from './game/dialogue';
@@ -72,11 +72,12 @@ function loadFromLocalStorage(): GameState | null {
       };
     }
 
-    // Migrate: equipment durability/tier fields
-    const migrateEquipment = (eq: { durability?: number; maxDurability?: number; tier?: number }) => {
+    // Migrate: equipment durability/tier/level fields
+    const migrateEquipment = (eq: { durability?: number; maxDurability?: number; tier?: number; level?: number }) => {
       if (eq.durability === undefined) eq.durability = DURABILITY_MAX;
       if (eq.maxDurability === undefined) eq.maxDurability = DURABILITY_MAX;
       if (eq.tier === undefined) eq.tier = 0;
+      if (eq.level === undefined) eq.level = 1;
     };
     state.inventory.equipment.forEach(migrateEquipment);
     state.home.equipmentRack.forEach(migrateEquipment);
@@ -93,6 +94,43 @@ function loadFromLocalStorage(): GameState | null {
     if (systems.smelting === undefined) {
       systems.smelting = false;
     }
+
+    // Migrate: mom state
+    if (!state.mom) {
+      (state as GameState).mom = {
+        jobLevel: 1,
+        jobExp: 0,
+        jobMaxExp: 5,
+        lastJobAt: 0,
+        refiningLevel: 1,
+        refiningExp: 0,
+        refiningMaxExp: 3,
+      };
+    }
+
+    // Migrate: individual seeds → universal seed
+    const mats = state.inventory.materials as Record<string, number>;
+    const oldSeedKeys = ['wheatSeed', 'potatoSeed', 'carrotSeed', 'appleSeed', 'redHerbSeed', 'blueHerbSeed', 'yellowHerbSeed'];
+    let totalSeeds = mats.seed ?? 0;
+    for (const key of oldSeedKeys) {
+      if (key in mats) {
+        totalSeeds += mats[key] ?? 0;
+        delete mats[key];
+      }
+    }
+    mats.seed = totalSeeds;
+
+    // Migrate: refiningStone
+    if (mats.refiningStone === undefined) {
+      mats.refiningStone = 0;
+    }
+
+    // Migrate: farm level/exp
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const farm = state.farm as any;
+    if (farm.farmLevel === undefined) farm.farmLevel = 1;
+    if (farm.farmExp === undefined) farm.farmExp = 0;
+    if (farm.farmMaxExp === undefined) farm.farmMaxExp = 5;
 
     return state;
   } catch {
@@ -119,7 +157,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return checkQuestProgress(brewPotion(state, action.recipeId));
 
     case 'PLANT_CROP':
-      return plantCrop(state, action.plotIndex, action.crop);
+      return plantCrop(state, action.plotIndex);
 
     case 'HARVEST_CROP':
       return harvestCrop(state, action.plotIndex);
@@ -129,14 +167,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return result.state;
     }
 
-    case 'PROMOTE_EQUIPMENT':
-      return promoteEquipment(state, action.equipmentId);
-
     case 'MAINTAIN_EQUIPMENT':
       return maintainEquipment(state, action.equipmentId);
 
     case 'SMELT_EQUIPMENT':
       return smeltEquipment(state, action.equipmentId);
+
+    case 'DO_JOB':
+      return doJob(state);
+
+    case 'REFINE_EQUIPMENT': {
+      const result = refineEquipment(state);
+      return result ? result.state : state;
+    }
 
     case 'PLACE_FOOD':
       return checkQuestProgress(placeFood(state, action.foodIndex));
@@ -453,7 +496,7 @@ export function useGameActions() {
       [dispatch]
     ),
     plantCrop: useCallback(
-      (plotIndex: number, crop: CropType) => dispatch({ type: 'PLANT_CROP', plotIndex, crop }),
+      (plotIndex: number) => dispatch({ type: 'PLANT_CROP', plotIndex }),
       [dispatch]
     ),
     harvestCrop: useCallback(
@@ -464,16 +507,20 @@ export function useGameActions() {
       (equipmentId: string) => dispatch({ type: 'ENHANCE_EQUIPMENT', equipmentId }),
       [dispatch]
     ),
-    promoteEquipment: useCallback(
-      (equipmentId: string) => dispatch({ type: 'PROMOTE_EQUIPMENT', equipmentId }),
-      [dispatch]
-    ),
     maintainEquipment: useCallback(
       (equipmentId: string) => dispatch({ type: 'MAINTAIN_EQUIPMENT', equipmentId }),
       [dispatch]
     ),
     smeltEquipment: useCallback(
       (equipmentId: string) => dispatch({ type: 'SMELT_EQUIPMENT', equipmentId }),
+      [dispatch]
+    ),
+    doJob: useCallback(
+      () => dispatch({ type: 'DO_JOB' }),
+      [dispatch]
+    ),
+    refineEquipment: useCallback(
+      () => dispatch({ type: 'REFINE_EQUIPMENT' }),
       [dispatch]
     ),
     placeFood: useCallback(

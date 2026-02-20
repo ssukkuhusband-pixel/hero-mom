@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { canPlantCrop, canHarvestCrop, getCropProgress } from '@/lib/game/farm';
-import { CROP_DATA, EMOJI_MAP, BASIC_CROPS } from '@/lib/constants';
-import type { MaterialKey, CropType, FarmPlot } from '@/lib/types';
+import { CROP_DATA } from '@/lib/constants';
+import type { CropType, FarmPlot } from '@/lib/types';
 import { useToast } from '@/components/ui/Toast';
 
 // ============================================================
@@ -21,107 +21,6 @@ const CROP_NAME: Record<CropType, string> = {
   redHerb: '빨간 약초', blueHerb: '파란 약초', yellowHerb: '노란 약초',
 };
 
-const SEED_TO_CROP: Record<string, CropType> = {
-  wheatSeed: 'wheat', potatoSeed: 'potato', carrotSeed: 'carrot', appleSeed: 'apple',
-  redHerbSeed: 'redHerb', blueHerbSeed: 'blueHerb', yellowHerbSeed: 'yellowHerb',
-};
-
-const SEED_KEYS: MaterialKey[] = [
-  'wheatSeed', 'potatoSeed', 'carrotSeed', 'appleSeed',
-  'redHerbSeed', 'blueHerbSeed', 'yellowHerbSeed',
-];
-
-// ============================================================
-// Seed Selection Popup (overlay style matching other pages)
-// ============================================================
-
-function SeedSelectionPopup({
-  plotIndex,
-  onClose,
-}: {
-  plotIndex: number;
-  onClose: () => void;
-}) {
-  const { state } = useGameState();
-  const actions = useGameActions();
-  const { addToast } = useToast();
-
-  const handlePlant = (crop: CropType) => {
-    actions.plantCrop(plotIndex, crop);
-    const cropInfo = CROP_DATA[crop];
-    addToast(`${CROP_EMOJI[crop]} ${CROP_NAME[crop]} 심기 완료! (${cropInfo.growthTimeSeconds}초)`, 'success');
-    onClose();
-  };
-
-  // Separate basic crops (no seed needed) from special crops
-  const basicCropOptions = (BASIC_CROPS as CropType[]).map((crop) => {
-    const cropInfo = CROP_DATA[crop];
-    return { crop, isBasic: true as const, count: Infinity, growthTime: cropInfo.growthTimeSeconds, canPlant: canPlantCrop(state, plotIndex, crop) };
-  });
-
-  const specialSeedKeys: MaterialKey[] = ['appleSeed', 'redHerbSeed', 'blueHerbSeed', 'yellowHerbSeed'];
-  const specialCropOptions = specialSeedKeys.map((seedKey) => {
-    const crop = SEED_TO_CROP[seedKey];
-    if (!crop) return null;
-    const count = state.inventory.materials[seedKey];
-    const cropInfo = CROP_DATA[crop];
-    return { crop, isBasic: false as const, count, seedKey, growthTime: cropInfo.growthTimeSeconds, canPlant: canPlantCrop(state, plotIndex, crop) };
-  }).filter(Boolean) as { crop: CropType; isBasic: false; count: number; seedKey: MaterialKey; growthTime: number; canPlant: boolean }[];
-
-  const allOptions = [...basicCropOptions, ...specialCropOptions];
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div
-        className="relative bg-gradient-to-b from-green-900/95 to-stone-900/95 border border-green-400/30 rounded-2xl p-5 w-full max-w-[340px] shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button onClick={onClose} className="absolute top-3 right-3 text-cream-300 hover:text-cream-100 text-lg leading-none">
-          ✕
-        </button>
-
-        <div className="flex flex-col items-center gap-1 mb-4">
-          <span className="text-4xl">🌱</span>
-          <h3 className="font-serif font-bold text-lg text-cream-100 drop-shadow">작물 선택</h3>
-        </div>
-
-        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
-          {allOptions.map((opt) => (
-            <button
-              key={opt.crop}
-              onClick={() => handlePlant(opt.crop)}
-              disabled={!opt.canPlant}
-              className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl border transition-all active:scale-[0.98] ${
-                opt.canPlant
-                  ? 'border-green-400/40 bg-white/10 hover:bg-white/20'
-                  : 'border-white/10 bg-white/5 opacity-40 cursor-not-allowed'
-              }`}
-            >
-              <span className="text-2xl">{CROP_EMOJI[opt.crop]}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-cream-100">{CROP_NAME[opt.crop]}</p>
-                <p className="text-[10px] text-cream-400">성장: {opt.growthTime}초</p>
-              </div>
-              {opt.isBasic ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg text-green-300 bg-green-500/20 border border-green-400/30">
-                  {'🌱'} 기본
-                </span>
-              ) : (
-                <span className={`text-sm font-bold tabular-nums px-2 py-0.5 rounded-lg ${
-                  opt.count > 0 ? 'text-cream-200 bg-white/15' : 'text-red-400 bg-red-500/15'
-                }`}>
-                  x{opt.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ============================================================
 // Farm Plot Card
 // ============================================================
@@ -130,7 +29,6 @@ function FarmPlotCard({ plot, plotIndex }: { plot: FarmPlot; plotIndex: number }
   const { state } = useGameState();
   const actions = useGameActions();
   const { addToast } = useToast();
-  const [seedModalOpen, setSeedModalOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -143,6 +41,15 @@ function FarmPlotCard({ plot, plotIndex }: { plot: FarmPlot; plotIndex: number }
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [plot]);
+
+  const handlePlant = () => {
+    if (state.inventory.materials.seed >= 1) {
+      actions.plantCrop(plotIndex);
+      addToast('🌱 씨앗을 심었습니다! (30초)', 'success');
+    } else {
+      addToast('씨앗이 부족합니다!', 'error');
+    }
+  };
 
   const handleHarvest = () => {
     if (!plot.crop || !canHarvestCrop(state, plotIndex)) return;
@@ -169,22 +76,17 @@ function FarmPlotCard({ plot, plotIndex }: { plot: FarmPlot; plotIndex: number }
     return () => clearInterval(interval);
   }, [plot, getTimeRemaining]);
 
-  // Empty plot
+  // Empty plot - tap to plant directly
   if (!plot.crop) {
     return (
-      <>
-        <button
-          onClick={() => setSeedModalOpen(true)}
-          className="bg-white/10 border-2 border-dashed border-white/25 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[130px] gap-2 transition-all hover:bg-white/15 hover:border-white/40 active:scale-95"
-        >
-          <span className="text-3xl opacity-40">🌱</span>
-          <p className="text-xs text-cream-300 font-medium">빈 밭</p>
-          <span className="text-[10px] text-cream-400">탭하여 심기</span>
-        </button>
-        {seedModalOpen && (
-          <SeedSelectionPopup plotIndex={plotIndex} onClose={() => setSeedModalOpen(false)} />
-        )}
-      </>
+      <button
+        onClick={handlePlant}
+        className="bg-white/10 border-2 border-dashed border-white/25 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[130px] gap-2 transition-all hover:bg-white/15 hover:border-white/40 active:scale-95"
+      >
+        <span className="text-3xl opacity-40">🌱</span>
+        <p className="text-xs text-cream-300 font-medium">빈 밭</p>
+        <span className="text-[10px] text-cream-400">탭하여 심기</span>
+      </button>
     );
   }
 
@@ -239,6 +141,11 @@ export default function FarmPage() {
   const farm = state.farm;
   const readyCrops = farm.plots.filter((p) => p.ready).length;
 
+  const farmLevel = farm.farmLevel ?? 1;
+  const farmExp = farm.farmExp ?? 0;
+  const farmMaxExp = farm.farmMaxExp ?? 5;
+  const expPercent = farmMaxExp > 0 ? Math.min(100, Math.round((farmExp / farmMaxExp) * 100)) : 0;
+
   return (
     <div className="relative min-h-[calc(100vh-140px)]">
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/farm.png')" }} />
@@ -248,6 +155,24 @@ export default function FarmPage() {
         <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
           🌾 농장
         </h1>
+
+        {/* Farm Level + EXP bar */}
+        <div className="bg-black/40 backdrop-blur-sm border border-green-400/30 rounded-xl px-3 py-2.5">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-bold text-cream-100 drop-shadow">
+              🌾 농장 Lv.{farmLevel}
+            </span>
+            <span className="text-[10px] text-cream-300 tabular-nums">
+              {farmExp}/{farmMaxExp} EXP
+            </span>
+          </div>
+          <div className="w-full h-2 bg-white/15 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-500"
+              style={{ width: `${expPercent}%` }}
+            />
+          </div>
+        </div>
 
         {readyCrops > 0 && (
           <div className="bg-cozy-gold/30 border border-cozy-gold/50 rounded-xl px-3 py-2 text-center backdrop-blur-sm">
@@ -264,20 +189,13 @@ export default function FarmPage() {
           ))}
         </div>
 
-        {/* Bottom seed bar */}
+        {/* Bottom seed bar - simplified */}
         <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
-          <div className="flex flex-wrap gap-2 px-3 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/20">
-            {(['appleSeed', 'redHerbSeed', 'blueHerbSeed', 'yellowHerbSeed'] as MaterialKey[]).map((key) => {
-              const crop = SEED_TO_CROP[key];
-              return (
-                <div key={key} className="flex items-center gap-1 text-xs">
-                  <span className="text-sm">{crop ? CROP_EMOJI[crop] : EMOJI_MAP[key]}</span>
-                  <span className="font-medium text-cream-200 tabular-nums">
-                    {state.inventory.materials[key]}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/20">
+            <span className="text-sm">🌱</span>
+            <span className="text-sm font-medium text-cream-200 tabular-nums">
+              씨앗: {state.inventory.materials.seed}개
+            </span>
           </div>
         </div>
       </div>

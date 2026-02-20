@@ -101,10 +101,6 @@ export const DURABILITY_LOSS_PER_ADVENTURE = 15;
 export const DURABILITY_LOSS_BOSS_BONUS = 5;
 export const DURABILITY_PENALTY_THRESHOLD = 30; // below this, stats decrease
 
-// --- Basic Crops (no seed required) ---
-
-export const BASIC_CROPS: CropType[] = ['wheat', 'potato', 'carrot'];
-
 // --- Maintenance Recipes (per equipment slot) ---
 
 export const MAINTENANCE_RECIPES: Record<EquipmentSlot, { materials: Partial<Record<MaterialKey, number>>; restore: number }> = {
@@ -113,45 +109,154 @@ export const MAINTENANCE_RECIPES: Record<EquipmentSlot, { materials: Partial<Rec
   accessory: { materials: { gems: 1, gold: 15 }, restore: 40 },
 };
 
-// --- Promotion Chains (upgrade existing equipment) ---
+// --- Mom's Part-time Job System ---
+export interface JobLevelData {
+  level: number;
+  goldReward: number;
+  cooldownSeconds: number;
+  expRequired: number;
+}
 
-export const PROMOTION_CHAINS: {
-  from: string; to: string; tier: number;
-  materials: Partial<Record<MaterialKey, number>>; reqLevel: number;
-}[] = [
-  // Weapon: wooden sword → iron sword → mithril sword
-  { from: 'wooden_sword', to: 'iron_sword', tier: 1, materials: { ironOre: 3, wood: 1, gold: 30 }, reqLevel: 5 },
-  { from: 'iron_sword', to: 'mithril_sword', tier: 2, materials: { mithril: 2, ironOre: 2, gold: 80 }, reqLevel: 12 },
-  // Armor: leather → iron → mithril
-  { from: 'leather_armor', to: 'iron_armor', tier: 1, materials: { ironOre: 4, leather: 1, gold: 40 }, reqLevel: 5 },
-  { from: 'iron_armor', to: 'mithril_armor', tier: 2, materials: { mithril: 3, ironOre: 2, gold: 100 }, reqLevel: 12 },
-  // Accessory: amulet → agility ring → life pendant
-  { from: 'amulet', to: 'agility_ring', tier: 1, materials: { gems: 2, gold: 35 }, reqLevel: 5 },
-  { from: 'agility_ring', to: 'life_pendant', tier: 2, materials: { gems: 3, redHerb: 3, gold: 60 }, reqLevel: 12 },
+export const JOB_LEVEL_TABLE: JobLevelData[] = [
+  { level: 1,  goldReward: 3,  cooldownSeconds: 5,  expRequired: 5 },
+  { level: 2,  goldReward: 4,  cooldownSeconds: 5,  expRequired: 8 },
+  { level: 3,  goldReward: 5,  cooldownSeconds: 5,  expRequired: 12 },
+  { level: 4,  goldReward: 6,  cooldownSeconds: 5,  expRequired: 17 },
+  { level: 5,  goldReward: 8,  cooldownSeconds: 4,  expRequired: 23 },
+  { level: 6,  goldReward: 9,  cooldownSeconds: 4,  expRequired: 30 },
+  { level: 7,  goldReward: 10, cooldownSeconds: 4,  expRequired: 38 },
+  { level: 8,  goldReward: 12, cooldownSeconds: 4,  expRequired: 47 },
+  { level: 9,  goldReward: 13, cooldownSeconds: 3,  expRequired: 57 },
+  { level: 10, goldReward: 15, cooldownSeconds: 3,  expRequired: 68 },
+  { level: 11, goldReward: 17, cooldownSeconds: 3,  expRequired: 80 },
+  { level: 12, goldReward: 19, cooldownSeconds: 3,  expRequired: 93 },
+  { level: 13, goldReward: 21, cooldownSeconds: 3,  expRequired: 107 },
+  { level: 14, goldReward: 23, cooldownSeconds: 2,  expRequired: 122 },
+  { level: 15, goldReward: 25, cooldownSeconds: 2,  expRequired: 999 },
 ];
 
-// --- Equipment Tier Data (referenced during promotion) ---
+export function getJobLevelData(level: number): JobLevelData {
+  return JOB_LEVEL_TABLE.find(j => j.level === level) ?? JOB_LEVEL_TABLE[JOB_LEVEL_TABLE.length - 1];
+}
 
-export const EQUIPMENT_TIER_DATA: Record<string, { name: string; baseStats: EquipmentStats }> = {
-  wooden_sword:  { name: '나무 검',       baseStats: { str: 3 } },
-  iron_sword:    { name: '철 검',         baseStats: { str: 7 } },
-  mithril_sword: { name: '미스릴 검',     baseStats: { str: 14, agi: 3 } },
-  leather_armor: { name: '가죽 갑옷',     baseStats: { def: 3 } },
-  iron_armor:    { name: '철 갑옷',       baseStats: { def: 8 } },
-  mithril_armor: { name: '미스릴 갑옷',   baseStats: { def: 16, hp: 20 } },
-  amulet:        { name: '부적',          baseStats: { int: 3 } },
-  agility_ring:  { name: '민첩의 반지',   baseStats: { agi: 5 } },
-  life_pendant:  { name: '생명의 펜던트', baseStats: { hp: 30, def: 2 } },
+// --- Equipment Refining System ---
+export interface RefiningLevelData {
+  level: number;
+  expRequired: number;
+}
+
+export const REFINING_LEVEL_TABLE: RefiningLevelData[] = [
+  { level: 1,  expRequired: 3 },
+  { level: 2,  expRequired: 5 },
+  { level: 3,  expRequired: 8 },
+  { level: 4,  expRequired: 12 },
+  { level: 5,  expRequired: 17 },
+  { level: 6,  expRequired: 23 },
+  { level: 7,  expRequired: 30 },
+  { level: 8,  expRequired: 38 },
+  { level: 9,  expRequired: 47 },
+  { level: 10, expRequired: 57 },
+  { level: 11, expRequired: 68 },
+  { level: 12, expRequired: 80 },
+  { level: 13, expRequired: 93 },
+  { level: 14, expRequired: 107 },
+  { level: 15, expRequired: 122 },
+  { level: 16, expRequired: 140 },
+  { level: 17, expRequired: 160 },
+  { level: 18, expRequired: 180 },
+  { level: 19, expRequired: 200 },
+  { level: 20, expRequired: 999 },
+];
+
+export const REFINING_COST = 3;
+
+export const REFINING_GRADE_RATES: { minLevel: number; maxLevel: number; rates: Record<EquipmentGrade, number> }[] = [
+  { minLevel: 1,  maxLevel: 4,  rates: { common: 0.80, uncommon: 0.20, rare: 0.00, epic: 0.00 } },
+  { minLevel: 5,  maxLevel: 9,  rates: { common: 0.60, uncommon: 0.30, rare: 0.10, epic: 0.00 } },
+  { minLevel: 10, maxLevel: 14, rates: { common: 0.40, uncommon: 0.35, rare: 0.20, epic: 0.05 } },
+  { minLevel: 15, maxLevel: 99, rates: { common: 0.20, uncommon: 0.35, rare: 0.30, epic: 0.15 } },
+];
+
+export const REFINING_SLOT_MULTIPLIERS: Record<EquipmentSlot, Partial<Record<string, number>>> = {
+  weapon:    { str: 1.5, agi: 0.3 },
+  armor:     { def: 1.5, hp: 3.0 },
+  accessory: { int: 0.8, agi: 0.6, hp: 1.5 },
 };
 
-// --- Smelting Output (equipment → materials) ---
-
-export const SMELTING_OUTPUT: Record<EquipmentGrade, Partial<Record<MaterialKey, number>>> = {
-  common:   { ironOre: 1, wood: 1, gold: 5 },
-  uncommon: { ironOre: 2, leather: 1, gold: 15 },
-  rare:     { mithril: 1, gems: 1, gold: 40 },
-  epic:     { mithril: 2, gems: 2, specialOre: 1, gold: 80 },
+export const EQUIPMENT_NAMES: Record<EquipmentSlot, { maxLevel: number; name: string }[]> = {
+  weapon: [
+    { maxLevel: 5,  name: '나무 검' },
+    { maxLevel: 10, name: '철 검' },
+    { maxLevel: 15, name: '강철 검' },
+    { maxLevel: 20, name: '마법 검' },
+    { maxLevel: 25, name: '미스릴 검' },
+    { maxLevel: 30, name: '전설의 검' },
+  ],
+  armor: [
+    { maxLevel: 5,  name: '가죽 갑옷' },
+    { maxLevel: 10, name: '철 갑옷' },
+    { maxLevel: 15, name: '강철 갑옷' },
+    { maxLevel: 20, name: '마법 갑옷' },
+    { maxLevel: 25, name: '미스릴 갑옷' },
+    { maxLevel: 30, name: '전설의 갑옷' },
+  ],
+  accessory: [
+    { maxLevel: 5,  name: '부적' },
+    { maxLevel: 10, name: '반지' },
+    { maxLevel: 15, name: '팔찌' },
+    { maxLevel: 20, name: '마법 목걸이' },
+    { maxLevel: 25, name: '빛나는 펜던트' },
+    { maxLevel: 30, name: '전설의 목걸이' },
+  ],
 };
+
+export const GRADE_PREFIX: Record<EquipmentGrade, string> = {
+  common: '',
+  uncommon: '고급 ',
+  rare: '희귀한 ',
+  epic: '영웅의 ',
+};
+
+// --- Farm Level System ---
+export interface FarmLevelData {
+  level: number;
+  expRequired: number;
+  cropRates: Record<CropType, number>;
+}
+
+export const FARM_LEVEL_TABLE: FarmLevelData[] = [
+  { level: 1,  expRequired: 5,  cropRates: { wheat: 0.40, potato: 0.30, carrot: 0.30, apple: 0, redHerb: 0, blueHerb: 0, yellowHerb: 0 } },
+  { level: 2,  expRequired: 8,  cropRates: { wheat: 0.40, potato: 0.30, carrot: 0.30, apple: 0, redHerb: 0, blueHerb: 0, yellowHerb: 0 } },
+  { level: 3,  expRequired: 12, cropRates: { wheat: 0.30, potato: 0.25, carrot: 0.25, apple: 0.10, redHerb: 0.10, blueHerb: 0, yellowHerb: 0 } },
+  { level: 4,  expRequired: 17, cropRates: { wheat: 0.30, potato: 0.25, carrot: 0.25, apple: 0.10, redHerb: 0.10, blueHerb: 0, yellowHerb: 0 } },
+  { level: 5,  expRequired: 23, cropRates: { wheat: 0.20, potato: 0.15, carrot: 0.15, apple: 0.15, redHerb: 0.15, blueHerb: 0.10, yellowHerb: 0.10 } },
+  { level: 6,  expRequired: 30, cropRates: { wheat: 0.20, potato: 0.15, carrot: 0.15, apple: 0.15, redHerb: 0.15, blueHerb: 0.10, yellowHerb: 0.10 } },
+  { level: 7,  expRequired: 38, cropRates: { wheat: 0.13, potato: 0.13, carrot: 0.13, apple: 0.13, redHerb: 0.16, blueHerb: 0.16, yellowHerb: 0.16 } },
+  { level: 8,  expRequired: 47, cropRates: { wheat: 0.13, potato: 0.13, carrot: 0.13, apple: 0.13, redHerb: 0.16, blueHerb: 0.16, yellowHerb: 0.16 } },
+  { level: 9,  expRequired: 57, cropRates: { wheat: 0.12, potato: 0.12, carrot: 0.12, apple: 0.13, redHerb: 0.17, blueHerb: 0.17, yellowHerb: 0.17 } },
+  { level: 10, expRequired: 999, cropRates: { wheat: 0.12, potato: 0.12, carrot: 0.12, apple: 0.13, redHerb: 0.17, blueHerb: 0.17, yellowHerb: 0.17 } },
+];
+
+export function getFarmLevelData(level: number): FarmLevelData {
+  return FARM_LEVEL_TABLE.find(f => f.level === level) ?? FARM_LEVEL_TABLE[FARM_LEVEL_TABLE.length - 1];
+}
+
+export const UNIVERSAL_GROWTH_TIME = 30;
+
+// --- Smelting Output (equipment → refining stones) ---
+
+export const SMELTING_OUTPUT: Record<EquipmentGrade, number> = {
+  common: 1,
+  uncommon: 2,
+  rare: 3,
+  epic: 5,
+};
+
+export function getSmeltingStones(grade: EquipmentGrade, equipLevel: number): number {
+  const base = SMELTING_OUTPUT[grade];
+  const levelBonus = Math.max(0, Math.floor((equipLevel - 10) / 3));
+  return base + levelBonus;
+}
 
 // --- Equipment Recipes (base tier only, others via promotion) ---
 
@@ -308,14 +413,14 @@ export const POTION_RECIPES: PotionRecipe[] = [
 
 // --- Crop Data ---
 
-export const CROP_DATA: Record<CropType, { growthTimeSeconds: number; yieldMin: number; yieldMax: number; seedKey: MaterialKey; produceKey: MaterialKey }> = {
-  wheat:     { growthTimeSeconds: 30,  yieldMin: 2, yieldMax: 3, seedKey: 'wheatSeed',     produceKey: 'wheat' },
-  potato:    { growthTimeSeconds: 35,  yieldMin: 2, yieldMax: 2, seedKey: 'potatoSeed',    produceKey: 'potato' },
-  carrot:    { growthTimeSeconds: 40,  yieldMin: 2, yieldMax: 2, seedKey: 'carrotSeed',    produceKey: 'carrot' },
-  apple:     { growthTimeSeconds: 50,  yieldMin: 1, yieldMax: 2, seedKey: 'appleSeed',     produceKey: 'apple' },
-  redHerb:   { growthTimeSeconds: 45,  yieldMin: 1, yieldMax: 2, seedKey: 'redHerbSeed',   produceKey: 'redHerb' },
-  blueHerb:  { growthTimeSeconds: 45,  yieldMin: 1, yieldMax: 2, seedKey: 'blueHerbSeed',  produceKey: 'blueHerb' },
-  yellowHerb:{ growthTimeSeconds: 45,  yieldMin: 1, yieldMax: 2, seedKey: 'yellowHerbSeed', produceKey: 'yellowHerb' },
+export const CROP_DATA: Record<CropType, { growthTimeSeconds: number; yieldMin: number; yieldMax: number; produceKey: MaterialKey }> = {
+  wheat:      { growthTimeSeconds: 30, yieldMin: 2, yieldMax: 3, produceKey: 'wheat' },
+  potato:     { growthTimeSeconds: 30, yieldMin: 2, yieldMax: 3, produceKey: 'potato' },
+  carrot:     { growthTimeSeconds: 30, yieldMin: 2, yieldMax: 3, produceKey: 'carrot' },
+  apple:      { growthTimeSeconds: 30, yieldMin: 1, yieldMax: 2, produceKey: 'apple' },
+  redHerb:    { growthTimeSeconds: 30, yieldMin: 1, yieldMax: 2, produceKey: 'redHerb' },
+  blueHerb:   { growthTimeSeconds: 30, yieldMin: 1, yieldMax: 2, produceKey: 'blueHerb' },
+  yellowHerb: { growthTimeSeconds: 30, yieldMin: 1, yieldMax: 2, produceKey: 'yellowHerb' },
 };
 
 // --- Level Up Table ---
@@ -390,13 +495,8 @@ export const EMOJI_MAP: Record<string, string> = {
   redHerb: '\uD83C\uDF39',
   blueHerb: '\uD83D\uDC99',
   yellowHerb: '\uD83D\uDC9B',
-  wheatSeed: '\uD83C\uDF31',
-  potatoSeed: '\uD83C\uDF31',
-  carrotSeed: '\uD83C\uDF31',
-  appleSeed: '\uD83C\uDF31',
-  redHerbSeed: '\uD83C\uDF31',
-  blueHerbSeed: '\uD83C\uDF31',
-  yellowHerbSeed: '\uD83C\uDF31',
+  refiningStone: '⚗️',
+  seed: '🌱',
   // Stats
   str: '\u2694\uFE0F',
   def: '\uD83D\uDEE1\uFE0F',
@@ -515,10 +615,6 @@ export const HERB_TYPES: MaterialKey[] = ['redHerb', 'blueHerb', 'yellowHerb'];
 
 // Seed drop
 export const SEED_DROP_CHANCE = 0.20;
-export const SEED_TYPES: MaterialKey[] = [
-  'wheatSeed', 'potatoSeed', 'carrotSeed', 'appleSeed',
-  'redHerbSeed', 'blueHerbSeed', 'yellowHerbSeed',
-];
 
 // Rare loot (boss / special conditions)
 export const RARE_LOOT = {
@@ -562,6 +658,7 @@ export const INITIAL_GAME_STATE: GameState = {
         durability: 100,
         maxDurability: 100,
         tier: 0,
+        level: 1,
       },
       armor: {
         id: 'starter_armor',
@@ -573,6 +670,7 @@ export const INITIAL_GAME_STATE: GameState = {
         durability: 100,
         maxDurability: 100,
         tier: 0,
+        level: 1,
       },
       accessory: null,
     },
@@ -616,13 +714,8 @@ export const INITIAL_GAME_STATE: GameState = {
       redHerb: 0,
       blueHerb: 0,
       yellowHerb: 0,
-      wheatSeed: 8,
-      potatoSeed: 4,
-      carrotSeed: 0,
-      appleSeed: 0,
-      redHerbSeed: 4,
-      blueHerbSeed: 0,
-      yellowHerbSeed: 0,
+      refiningStone: 0,
+      seed: 12,
     },
     equipment: [],
     food: [
@@ -661,6 +754,9 @@ export const INITIAL_GAME_STATE: GameState = {
       { crop: null, plantedAt: null, growthTime: 0, ready: false },
     ],
     maxPlots: 4,
+    farmLevel: 1,
+    farmExp: 0,
+    farmMaxExp: 5,
   },
   adventure: null,
   lastAdventureResult: null,
@@ -677,6 +773,15 @@ export const INITIAL_GAME_STATE: GameState = {
   letters: [],
   gameTime: 0,
   lastTickAt: Date.now(),
+  mom: {
+    jobLevel: 1,
+    jobExp: 0,
+    jobMaxExp: 5,
+    lastJobAt: 0,
+    refiningLevel: 1,
+    refiningExp: 0,
+    refiningMaxExp: 3,
+  },
 };
 
 // --- Milestone Levels ---
@@ -757,11 +862,8 @@ export const SHOP_INVENTORY: ShopItem[] = [
   { id: 'shop_def_book', category: 'book', name: '방어의 기초', emoji: '📘', description: 'DEF +1', goldCost: 80, book: { name: '방어의 기초', stat: 'def', value: 1 } },
   { id: 'shop_agi_book', category: 'book', name: '순발력 훈련법', emoji: '📗', description: 'AGI +1', goldCost: 80, book: { name: '순발력 훈련법', stat: 'agi', value: 1 } },
   { id: 'shop_int_book', category: 'book', name: '마법 입문서', emoji: '📙', description: 'INT +1', goldCost: 80, book: { name: '마법 입문서', stat: 'int', value: 1 } },
-  // Seeds (basic crops don't need seeds - only special crops)
-  { id: 'shop_apple', category: 'seed', name: '사과 씨앗 x2', emoji: '🍎', description: '사과를 재배할 수 있습니다', goldCost: 25, material: { key: 'appleSeed', amount: 2 } },
-  { id: 'shop_red_herb', category: 'seed', name: '붉은 약초 씨앗 x2', emoji: '🌺', description: '붉은 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'redHerbSeed', amount: 2 } },
-  { id: 'shop_blue_herb', category: 'seed', name: '푸른 약초 씨앗 x2', emoji: '💙', description: '푸른 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'blueHerbSeed', amount: 2 } },
-  { id: 'shop_yellow_herb', category: 'seed', name: '노란 약초 씨앗 x2', emoji: '💛', description: '노란 약초를 재배할 수 있습니다', goldCost: 20, material: { key: 'yellowHerbSeed', amount: 2 } },
+  // Seeds
+  { id: 'shop_seed', category: 'seed', name: '씨앗 x5', emoji: '🌱', description: '만능 씨앗 5개', goldCost: 50, material: { key: 'seed', amount: 5 } },
 ];
 
 export const SELL_PRICES: {

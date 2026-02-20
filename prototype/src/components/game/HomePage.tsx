@@ -5,6 +5,7 @@ import { useGameState, useGameActions } from '@/lib/gameState';
 import { SonAction } from '@/lib/types';
 import type { FurnitureKey } from '@/lib/types';
 import { EMOJI_MAP, DEPARTURE_HUNGER_THRESHOLD, DEPARTURE_HP_THRESHOLD } from '@/lib/constants';
+import { canDoJob, getJobCooldownRemaining, getJobReward, getJobCooldownDuration } from '@/lib/game/job';
 import ReturnModal from './ReturnModal';
 import QuestPanel from './QuestPanel';
 import QuestBadge from './QuestBadge';
@@ -156,6 +157,81 @@ function DepartureIndicator({ hp, maxHp, hunger }: { hp: number; maxHp: number; 
 }
 
 // ============================================================
+// Job Panel (알바)
+// ============================================================
+
+function JobPanel() {
+  const { state } = useGameState();
+  const actions = useGameActions();
+  const mom = state.mom;
+  const ready = canDoJob(state);
+  const reward = getJobReward(state);
+  const cooldownDuration = getJobCooldownDuration(state);
+
+  const [cooldownMs, setCooldownMs] = React.useState(getJobCooldownRemaining(state));
+
+  React.useEffect(() => {
+    if (ready) { setCooldownMs(0); return; }
+    const update = () => setCooldownMs(getJobCooldownRemaining(state));
+    update();
+    const interval = setInterval(update, 200);
+    return () => clearInterval(interval);
+  }, [state.mom.lastJobAt, ready]);
+
+  const cooldownSec = Math.ceil(cooldownMs / 1000);
+  const cooldownPct = cooldownDuration > 0 ? Math.max(0, 100 - (cooldownMs / (cooldownDuration * 1000)) * 100) : 100;
+
+  const handleJob = () => {
+    if (!ready) return;
+    actions.doJob();
+  };
+
+  return (
+    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 w-full max-w-[300px]">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">💼</span>
+        <span className="text-xs font-bold text-cream-100">알바</span>
+        <span className="text-[10px] text-cream-300 ml-auto">Lv.{mom.jobLevel}</span>
+      </div>
+
+      {/* EXP bar */}
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="flex-1 h-1.5 bg-white/15 rounded-full overflow-hidden">
+          <div className="h-full bg-cozy-amber rounded-full transition-all" style={{ width: `${mom.jobMaxExp > 0 ? (mom.jobExp / mom.jobMaxExp) * 100 : 0}%` }} />
+        </div>
+        <span className="text-[9px] text-cream-400 tabular-nums">{mom.jobExp}/{mom.jobMaxExp}</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-cream-300">보수: <span className="text-cozy-amber font-bold">{reward}G</span></span>
+        <span className="text-[10px] text-cream-400">쿨다운: {cooldownDuration}초</span>
+      </div>
+
+      <button
+        onClick={handleJob}
+        disabled={!ready}
+        className={`w-full mt-2 py-2 rounded-lg text-sm font-bold transition-all active:scale-95 ${
+          ready
+            ? 'bg-cozy-amber text-cream-50 shadow-md hover:bg-cozy-amber-dark'
+            : 'bg-white/10 text-cream-400 cursor-not-allowed'
+        }`}
+      >
+        {ready ? (
+          <span>💰 일하기 (+{reward}G)</span>
+        ) : (
+          <span className="flex items-center justify-center gap-1.5">
+            <span className="text-cream-400">⏳ {cooldownSec}초</span>
+            <div className="w-12 h-1 bg-white/15 rounded-full overflow-hidden">
+              <div className="h-full bg-cream-400/60 rounded-full transition-all" style={{ width: `${cooldownPct}%` }} />
+            </div>
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ============================================================
 // Main HomePage Component
 // ============================================================
 
@@ -259,6 +335,13 @@ export default function HomePage() {
             <span className="text-sm">{currentRoomDef.emoji}</span>
             <span className="text-xs text-cream-100 font-medium">{currentRoomDef.name}</span>
           </div>
+
+          {/* Job panel (living room only) */}
+          {activeRoom === 'living' && (
+            <div className="flex justify-center w-full">
+              <JobPanel />
+            </div>
+          )}
 
           {/* Furniture grid */}
           <div className="flex-1 flex items-center justify-center w-full">

@@ -1,6 +1,6 @@
 // ============================================================
 // Crafting System - Equipment, Food, Potions, Enhancement,
-//                   Promotion, Maintenance, Smelting
+//                   Refining, Maintenance, Smelting
 // ============================================================
 
 import type {
@@ -10,18 +10,23 @@ import type {
   Potion,
   MaterialKey,
 } from '../types';
+import type { EquipmentSlot, EquipmentGrade } from '../types';
 import {
   EQUIPMENT_RECIPES,
   FOOD_RECIPES,
   POTION_RECIPES,
   ENHANCEMENT_TABLE,
   GRADE_MULTIPLIERS,
-  PROMOTION_CHAINS,
-  EQUIPMENT_TIER_DATA,
   MAINTENANCE_RECIPES,
-  SMELTING_OUTPUT,
   DURABILITY_MAX,
   DURABILITY_PENALTY_THRESHOLD,
+  REFINING_COST,
+  REFINING_GRADE_RATES,
+  REFINING_SLOT_MULTIPLIERS,
+  EQUIPMENT_NAMES,
+  GRADE_PREFIX,
+  REFINING_LEVEL_TABLE,
+  getSmeltingStones,
 } from '../constants';
 
 /** Generate a unique ID */
@@ -51,15 +56,6 @@ function consumeMaterials(
 ): void {
   for (const [key, amount] of Object.entries(required)) {
     state.inventory.materials[key as MaterialKey] -= amount ?? 0;
-  }
-}
-
-function addMaterials(
-  state: GameState,
-  mats: Partial<Record<MaterialKey, number>>
-): void {
-  for (const [key, amount] of Object.entries(mats)) {
-    state.inventory.materials[key as MaterialKey] += amount ?? 0;
   }
 }
 
@@ -124,6 +120,7 @@ export function craftEquipment(state: GameState, recipeId: string): GameState {
     durability: DURABILITY_MAX,
     maxDurability: DURABILITY_MAX,
     tier: 0,
+    level: 1,
   };
 
   newState.inventory.equipment.push(equipment);
@@ -246,61 +243,6 @@ export function calculateEquipmentStats(eq: Equipment): Record<string, number> {
 }
 
 // -----------------------------------------------------------------
-// Promote Equipment (승급: e.g., 나무검 → 철검 → 미스릴검)
-// -----------------------------------------------------------------
-
-export function canPromoteEquipment(state: GameState, equipmentId: string): boolean {
-  const eq = findEquipment(state, equipmentId);
-  if (!eq) return false;
-
-  // Match by current equipment's base recipe id (derived from name/tier)
-  const currentBaseId = getEquipmentBaseId(eq);
-  if (!currentBaseId) return false;
-
-  const promo = PROMOTION_CHAINS.find(c => c.from === currentBaseId);
-  if (!promo) return false;
-
-  // Check level requirement
-  if (state.son.stats.level < promo.reqLevel) return false;
-
-  // Check materials
-  return hasMaterials(state, promo.materials as Partial<Record<MaterialKey, number>>);
-}
-
-export function promoteEquipment(state: GameState, equipmentId: string): GameState {
-  if (!canPromoteEquipment(state, equipmentId)) return state;
-
-  const newState = structuredClone(state);
-  const eq = findEquipment(newState, equipmentId);
-  if (!eq) return state;
-
-  const currentBaseId = getEquipmentBaseId(eq);
-  if (!currentBaseId) return state;
-
-  const promo = PROMOTION_CHAINS.find(c => c.from === currentBaseId);
-  if (!promo) return state;
-
-  const tierData = EQUIPMENT_TIER_DATA[promo.to];
-  if (!tierData) return state;
-
-  // Consume materials
-  consumeMaterials(newState, promo.materials as Partial<Record<MaterialKey, number>>);
-
-  // In-place transform: preserve enhanceLevel, reset durability
-  eq.name = tierData.name;
-  eq.baseStats = { ...tierData.baseStats };
-  eq.tier = promo.tier;
-  eq.durability = DURABILITY_MAX;
-  eq.maxDurability = DURABILITY_MAX;
-
-  // Upgrade grade based on tier
-  if (promo.tier === 1) eq.grade = 'uncommon';
-  if (promo.tier === 2) eq.grade = 'rare';
-
-  return newState;
-}
-
-// -----------------------------------------------------------------
 // Maintain Equipment (정비: durability recovery)
 // -----------------------------------------------------------------
 
@@ -337,7 +279,7 @@ export function maintainEquipment(state: GameState, equipmentId: string): GameSt
 }
 
 // -----------------------------------------------------------------
-// Smelt Equipment (용해: break down equipment into materials)
+// Smelt Equipment (용해: break down equipment into refining stones)
 // -----------------------------------------------------------------
 
 export function canSmeltEquipment(state: GameState, equipmentId: string): boolean {
@@ -359,11 +301,9 @@ export function smeltEquipment(state: GameState, equipmentId: string): GameState
 
   const eq = newState.inventory.equipment[eqIndex];
 
-  // Get base materials from grade
-  const baseMats = SMELTING_OUTPUT[eq.grade];
-  if (baseMats) {
-    addMaterials(newState, baseMats);
-  }
+  // Get refining stones based on grade + level
+  const stones = getSmeltingStones(eq.grade, eq.level ?? 1);
+  newState.inventory.materials.refiningStone += stones;
 
   // Return half of enhancement stones used
   if (eq.enhanceLevel > 0) {
@@ -373,10 +313,116 @@ export function smeltEquipment(state: GameState, equipmentId: string): GameState
     }
   }
 
-  // Remove equipment from inventory
+  // Remove equipment
   newState.inventory.equipment.splice(eqIndex, 1);
-
   return newState;
+}
+
+// -----------------------------------------------------------------
+// Refine Equipment (제련: random equipment generation)
+// -----------------------------------------------------------------
+
+export function canRefineEquipment(state: GameState): boolean {
+  return state.inventory.materials.refiningStone >= REFINING_COST;
+}
+
+export function refineEquipment(state: GameState): { state: GameState; equipment: Equipment } | null {
+  if (!canRefineEquipment(state)) return null;
+
+  const newState = structuredClone(state);
+  const mom = newState.mom;
+
+  // Consume refining stones
+  newState.inventory.materials.refiningStone -= REFINING_COST;
+
+  // Equipment level range
+  const minLevel = mom.refiningLevel;
+  const maxLevel = Math.min(30, mom.refiningLevel + 5);
+  const equipLevel = randInt(minLevel, maxLevel);
+
+  // Grade
+  const grade = rollGrade(mom.refiningLevel);
+
+  // Slot
+  const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
+  const slot = slots[Math.floor(Math.random() * slots.length)];
+
+  // Stats
+  const baseStats = generateBaseStats(equipLevel, slot, grade);
+
+  // Name
+  const name = generateEquipmentName(equipLevel, slot, grade);
+
+  const equipment: Equipment = {
+    id: uid(),
+    name,
+    slot,
+    grade,
+    baseStats,
+    enhanceLevel: 0,
+    durability: DURABILITY_MAX,
+    maxDurability: DURABILITY_MAX,
+    tier: 0,
+    level: equipLevel,
+  };
+
+  newState.inventory.equipment.push(equipment);
+
+  // Refining exp
+  mom.refiningExp += 1;
+  while (mom.refiningExp >= mom.refiningMaxExp && mom.refiningLevel < 20) {
+    mom.refiningExp -= mom.refiningMaxExp;
+    mom.refiningLevel += 1;
+    const nextData = REFINING_LEVEL_TABLE.find(r => r.level === mom.refiningLevel);
+    if (nextData) mom.refiningMaxExp = nextData.expRequired;
+  }
+
+  return { state: newState, equipment };
+}
+
+function rollGrade(refiningLevel: number): EquipmentGrade {
+  const entry = REFINING_GRADE_RATES.find(
+    r => refiningLevel >= r.minLevel && refiningLevel <= r.maxLevel
+  ) ?? REFINING_GRADE_RATES[REFINING_GRADE_RATES.length - 1];
+
+  const roll = Math.random();
+  let cumulative = 0;
+  for (const [grade, rate] of Object.entries(entry.rates) as [EquipmentGrade, number][]) {
+    cumulative += rate;
+    if (roll < cumulative) return grade;
+  }
+  return 'common';
+}
+
+function generateBaseStats(
+  level: number,
+  slot: EquipmentSlot,
+  grade: EquipmentGrade
+): Record<string, number> {
+  const slotMult = REFINING_SLOT_MULTIPLIERS[slot];
+  const gradeMult = GRADE_MULTIPLIERS[grade];
+  const stats: Record<string, number> = {};
+  for (const [stat, mult] of Object.entries(slotMult)) {
+    if (mult !== undefined) {
+      stats[stat] = Math.max(1, Math.floor(level * mult * gradeMult));
+    }
+  }
+  return stats;
+}
+
+function generateEquipmentName(
+  level: number,
+  slot: EquipmentSlot,
+  grade: EquipmentGrade
+): string {
+  const nameList = EQUIPMENT_NAMES[slot];
+  const baseName = nameList.find(n => level <= n.maxLevel)?.name ?? nameList[nameList.length - 1].name;
+  const prefix = GRADE_PREFIX[grade];
+  return `${prefix}${baseName}`;
+}
+
+function randInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 // -----------------------------------------------------------------
@@ -407,27 +453,4 @@ export function getAllEquipment(state: GameState): Equipment[] {
   if (armor) all.push(armor);
   if (accessory) all.push(accessory);
   return all;
-}
-
-/**
- * Derive the base recipe ID from an equipment's current state.
- * Maps equipment name/tier back to the EQUIPMENT_TIER_DATA key.
- */
-function getEquipmentBaseId(eq: Equipment): string | null {
-  // Search EQUIPMENT_TIER_DATA for a matching name
-  for (const [id, data] of Object.entries(EQUIPMENT_TIER_DATA)) {
-    if (data.name === eq.name) return id;
-  }
-  // Fallback: check EQUIPMENT_RECIPES for base tier items
-  for (const recipe of EQUIPMENT_RECIPES) {
-    if (recipe.name === eq.name) return recipe.id;
-  }
-  return null;
-}
-
-/** Get the promotion chain entry for an equipment, if any */
-export function getPromotionForEquipment(eq: Equipment): typeof PROMOTION_CHAINS[number] | null {
-  const baseId = getEquipmentBaseId(eq);
-  if (!baseId) return null;
-  return PROMOTION_CHAINS.find(c => c.from === baseId) ?? null;
 }

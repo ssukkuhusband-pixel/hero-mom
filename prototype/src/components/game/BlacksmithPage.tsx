@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
-import { canCraftEquipment, canEnhance, canPromoteEquipment, canMaintainEquipment, canSmeltEquipment, calculateEquipmentStats, enhanceEquipment as enhanceEquipmentFn, getAllEquipment, getPromotionForEquipment, findEquipment } from '@/lib/game/crafting';
-import { EQUIPMENT_RECIPES, ENHANCEMENT_TABLE, EMOJI_MAP, GRADE_COLORS, UNLOCK_LEVELS, SHOP_INVENTORY, SELL_PRICES, MAINTENANCE_RECIPES, PROMOTION_CHAINS, EQUIPMENT_TIER_DATA, SMELTING_OUTPUT, DURABILITY_MAX, DURABILITY_PENALTY_THRESHOLD } from '@/lib/constants';
+import { canCraftEquipment, canEnhance, canMaintainEquipment, canRefineEquipment, calculateEquipmentStats, enhanceEquipment as enhanceEquipmentFn, getAllEquipment } from '@/lib/game/crafting';
+import { EQUIPMENT_RECIPES, ENHANCEMENT_TABLE, EMOJI_MAP, GRADE_COLORS, UNLOCK_LEVELS, SHOP_INVENTORY, SELL_PRICES, MAINTENANCE_RECIPES, DURABILITY_MAX, DURABILITY_PENALTY_THRESHOLD, REFINING_COST, REFINING_GRADE_RATES, getSmeltingStones } from '@/lib/constants';
 import type { Equipment, EquipmentSlot, EquipmentGrade, MaterialKey, EquipmentRecipe } from '@/lib/types';
 import type { ShopItem } from '@/lib/constants';
 import { useToast } from '@/components/ui/Toast';
@@ -11,7 +11,10 @@ const SLOT_EMOJI: Record<EquipmentSlot, string> = { weapon: '\u2694\uFE0F', armo
 const STAT_EMOJI: Record<string, string> = { str: '\u2694\uFE0F', def: '\uD83D\uDEE1\uFE0F', agi: '\uD83D\uDCA8', int: '\uD83D\uDCD6', hp: '\u2764\uFE0F' };
 const STAT_LABEL: Record<string, string> = { str: 'STR', def: 'DEF', agi: 'AGI', int: 'INT', hp: 'HP' };
 const GB: Record<EquipmentGrade, string> = { common: 'border-gray-400/40', uncommon: 'border-green-400/60', rare: 'border-blue-400/60', epic: 'border-purple-400/60' };
-type TabType = 'craft' | 'maintain' | 'enhance' | 'shop';
+const GRADE_TEXT_COLOR: Record<EquipmentGrade, string> = { common: 'text-gray-400', uncommon: 'text-green-400', rare: 'text-blue-400', epic: 'text-purple-400' };
+const GRADE_BG: Record<EquipmentGrade, string> = { common: 'bg-gray-400', uncommon: 'bg-green-400', rare: 'bg-blue-400', epic: 'bg-purple-400' };
+const GRADE_LABEL: Record<EquipmentGrade, string> = { common: '일반', uncommon: '고급', rare: '희귀', epic: '전설' };
+type TabType = 'craft' | 'refine' | 'maintain' | 'enhance' | 'shop';
 const sellCls = "flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg border border-cream-500 bg-cream-100 hover:border-red-300 hover:bg-red-50 active:scale-[0.98] transition-all";
 const gridCls = (off: boolean) => `flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition-all active:scale-95 ${off ? 'opacity-40 border-white/10 bg-white/5' : 'border-white/20 bg-white/10 hover:border-cozy-amber'}`;
 
@@ -60,19 +63,7 @@ function CraftTab() {
   const allEq = useMemo(() => getAllEquipment(state), [state.inventory.equipment, state.home.equipmentRack, state.son.equipment]);
   const slotHas = (slot: EquipmentSlot) => allEq.some(e => e.slot === slot);
 
-  // Promotable equipment
-  const promotable = useMemo(() => {
-    return allEq.map(eq => {
-      const promo = getPromotionForEquipment(eq);
-      if (!promo) return null;
-      const tierData = EQUIPMENT_TIER_DATA[promo.to];
-      if (!tierData) return null;
-      return { eq, promo, tierData };
-    }).filter(Boolean) as { eq: Equipment; promo: typeof PROMOTION_CHAINS[number]; tierData: { name: string; baseStats: Record<string, number | undefined> } }[];
-  }, [allEq]);
-
   const craft = (r: EquipmentRecipe) => { actions.craftEquipment(r.id); addToast(`${r.name} 제작 완료!`, 'success'); setSel(null); };
-  const promote = (eqId: string, name: string) => { actions.promoteEquipment(eqId); addToast(`${name} 승급 완료!`, 'success'); };
 
   return (<>
     {/* Base recipes */}
@@ -90,36 +81,6 @@ function CraftTab() {
         );
       })}
     </div>
-
-    {/* Promotion section */}
-    {promotable.length > 0 && (<>
-      <p className="text-xs font-bold text-cream-200 mt-3">{'⬆️'} 승급</p>
-      <div className="flex flex-col gap-2">
-        {promotable.map(({ eq, promo, tierData }) => {
-          const can = canPromoteEquipment(state, eq.id);
-          const mats = Object.entries(promo.materials) as [MaterialKey, number][];
-          const levelOk = state.son.stats.level >= promo.reqLevel;
-          return (
-            <div key={eq.id} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">{SLOT_EMOJI[eq.slot]}</span>
-                <span className="text-xs font-bold text-cream-100">{eq.name}</span>
-                <span className="text-cream-400 text-xs">{'→'}</span>
-                <span className="text-xs font-bold text-green-300">{tierData.name}</span>
-                {!levelOk && <span className="text-[9px] text-red-400 ml-auto">Lv.{promo.reqLevel} 필요</span>}
-              </div>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 mb-2">
-                {mats.map(([k, amt]) => {
-                  const has = state.inventory.materials[k] ?? 0;
-                  return <span key={k} className="flex items-center gap-0.5 text-[10px]"><span>{EMOJI_MAP[k] ?? '?'}</span><span className={`tabular-nums font-medium ${has >= amt ? 'text-cream-200' : 'text-red-400'}`}>{has}/{amt}</span></span>;
-                })}
-              </div>
-              <button onClick={() => promote(eq.id, tierData.name)} disabled={!can} className="btn-wood w-full text-xs !py-1.5">{'⬆️'} 승급하기</button>
-            </div>
-          );
-        })}
-      </div>
-    </>)}
 
     {/* Recipe detail modal */}
     {sel && (
@@ -146,6 +107,163 @@ function CraftTab() {
       </Overlay>
     )}
   </>);
+}
+
+/* ===== REFINE TAB ===== */
+function RefineTab() {
+  const { state } = useGameState();
+  const actions = useGameActions();
+  const { addToast } = useToast();
+  const [lastResult, setLastResult] = useState<Equipment | null>(null);
+  const [animating, setAnimating] = useState(false);
+
+  const mom = state.mom;
+  const stones = state.inventory.materials.refiningStone;
+  const canRefine = canRefineEquipment(state);
+
+  // Find current grade rates based on mom's refining level
+  const currentRates = useMemo(() => {
+    const entry = REFINING_GRADE_RATES.find(
+      r => mom.refiningLevel >= r.minLevel && mom.refiningLevel <= r.maxLevel
+    ) ?? REFINING_GRADE_RATES[REFINING_GRADE_RATES.length - 1];
+    return entry.rates;
+  }, [mom.refiningLevel]);
+
+  const expPct = mom.refiningMaxExp > 0 ? Math.min(100, (mom.refiningExp / mom.refiningMaxExp) * 100) : 0;
+
+  const doRefine = () => {
+    setAnimating(true);
+    setLastResult(null);
+    // Small delay for visual feedback
+    setTimeout(() => {
+      actions.refineEquipment();
+      setAnimating(false);
+    }, 300);
+  };
+
+  // Watch for newly added equipment after refining
+  const allEq = useMemo(() => getAllEquipment(state), [state.inventory.equipment, state.home.equipmentRack, state.son.equipment]);
+
+  // After action dispatched, find the latest equipment in inventory as result
+  useMemo(() => {
+    if (!animating && state.inventory.equipment.length > 0) {
+      const latest = state.inventory.equipment[state.inventory.equipment.length - 1];
+      if (lastResult === null && latest) {
+        // Only set if we're actively refining (detected by state change)
+      }
+    }
+  }, [state.inventory.equipment, animating, lastResult]);
+
+  const handleRefine = () => {
+    if (!canRefine) return;
+    const prevLen = state.inventory.equipment.length;
+    actions.refineEquipment();
+    // We need to get the result from state on next render
+    // Use a timeout to let the state update
+    setTimeout(() => {
+      // The result will be shown via the effect-like pattern below
+    }, 50);
+  };
+
+  // Track equipment changes to detect refine result
+  const [prevEqCount, setPrevEqCount] = useState(state.inventory.equipment.length);
+  useMemo(() => {
+    if (state.inventory.equipment.length > prevEqCount) {
+      const newEq = state.inventory.equipment[state.inventory.equipment.length - 1];
+      if (newEq) {
+        setLastResult(newEq);
+        addToast(`${newEq.name} 제련 완료!`, 'success');
+      }
+    }
+    setPrevEqCount(state.inventory.equipment.length);
+  }, [state.inventory.equipment.length]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Mom's Refining Level */}
+      <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{'⚗️'}</span>
+            <span className="font-serif font-bold text-cream-100 text-sm">제련 레벨</span>
+          </div>
+          <span className="text-lg font-bold text-cozy-amber">Lv.{mom.refiningLevel}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-2.5 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cozy-amber to-yellow-300 rounded-full transition-all"
+              style={{ width: `${expPct}%` }}
+            />
+          </div>
+          <span className="text-[10px] text-cream-300 tabular-nums shrink-0">{mom.refiningExp}/{mom.refiningMaxExp}</span>
+        </div>
+      </div>
+
+      {/* Grade Probabilities */}
+      <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+        <p className="text-xs font-bold text-cream-200 mb-2.5">{'🎲'} 등급 확률</p>
+        <div className="flex flex-col gap-1.5">
+          {(Object.entries(currentRates) as [EquipmentGrade, number][]).map(([grade, rate]) => (
+            <div key={grade} className="flex items-center gap-2">
+              <span className={`text-[10px] font-bold w-10 ${GRADE_TEXT_COLOR[grade]}`}>{GRADE_LABEL[grade]}</span>
+              <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${GRADE_BG[grade]}`}
+                  style={{ width: `${rate * 100}%`, opacity: rate > 0 ? 1 : 0 }}
+                />
+              </div>
+              <span className={`text-[10px] tabular-nums w-10 text-right font-medium ${rate > 0 ? 'text-cream-200' : 'text-cream-500'}`}>{Math.round(rate * 100)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Refine Action */}
+      <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm">{'⚗️'}</span>
+            <span className="text-xs text-cream-300">제련석 비용</span>
+          </div>
+          <span className={`text-sm font-bold tabular-nums ${stones >= REFINING_COST ? 'text-cream-100' : 'text-red-400'}`}>
+            {'⚗️'} {stones} / {REFINING_COST}
+          </span>
+        </div>
+        <button
+          onClick={handleRefine}
+          disabled={!canRefine}
+          className="btn-wood w-full text-sm !py-3 font-bold"
+        >
+          {'⚗️'} 제련하기
+        </button>
+        <p className="text-[10px] text-cream-400 text-center mt-1.5">
+          제련석 {REFINING_COST}개를 소모하여 랜덤 장비를 생성합니다
+        </p>
+      </div>
+
+      {/* Last Result */}
+      {lastResult && (
+        <div className={`bg-white/15 backdrop-blur-sm border-2 rounded-xl p-4 ${GB[lastResult.grade]} shadow-lg`}>
+          <p className="text-[10px] text-cream-300 mb-2 text-center">{'✨'} 제련 결과</p>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{SLOT_EMOJI[lastResult.slot]}</span>
+            <div className="flex-1">
+              <p className="font-serif font-bold text-cream-100 text-sm drop-shadow">{lastResult.name}</p>
+              <p className={`text-[11px] font-bold ${GRADE_TEXT_COLOR[lastResult.grade]}`}>{GRADE_LABEL[lastResult.grade]}</p>
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
+                {Object.entries(calculateEquipmentStats(lastResult)).map(([k, v]) => (
+                  <span key={k} className="text-[10px] text-cream-200">
+                    {STAT_EMOJI[k] ?? ''} {STAT_LABEL[k] ?? k}+{v}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ===== MAINTAIN TAB ===== */
@@ -298,9 +416,8 @@ function ShopTab() {
   const doSellOrSmelt = (eq: Equipment) => {
     if (smeltUnlocked) {
       actions.smeltEquipment(eq.id);
-      const mats = SMELTING_OUTPUT[eq.grade];
-      const matStr = Object.entries(mats).map(([k, v]) => `${EMOJI_MAP[k as MaterialKey] ?? k} x${v}`).join(' ');
-      addToast(`${eq.name} 용해! ${matStr}`, 'success');
+      const stones = getSmeltingStones(eq.grade, eq.level ?? 1);
+      addToast(`${eq.name} 용해! ⚗️ x${stones}`, 'success');
     } else {
       actions.sellEquipment(eq.id);
       addToast(`${eq.name} 판매! +${SELL_PRICES.equipment[eq.grade]}G`, 'success');
@@ -344,14 +461,14 @@ function ShopTab() {
             {state.inventory.potions.map((p, i) => <button key={`p-${i}`} onClick={() => actions.sellPotion(i)} className={sellCls}><span className="text-lg">{'🧪'}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{p.name}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.potion}G</span></button>)}
           </>)}
           {state.inventory.equipment.length > 0 && (<>
-            <p className="text-xs font-bold text-cream-200 mt-1">{smeltUnlocked ? '\u2697\uFE0F 용해 (재료 회수)' : '\u2694\uFE0F 장비 (등급별 가격)'}</p>
+            <p className="text-xs font-bold text-cream-200 mt-1">{smeltUnlocked ? '\u2697\uFE0F 용해 (제련석 회수)' : '\u2694\uFE0F 장비 (등급별 가격)'}</p>
             {state.inventory.equipment.map((eq) => (
               <button key={`e-${eq.id}`} onClick={() => doSellOrSmelt(eq)} className={sellCls}>
                 <span className="text-lg">{SLOT_EMOJI[eq.slot]}</span>
                 <span className="flex-1 text-sm font-medium text-cream-900 truncate">{eq.name}{eq.enhanceLevel > 0 ? ` +${eq.enhanceLevel}` : ''}</span>
                 {smeltUnlocked ? (
                   <span className="text-[10px] text-blue-600 font-medium shrink-0">
-                    {Object.entries(SMELTING_OUTPUT[eq.grade]).map(([k, v]) => `${EMOJI_MAP[k as MaterialKey] ?? k}${v}`).join(' ')}
+                    {'⚗️'} x{getSmeltingStones(eq.grade, eq.level ?? 1)}
                   </span>
                 ) : (
                   <span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.equipment[eq.grade]}G</span>
@@ -372,11 +489,12 @@ export default function BlacksmithPage() {
   const [activeTab, setActiveTab] = useState<TabType>('craft');
   const tabs: { key: TabType; label: string }[] = [
     { key: 'craft', label: '\uD83D\uDD28 제작' },
+    { key: 'refine', label: '\u2697\uFE0F 제련' },
     { key: 'maintain', label: '\uD83D\uDD27 정비' },
     { key: 'enhance', label: '\uD83D\uDD2E 강화' },
     { key: 'shop', label: '\uD83D\uDED2 상점' },
   ];
-  const mats: MaterialKey[] = ['gold', 'wood', 'ironOre', 'mithril', 'leather', 'gems', 'enhancementStones', 'specialOre'];
+  const mats: MaterialKey[] = ['gold', 'wood', 'ironOre', 'mithril', 'leather', 'gems', 'enhancementStones', 'specialOre', 'refiningStone'];
   return (
     <div className="relative min-h-[calc(100vh-140px)]">
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/blacksmith.png')" }} />
@@ -385,10 +503,11 @@ export default function BlacksmithPage() {
         <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">{'\uD83D\uDD28'} 대장간</h1>
         <div className="flex gap-1 bg-black/30 backdrop-blur-sm rounded-xl p-1 border border-white/10">
           {tabs.map((t) => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)} className={`flex-1 py-2 px-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === t.key ? 'bg-white/20 text-cream-100 shadow-sm' : 'text-cream-300 hover:bg-white/10'}`}>{t.label}</button>
+            <button key={t.key} onClick={() => setActiveTab(t.key)} className={`flex-1 py-2 px-1 rounded-lg text-[11px] font-medium transition-all ${activeTab === t.key ? 'bg-white/20 text-cream-100 shadow-sm' : 'text-cream-300 hover:bg-white/10'}`}>{t.label}</button>
           ))}
         </div>
         {activeTab === 'craft' && <CraftTab />}
+        {activeTab === 'refine' && <RefineTab />}
         {activeTab === 'maintain' && <MaintainTab />}
         {activeTab === 'enhance' && <EnhanceTab />}
         {activeTab === 'shop' && <ShopTab />}

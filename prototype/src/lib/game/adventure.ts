@@ -24,7 +24,6 @@ import {
   HERB_DROP_MAX,
   HERB_TYPES,
   SEED_DROP_CHANCE,
-  SEED_TYPES,
   RARE_LOOT,
   LETTER_TEMPLATES,
   GRADE_MULTIPLIERS,
@@ -478,10 +477,9 @@ function generateBattleLoot(
     loot[herb] = (loot[herb] ?? 0) + randInt(HERB_DROP_MIN, HERB_DROP_MAX);
   }
 
-  // Seed drop
+  // Seed drop (universal seed)
   if (Math.random() < SEED_DROP_CHANCE * multiplier) {
-    const seed = pick(SEED_TYPES);
-    loot[seed] = (loot[seed] ?? 0) + 1;
+    loot.seed = (loot.seed ?? 0) + randInt(1, 2);
   }
 
   // Rare loot (boss / special)

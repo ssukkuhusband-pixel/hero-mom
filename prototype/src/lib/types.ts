@@ -181,6 +181,7 @@ export interface Equipment {
   durability: number;     // 현재 내구도 (0~100)
   maxDurability: number;  // 최대 내구도 (100)
   tier: number;           // 승급 단계 (0=기본, 1=철, 2=미스릴)
+  level: number;          // 장비 레벨 (1~30, 제련 시 결정)
 }
 
 // --- Items ---
@@ -230,13 +231,8 @@ export type MaterialKey =
   | 'redHerb'
   | 'blueHerb'
   | 'yellowHerb'
-  | 'wheatSeed'
-  | 'potatoSeed'
-  | 'carrotSeed'
-  | 'appleSeed'
-  | 'redHerbSeed'
-  | 'blueHerbSeed'
-  | 'yellowHerbSeed';
+  | 'refiningStone'
+  | 'seed';
 
 export type Materials = Record<MaterialKey, number>;
 
@@ -278,6 +274,9 @@ export interface FarmPlot {
 export interface FarmState {
   plots: FarmPlot[];
   maxPlots: number; // 4, expandable to 6 at Lv.10
+  farmLevel: number;   // 농사 레벨 1~10
+  farmExp: number;
+  farmMaxExp: number;
 }
 
 // --- Recipes ---
@@ -393,6 +392,18 @@ export interface UnlockState {
   milestones: Record<number, boolean>;
 }
 
+// --- Mom State ---
+
+export interface MomState {
+  jobLevel: number;       // 1~15
+  jobExp: number;
+  jobMaxExp: number;
+  lastJobAt: number;      // timestamp (ms), 0 if ready
+  refiningLevel: number;  // 1~20
+  refiningExp: number;
+  refiningMaxExp: number;
+}
+
 // --- Game State ---
 
 export interface GameState {
@@ -406,6 +417,7 @@ export interface GameState {
   letters: Letter[];
   gameTime: number; // total elapsed game time in seconds
   lastTickAt: number; // timestamp of last game tick
+  mom: MomState;
 }
 
 // --- Action types for reducer ---
@@ -415,12 +427,13 @@ export type GameAction =
   | { type: 'CRAFT_EQUIPMENT'; recipeId: string }
   | { type: 'COOK_FOOD'; recipeId: string }
   | { type: 'BREW_POTION'; recipeId: string }
-  | { type: 'PLANT_CROP'; plotIndex: number; crop: CropType }
+  | { type: 'PLANT_CROP'; plotIndex: number }
   | { type: 'HARVEST_CROP'; plotIndex: number }
   | { type: 'ENHANCE_EQUIPMENT'; equipmentId: string }
-  | { type: 'PROMOTE_EQUIPMENT'; equipmentId: string }
   | { type: 'MAINTAIN_EQUIPMENT'; equipmentId: string }
   | { type: 'SMELT_EQUIPMENT'; equipmentId: string }
+  | { type: 'DO_JOB' }
+  | { type: 'REFINE_EQUIPMENT' }
   | { type: 'PLACE_FOOD'; foodIndex: number }
   | { type: 'PLACE_POTION'; potionIndex: number }
   | { type: 'PLACE_EQUIPMENT'; equipmentId: string }

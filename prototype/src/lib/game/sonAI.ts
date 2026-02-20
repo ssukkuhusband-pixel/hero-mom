@@ -368,10 +368,11 @@ function autoEquipBestGear(state: GameState): void {
 function equipmentStatTotal(eq: Equipment): number {
   const s = eq.baseStats;
   const raw = (s.str ?? 0) + (s.def ?? 0) + (s.agi ?? 0) + (s.int ?? 0) + (s.hp ?? 0) / 5;
+  const levelBonus = (eq.level ?? 1) * 0.1;
   // Apply durability penalty
   if (eq.durability <= 0) return 0;
-  if (eq.durability < 30) return raw * (eq.durability / 30);
-  return raw;
+  if (eq.durability < 30) return (raw + levelBonus) * (eq.durability / 30);
+  return raw + levelBonus;
 }
 
 // -----------------------------------------------------------------

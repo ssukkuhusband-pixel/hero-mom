@@ -41,13 +41,8 @@ const MATERIAL_NAMES: Partial<Record<MaterialKey, string>> = {
   redHerb: '붉은 약초',
   blueHerb: '푸른 약초',
   yellowHerb: '노란 약초',
-  wheatSeed: '밀 씨앗',
-  potatoSeed: '감자 씨앗',
-  carrotSeed: '당근 씨앗',
-  appleSeed: '사과 씨앗',
-  redHerbSeed: '붉은 약초 씨앗',
-  blueHerbSeed: '푸른 약초 씨앗',
-  yellowHerbSeed: '노란 약초 씨앗',
+  refiningStone: '제련석',
+  seed: '씨앗',
 };
 
 // ============================================================
