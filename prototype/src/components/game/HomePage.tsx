@@ -16,16 +16,16 @@ import ReturnModal from './ReturnModal';
 // ============================================================
 
 const SON_STATE_EMOJI: Record<string, string> = {
-  [SonAction.IDLE]: '\uD83E\uDDD1',       // standing
-  [SonAction.SLEEPING]: '\uD83D\uDE34',    // sleeping face
-  [SonAction.TRAINING]: '\uD83D\uDE24',    // determined
-  [SonAction.EATING]: '\uD83D\uDE0B',      // yum face
-  [SonAction.READING]: '\uD83E\uDD13',     // nerd face
-  [SonAction.RESTING]: '\uD83D\uDE0C',     // relieved
-  [SonAction.HEALING]: '\uD83E\uDE79',     // bandaged
-  [SonAction.DRINKING_POTION]: '\uD83D\uDE32', // astonished
-  [SonAction.DEPARTING]: '\uD83D\uDEB6',   // walking
-  [SonAction.ADVENTURING]: '\uD83D\uDDFA\uFE0F', // map
+  [SonAction.IDLE]: '\uD83E\uDDD1',
+  [SonAction.SLEEPING]: '\uD83D\uDE34',
+  [SonAction.TRAINING]: '\uD83D\uDE24',
+  [SonAction.EATING]: '\uD83D\uDE0B',
+  [SonAction.READING]: '\uD83E\uDD13',
+  [SonAction.RESTING]: '\uD83D\uDE0C',
+  [SonAction.HEALING]: '\uD83E\uDE79',
+  [SonAction.DRINKING_POTION]: '\uD83D\uDE32',
+  [SonAction.DEPARTING]: '\uD83D\uDEB6',
+  [SonAction.ADVENTURING]: '\uD83D\uDDFA\uFE0F',
 };
 
 const ACTION_INDICATOR: Record<string, { emoji: string; label: string }> = {
@@ -42,6 +42,39 @@ const ACTION_INDICATOR: Record<string, { emoji: string; label: string }> = {
 };
 
 // ============================================================
+// Spatial Layout: Furniture Positions (% based)
+// ============================================================
+
+type FurnitureKey = 'bed' | 'dummy' | 'desk' | 'chair' | 'table' | 'potionShelf' | 'equipmentRack' | 'door';
+
+interface Position { top: number; left: number }
+
+// Furniture positions within the room (percentage)
+const FURNITURE_POSITIONS: Record<FurnitureKey, Position> = {
+  bed:           { top: 3,  left: 3  },
+  desk:          { top: 4,  left: 42 },
+  potionShelf:   { top: 3,  left: 73 },
+  chair:         { top: 30, left: 5  },
+  equipmentRack: { top: 30, left: 72 },
+  dummy:         { top: 58, left: 3  },
+  table:         { top: 62, left: 35 },
+  door:          { top: 72, left: 73 },
+};
+
+// Son's target position when interacting with each furniture
+const SON_POSITIONS: Record<FurnitureKey | 'idle', Position> = {
+  bed:           { top: 12, left: 32 },
+  desk:          { top: 14, left: 60 },
+  potionShelf:   { top: 14, left: 68 },
+  chair:         { top: 38, left: 26 },
+  equipmentRack: { top: 40, left: 66 },
+  dummy:         { top: 65, left: 26 },
+  table:         { top: 72, left: 54 },
+  door:          { top: 80, left: 68 },
+  idle:          { top: 44, left: 48 },
+};
+
+// ============================================================
 // Placement modal types
 // ============================================================
 
@@ -49,7 +82,6 @@ type PlacementType = 'food' | 'potion' | 'book' | 'equipment';
 
 // ============================================================
 // Furniture Visual Illustrations
-// Each furniture piece has a unique CSS + emoji illustration
 // ============================================================
 
 interface FurnitureBaseProps {
@@ -80,47 +112,42 @@ function FurnitureWrapper({
       onClick={onClick}
       disabled={!onClick}
       className={`
-        relative flex flex-col items-center gap-0.5 p-2 rounded-xl
-        backdrop-blur-sm transition-all duration-200
+        relative flex flex-col items-center gap-0.5 p-1.5 rounded-xl
+        backdrop-blur-sm transition-all duration-300
         ${dimmed
-          ? 'bg-white/10 border-2 border-white/10 opacity-60'
+          ? 'bg-white/10 border-2 border-white/10 opacity-50'
           : highlight
-            ? 'bg-white/25 border-2 border-cozy-amber shadow-[0_0_12px_rgba(212,137,63,0.3)]'
-            : 'bg-white/20 border-2 border-white/20'
+            ? 'bg-white/30 border-2 border-cozy-amber shadow-[0_0_16px_rgba(212,137,63,0.5)]'
+            : 'bg-white/15 border border-white/15'
         }
-        ${onClick ? 'cursor-pointer hover:bg-white/30 hover:border-cozy-amber/50 hover:shadow-md active:scale-95' : 'cursor-default'}
+        ${onClick ? 'cursor-pointer hover:bg-white/25 hover:border-cozy-amber/50 hover:shadow-md active:scale-95' : 'cursor-default'}
         ${className}
       `}
     >
-      {/* Visual illustration */}
       {children}
+      <span className="text-[9px] text-cream-100 font-medium drop-shadow-sm leading-tight">{label}</span>
 
-      {/* Label */}
-      <span className="text-[10px] text-cream-100 font-medium drop-shadow-sm mt-0.5">{label}</span>
-
-      {/* Occupied overlay */}
       {occupied && occupiedLabel && (
-        <span className="absolute -top-1.5 -right-1.5 text-sm bg-cozy-amber/90 text-cream-50 w-6 h-6 flex items-center justify-center rounded-full font-bold shadow-md border border-white/30 animate-pulse">
+        <span className="absolute -top-1.5 -right-1.5 text-sm bg-cozy-amber/90 text-cream-50 w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-md border border-white/30 animate-pulse">
           {occupiedLabel}
         </span>
       )}
 
-      {/* Item slots preview */}
       {items.length > 0 && (
-        <div className="flex gap-0.5 flex-wrap justify-center">
-          {items.map((item, i) => (
-            <span key={i} className="text-sm drop-shadow-sm" title={item.name}>
+        <div className="flex gap-0.5 flex-wrap justify-center max-w-[60px]">
+          {items.slice(0, 3).map((item, i) => (
+            <span key={i} className="text-xs drop-shadow-sm" title={item.name}>
               {item.emoji}
             </span>
           ))}
-          {maxSlots && items.length < maxSlots && (
-            <span className="text-sm text-cream-300/70">+</span>
+          {items.length > 3 && (
+            <span className="text-[9px] text-cream-300/70">+{items.length - 3}</span>
           )}
         </div>
       )}
       {items.length === 0 && maxSlots && (
-        <span className="text-[9px] text-cream-300/70">
-          {onClick ? '클릭하여 배치' : '비어있음'}
+        <span className="text-[8px] text-cream-300/60 leading-tight">
+          {onClick ? '배치' : ''}
         </span>
       )}
     </button>
@@ -131,20 +158,12 @@ function FurnitureWrapper({
 function BedIllustration() {
   return (
     <div className="relative w-14 h-10 drop-shadow-md">
-      {/* Bed frame */}
       <div className="absolute bottom-0 left-0.5 right-0.5 h-6 bg-gradient-to-b from-amber-700 to-amber-900 rounded-t-md rounded-b-sm border border-amber-600/50" />
-      {/* Mattress */}
       <div className="absolute bottom-1.5 left-1.5 right-1.5 h-4 bg-gradient-to-b from-cream-100 to-cream-200 rounded-sm" />
-      {/* Blanket */}
       <div className="absolute bottom-1.5 left-1.5 right-4 h-4 bg-gradient-to-br from-blue-300 to-blue-500 rounded-sm opacity-90" />
-      {/* Pillow */}
       <div className="absolute bottom-3 right-2 w-4 h-3 bg-gradient-to-b from-cream-50 to-cream-200 rounded-md border border-cream-300/50" />
-      {/* Headboard */}
       <div className="absolute top-0 right-0.5 w-2 h-8 bg-gradient-to-b from-amber-600 to-amber-800 rounded-t-md" />
-      {/* Zzz */}
-      <span className="absolute -top-1 -left-0.5 text-[10px] opacity-60">
-        {'\uD83D\uDCA4'}
-      </span>
+      <span className="absolute -top-1 -left-0.5 text-[10px] opacity-60">{'\uD83D\uDCA4'}</span>
     </div>
   );
 }
@@ -153,24 +172,13 @@ function BedIllustration() {
 function DummyIllustration() {
   return (
     <div className="relative w-14 h-12 drop-shadow-md flex items-end justify-center">
-      {/* Pole */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-10 bg-gradient-to-b from-amber-600 to-amber-800 rounded-full" />
-      {/* Base */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1.5 bg-gradient-to-b from-amber-700 to-amber-900 rounded-full" />
-      {/* Cross bar */}
       <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 rounded-full" />
-      {/* Straw body (circle) */}
       <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-6 h-5 bg-gradient-to-b from-yellow-200 to-yellow-400 rounded-lg border border-yellow-500/40" />
-      {/* Head */}
       <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-4 bg-gradient-to-b from-yellow-100 to-yellow-300 rounded-full border border-yellow-400/40" />
-      {/* Face marks */}
-      <span className="absolute top-0 left-1/2 -translate-x-1/2 text-[8px] leading-none">
-        {'\u00D7'}
-      </span>
-      {/* Hit sparks */}
-      <span className="absolute top-1 -right-0.5 text-[10px] animate-pulse">
-        {'\uD83D\uDCA5'}
-      </span>
+      <span className="absolute top-0 left-1/2 -translate-x-1/2 text-[8px] leading-none">{'\u00D7'}</span>
+      <span className="absolute top-1 -right-0.5 text-[10px] animate-pulse">{'\uD83D\uDCA5'}</span>
     </div>
   );
 }
@@ -179,21 +187,12 @@ function DummyIllustration() {
 function DeskIllustration() {
   return (
     <div className="relative w-14 h-10 drop-shadow-md">
-      {/* Desk surface */}
       <div className="absolute bottom-2.5 left-0 right-0 h-2 bg-gradient-to-b from-amber-600 to-amber-800 rounded-sm border-t border-amber-500/50" />
-      {/* Front panel */}
       <div className="absolute bottom-0 left-0.5 right-0.5 h-3 bg-gradient-to-b from-amber-700 to-amber-900 rounded-b-sm" />
-      {/* Book on desk */}
       <div className="absolute bottom-4 left-2 w-4 h-3 bg-gradient-to-br from-red-400 to-red-600 rounded-sm transform -rotate-3" />
       <div className="absolute bottom-4.5 left-2.5 w-3 h-0.5 bg-cream-100/50 rounded-full" />
-      {/* Quill/pen */}
-      <span className="absolute bottom-4 right-2 text-[10px] transform rotate-12">
-        {'\uD83D\uDD8A\uFE0F'}
-      </span>
-      {/* Candle */}
-      <span className="absolute -top-1 right-1 text-[10px]">
-        {'\uD83D\uDD6F\uFE0F'}
-      </span>
+      <span className="absolute bottom-4 right-2 text-[10px] transform rotate-12">{'\uD83D\uDD8A\uFE0F'}</span>
+      <span className="absolute -top-1 right-1 text-[10px]">{'\uD83D\uDD6F\uFE0F'}</span>
     </div>
   );
 }
@@ -202,21 +201,14 @@ function DeskIllustration() {
 function ChairIllustration() {
   return (
     <div className="relative w-12 h-11 drop-shadow-md">
-      {/* Chair back */}
       <div className="absolute top-0 left-2 right-2 h-5 bg-gradient-to-b from-amber-500 to-amber-700 rounded-t-lg border border-amber-400/30" />
-      {/* Back pattern (vertical slats) */}
       <div className="absolute top-1 left-3.5 w-0.5 h-3 bg-amber-400/40 rounded-full" />
       <div className="absolute top-1 left-5 w-0.5 h-3 bg-amber-400/40 rounded-full" />
       <div className="absolute top-1 right-3.5 w-0.5 h-3 bg-amber-400/40 rounded-full" />
-      {/* Seat cushion */}
       <div className="absolute top-5 left-1 right-1 h-2.5 bg-gradient-to-b from-red-400 to-red-600 rounded-sm border border-red-300/30" />
-      {/* Front legs */}
       <div className="absolute bottom-0 left-2 w-1 h-3 bg-gradient-to-b from-amber-600 to-amber-800 rounded-b-sm" />
       <div className="absolute bottom-0 right-2 w-1 h-3 bg-gradient-to-b from-amber-600 to-amber-800 rounded-b-sm" />
-      {/* Cushion detail */}
-      <span className="absolute top-4.5 left-1/2 -translate-x-1/2 text-[8px] opacity-50">
-        ~
-      </span>
+      <span className="absolute top-4.5 left-1/2 -translate-x-1/2 text-[8px] opacity-50">~</span>
     </div>
   );
 }
@@ -225,19 +217,12 @@ function ChairIllustration() {
 function TableIllustration() {
   return (
     <div className="relative w-16 h-10 drop-shadow-md">
-      {/* Table top */}
       <div className="absolute top-2 left-0 right-0 h-2.5 bg-gradient-to-b from-amber-500 to-amber-700 rounded-md border-t border-amber-400/50" />
-      {/* Table cloth edge */}
       <div className="absolute top-4 left-0.5 right-0.5 h-1 bg-cream-100/30 rounded-b-sm" />
-      {/* Legs */}
       <div className="absolute bottom-0 left-1.5 w-1.5 h-4 bg-gradient-to-b from-amber-600 to-amber-900 rounded-b-sm" />
       <div className="absolute bottom-0 right-1.5 w-1.5 h-4 bg-gradient-to-b from-amber-600 to-amber-900 rounded-b-sm" />
-      {/* Plate */}
       <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-5 h-3 bg-cream-100/80 rounded-full border border-cream-300/50" />
-      {/* Food emoji on plate */}
-      <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 text-[10px]">
-        {'\uD83C\uDF56'}
-      </span>
+      <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 text-[10px]">{'\uD83C\uDF56'}</span>
     </div>
   );
 }
@@ -246,19 +231,14 @@ function TableIllustration() {
 function PotionShelfIllustration() {
   return (
     <div className="relative w-14 h-12 drop-shadow-md">
-      {/* Back panel */}
       <div className="absolute inset-0 bg-gradient-to-b from-amber-800 to-amber-950 rounded-md border border-amber-700/30" />
-      {/* Top shelf */}
       <div className="absolute top-3 left-0.5 right-0.5 h-0.5 bg-amber-600" />
-      {/* Bottom shelf */}
       <div className="absolute top-7 left-0.5 right-0.5 h-0.5 bg-amber-600" />
-      {/* Potions on shelves */}
       <span className="absolute top-0.5 left-1 text-[10px]">{'\uD83E\uDDEA'}</span>
       <span className="absolute top-0.5 left-5 text-[10px] hue-rotate-90">{'\uD83E\uDDEA'}</span>
       <span className="absolute top-0.5 right-1 text-[10px] hue-rotate-180">{'\uD83E\uDDEA'}</span>
       <span className="absolute top-4 left-2 text-[10px] hue-rotate-60">{'\uD83E\uDDEA'}</span>
       <span className="absolute top-4 right-2 text-[10px] hue-rotate-270">{'\uD83E\uDDEA'}</span>
-      {/* Glow effect */}
       <div className="absolute top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-green-400/20 rounded-full blur-sm" />
     </div>
   );
@@ -268,18 +248,12 @@ function PotionShelfIllustration() {
 function EquipmentRackIllustration() {
   return (
     <div className="relative w-14 h-12 drop-shadow-md">
-      {/* Rack frame */}
       <div className="absolute bottom-0 left-1 w-1 h-11 bg-gradient-to-b from-gray-500 to-gray-700 rounded-t-sm" />
       <div className="absolute bottom-0 right-1 w-1 h-11 bg-gradient-to-b from-gray-500 to-gray-700 rounded-t-sm" />
-      {/* Cross bar top */}
       <div className="absolute top-0 left-1 right-1 h-1 bg-gradient-to-r from-gray-500 via-gray-400 to-gray-500 rounded-full" />
-      {/* Base */}
       <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-b from-gray-600 to-gray-800 rounded-sm" />
-      {/* Hanging sword */}
       <span className="absolute top-1 left-2 text-[12px] transform -rotate-12">{'\u2694\uFE0F'}</span>
-      {/* Shield */}
       <span className="absolute top-1 right-1.5 text-[12px]">{'\uD83D\uDEE1\uFE0F'}</span>
-      {/* Armor */}
       <span className="absolute top-5 left-1/2 -translate-x-1/2 text-[12px]">{'\uD83E\uDDBE'}</span>
     </div>
   );
@@ -288,15 +262,11 @@ function EquipmentRackIllustration() {
 // --- Door Illustration ---
 function DoorIllustration({ isOpen }: { isOpen: boolean }) {
   return (
-    <div className="relative w-10 h-12 drop-shadow-md">
-      {/* Door frame */}
+    <div className="relative w-10 h-14 drop-shadow-md">
       <div className="absolute inset-0 bg-gradient-to-b from-amber-700 to-amber-900 rounded-t-lg border-2 border-amber-600/50" />
-      {/* Door panels */}
-      <div className="absolute top-1.5 left-1.5 right-1.5 h-4 bg-amber-600/60 rounded-sm border border-amber-500/30" />
-      <div className="absolute bottom-2 left-1.5 right-1.5 h-3.5 bg-amber-600/60 rounded-sm border border-amber-500/30" />
-      {/* Door knob */}
+      <div className="absolute top-1.5 left-1.5 right-1.5 h-4.5 bg-amber-600/60 rounded-sm border border-amber-500/30" />
+      <div className="absolute bottom-2 left-1.5 right-1.5 h-4 bg-amber-600/60 rounded-sm border border-amber-500/30" />
       <div className="absolute top-1/2 right-2 w-1.5 h-1.5 bg-yellow-400 rounded-full border border-yellow-300 shadow-sm" />
-      {/* Light from outside when open */}
       {isOpen && (
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-200/20 to-yellow-100/30 rounded-t-lg animate-pulse" />
       )}
@@ -305,28 +275,33 @@ function DoorIllustration({ isOpen }: { isOpen: boolean }) {
 }
 
 // ============================================================
-// Speech Bubble Component
+// Speech Bubble Component (follows son)
 // ============================================================
 
-function SpeechBubble({ text }: { text: string }) {
+function SpeechBubble({ text, align }: { text: string; align: 'left' | 'center' | 'right' }) {
   return (
-    <div className="relative max-w-[280px] mx-auto animate-fade-in">
-      <div className="bg-cream-50/90 backdrop-blur-sm border-2 border-cream-500/80 rounded-xl px-4 py-2.5 shadow-md">
-        <p className="text-sm font-serif text-cream-900 text-center italic">
+    <div className={`
+      relative max-w-[180px] animate-fade-in whitespace-normal
+      ${align === 'left' ? 'left-0' : align === 'right' ? 'right-0 -translate-x-full' : 'left-1/2 -translate-x-1/2'}
+    `}>
+      <div className="bg-cream-50/95 backdrop-blur-sm border-2 border-cream-500/80 rounded-xl px-3 py-2 shadow-lg">
+        <p className="text-xs font-serif text-cream-900 text-center italic leading-tight">
           &ldquo;{text}&rdquo;
         </p>
       </div>
-      {/* Triangle pointer */}
-      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0
-                      border-l-[8px] border-l-transparent
-                      border-t-[8px] border-t-cream-500/80
-                      border-r-[8px] border-r-transparent" />
+      <div className={`
+        absolute -bottom-2 w-0 h-0
+        border-l-[6px] border-l-transparent
+        border-t-[6px] border-t-cream-500/80
+        border-r-[6px] border-r-transparent
+        ${align === 'left' ? 'left-4' : align === 'right' ? 'right-4' : 'left-1/2 -translate-x-1/2'}
+      `} />
     </div>
   );
 }
 
 // ============================================================
-// Adventure Status Indicator (floating mini widget)
+// Adventure Status Indicator
 // ============================================================
 
 function AdventureStatusIndicator() {
@@ -352,11 +327,11 @@ function AdventureStatusIndicator() {
   if (!adventure?.active) return null;
 
   return (
-    <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg border border-white/10">
+    <div className="flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg border border-white/10">
       <span className="text-sm animate-pulse">{'\u2694\uFE0F'}</span>
-      <span className="text-xs text-cream-100 font-medium">아들이 모험 중...</span>
+      <span className="text-xs text-cream-100 font-medium">모험 중</span>
       <span className="text-xs text-cozy-gold font-bold tabular-nums">{timeInfo.display}</span>
-      <div className="w-12 h-1.5 bg-black/30 rounded-full overflow-hidden">
+      <div className="w-10 h-1.5 bg-black/30 rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-cozy-forest to-[#7BC67B] rounded-full transition-[width] duration-1000 ease-linear"
           style={{ width: `${timeInfo.percent}%` }}
@@ -392,9 +367,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
           getName: (item: Food) => item.name,
           getDesc: (item: Food) =>
             `배고픔 +${item.hungerRestore}${item.hpRestore ? ` HP +${item.hpRestore}` : ''}${item.tempBuff ? ` ${item.tempBuff.stat === 'all' ? '전스탯' : item.tempBuff.stat.toUpperCase()} +${item.tempBuff.value}` : ''}`,
-          onPlace: (idx: number) => {
-            actions.placeFood(idx);
-          },
+          onPlace: (idx: number) => { actions.placeFood(idx); },
         };
       case 'potion':
         return {
@@ -408,9 +381,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
             item.effect === 'instant'
               ? `HP +${item.value} (즉시)`
               : `${item.stat === 'all' ? '전스탯' : (item.stat ?? '').toUpperCase()} +${item.value} (1모험)`,
-          onPlace: (idx: number) => {
-            actions.placePotion(idx);
-          },
+          onPlace: (idx: number) => { actions.placePotion(idx); },
         };
       case 'book':
         return {
@@ -422,9 +393,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
           getName: (item: Book) => item.name,
           getDesc: (item: Book) =>
             `${item.statEffect.stat.toUpperCase()} +${item.statEffect.value}`,
-          onPlace: (idx: number) => {
-            actions.placeBook(idx);
-          },
+          onPlace: (idx: number) => { actions.placeBook(idx); },
         };
       case 'equipment':
         return {
@@ -453,21 +422,15 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={config.title}>
-      {/* Currently placed items */}
       <div className="mb-4">
         <p className="text-xs text-cream-700 mb-2">
           배치됨 ({config.placed.length}/{config.maxSlots})
         </p>
         <div className="flex flex-wrap gap-2">
           {config.placed.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-1.5 bg-cream-200 border border-cream-500 rounded-lg px-2.5 py-1.5"
-            >
+            <div key={i} className="flex items-center gap-1.5 bg-cream-200 border border-cream-500 rounded-lg px-2.5 py-1.5">
               <span className="text-lg">{config.getEmoji(item as never)}</span>
-              <span className="text-xs font-medium text-cream-800">
-                {config.getName(item as never)}
-              </span>
+              <span className="text-xs font-medium text-cream-800">{config.getName(item as never)}</span>
             </div>
           ))}
           {config.placed.length === 0 && (
@@ -476,14 +439,10 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
         </div>
       </div>
 
-      {/* Divider */}
       <div className="border-t border-cream-400 my-3" />
 
-      {/* Inventory items to place */}
       <div>
-        <p className="text-xs text-cream-700 mb-2">
-          인벤토리 ({config.items.length}개)
-        </p>
+        <p className="text-xs text-cream-700 mb-2">인벤토리 ({config.items.length}개)</p>
         {config.items.length === 0 ? (
           <p className="text-xs text-cream-500 italic">배치할 수 있는 아이템이 없습니다</p>
         ) : (
@@ -491,9 +450,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
             {config.items.map((item, idx) => (
               <button
                 key={idx}
-                onClick={() => {
-                  config.onPlace(idx);
-                }}
+                onClick={() => { config.onPlace(idx); }}
                 disabled={isFull}
                 className={`
                   flex items-center gap-2.5 w-full text-left
@@ -506,18 +463,10 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
               >
                 <span className="text-xl">{config.getEmoji(item as never)}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-cream-900 truncate">
-                    {config.getName(item as never)}
-                  </p>
-                  <p className="text-[11px] text-cream-600">
-                    {config.getDesc(item as never)}
-                  </p>
+                  <p className="text-sm font-medium text-cream-900 truncate">{config.getName(item as never)}</p>
+                  <p className="text-[11px] text-cream-600">{config.getDesc(item as never)}</p>
                 </div>
-                {!isFull && (
-                  <span className="text-xs text-cozy-amber font-bold shrink-0">
-                    배치
-                  </span>
-                )}
+                {!isFull && <span className="text-xs text-cozy-amber font-bold shrink-0">배치</span>}
               </button>
             ))}
           </div>
@@ -525,9 +474,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
       </div>
 
       {isFull && (
-        <p className="text-xs text-cozy-red mt-2 text-center">
-          슬롯이 가득 찼습니다
-        </p>
+        <p className="text-xs text-cozy-red mt-2 text-center">슬롯이 가득 찼습니다</p>
       )}
     </Modal>
   );
@@ -544,25 +491,30 @@ export default function HomePage() {
   const [placementModal, setPlacementModal] = useState<PlacementType | null>(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
 
+  // Skip transition on initial render
+  const isInitialRender = useRef(true);
+  useEffect(() => {
+    const timer = setTimeout(() => { isInitialRender.current = false; }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Track when son returns from adventure
   const prevAdventureRef = useRef(adventure?.active ?? false);
   useEffect(() => {
     const wasAdventuring = prevAdventureRef.current;
-    const isAdventuring = adventure?.active ?? false;
-
-    // Son just returned (was adventuring, now not)
-    if (wasAdventuring && !isAdventuring && son.isHome) {
+    const isAdv = adventure?.active ?? false;
+    if (wasAdventuring && !isAdv && son.isHome) {
       setShowReturnModal(true);
     }
-    prevAdventureRef.current = isAdventuring;
+    prevAdventureRef.current = isAdv;
   }, [adventure?.active, son.isHome]);
 
   const isAdventuring = adventure?.active ?? false;
   const sonIsHome = son.isHome && !isAdventuring;
   const currentAction = son.currentAction;
 
-  // Get the furniture highlight based on son's current action
-  const activeFurniture = useMemo(() => {
+  // Map son's action to which furniture he's at
+  const activeFurniture = useMemo((): FurnitureKey | null => {
     if (!sonIsHome) return null;
     switch (currentAction) {
       case SonAction.SLEEPING: return 'bed';
@@ -576,225 +528,269 @@ export default function HomePage() {
     }
   }, [currentAction, sonIsHome]);
 
-  // Prepare table items preview
-  const tableItems = home.table.map((f) => ({
-    emoji: EMOJI_MAP.food,
-    name: f.name,
-  }));
+  // Son's animated position
+  const sonPosition = useMemo(() => {
+    if (!sonIsHome) return SonPositionDefault();
+    const key = activeFurniture ?? 'idle';
+    return SON_POSITIONS[key];
+  }, [activeFurniture, sonIsHome]);
 
-  const potionItems = home.potionShelf.map((p) => ({
-    emoji: EMOJI_MAP.potion,
-    name: p.name,
-  }));
+  // Speech bubble alignment based on son's horizontal position
+  const bubbleAlign = useMemo((): 'left' | 'center' | 'right' => {
+    if (sonPosition.left < 30) return 'left';
+    if (sonPosition.left > 65) return 'right';
+    return 'center';
+  }, [sonPosition.left]);
 
-  const deskItems = home.desk.map((b) => ({
-    emoji: EMOJI_MAP.book,
-    name: b.name,
-  }));
+  // Prepare item previews
+  const tableItems = home.table.map((f) => ({ emoji: EMOJI_MAP.food, name: f.name }));
+  const potionItems = home.potionShelf.map((p) => ({ emoji: EMOJI_MAP.potion, name: p.name }));
+  const deskItems = home.desk.map((b) => ({ emoji: EMOJI_MAP.book, name: b.name }));
+  const equipmentItems = home.equipmentRack.map((e) => ({ emoji: EMOJI_MAP[e.slot] ?? '\u2694\uFE0F', name: e.name }));
 
-  const equipmentItems = home.equipmentRack.map((e) => ({
-    emoji: EMOJI_MAP[e.slot] ?? '\u2694\uFE0F',
-    name: e.name,
-  }));
-
-  // Son's current dialogue
   const dialogue = son.dialogue;
-
-  // Action indicator
   const actionInfo = ACTION_INDICATOR[currentAction] ?? ACTION_INDICATOR[SonAction.IDLE];
-
-  // Is door open (son departing)?
   const isDoorOpen = currentAction === SonAction.DEPARTING;
 
   return (
     <>
-      {/* Full-screen background with home interior */}
+      {/* Room container - spatial layout */}
       <div
-        className="relative min-h-[calc(100vh-140px)] flex flex-col"
+        className="relative overflow-hidden"
         style={{
+          height: 'calc(100vh - 140px)',
           backgroundImage: "url('/hero-mom/assets/backgrounds/home.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-black/35 pointer-events-none" />
+        {/* Dark overlay */}
+        <div className={`absolute inset-0 pointer-events-none transition-all duration-500 ${isAdventuring ? 'bg-black/50' : 'bg-black/30'}`} />
 
-        {/* Content layer */}
-        <div className="relative z-10 flex flex-col flex-1 px-3 py-3 gap-3">
+        {/* === Room zone hints (subtle) === */}
+        <div className="absolute top-0 left-0 w-[42%] h-[28%] bg-blue-400/5 rounded-br-3xl pointer-events-none z-0" />
+        <span className="absolute top-1.5 left-2 text-[8px] text-cream-200/25 pointer-events-none z-0 font-medium">침실</span>
 
-          {/* === Adventure Status Indicator (when son is away) === */}
-          {isAdventuring && (
-            <div className="flex justify-center pt-1">
-              <AdventureStatusIndicator />
-            </div>
-          )}
+        <div className="absolute top-0 right-0 w-[30%] h-[50%] bg-purple-400/5 rounded-bl-3xl pointer-events-none z-0" />
+        <span className="absolute top-1.5 right-2 text-[8px] text-cream-200/25 pointer-events-none z-0 font-medium">보관실</span>
 
-          {/* === Son Display Area (center-top, overlaid on background) === */}
-          {sonIsHome && (
-            <div className="flex flex-col items-center gap-2 pt-2">
-              {/* Speech bubble above son */}
-              {dialogue && <SpeechBubble text={dialogue} />}
+        <div className="absolute bottom-0 left-0 w-[55%] h-[42%] bg-amber-400/5 rounded-tr-3xl pointer-events-none z-0" />
+        <span className="absolute bottom-2 left-3 text-[8px] text-cream-200/25 pointer-events-none z-0 font-medium">거실</span>
 
-              {/* Action indicator */}
-              <div className="flex items-center justify-center gap-1.5">
-                <span className="text-lg animate-pulse drop-shadow-md">{actionInfo.emoji}</span>
-                <span className="text-sm font-medium text-cream-100 drop-shadow-sm">{actionInfo.label}</span>
+        {/* === Adventure Status (floating top-center) === */}
+        {isAdventuring && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+            <AdventureStatusIndicator />
+          </div>
+        )}
+
+        {/* === Furniture pieces (absolutely positioned) === */}
+
+        {/* Bed - top left (bedroom) */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.bed.top}%`, left: `${FURNITURE_POSITIONS.bed.left}%` }}>
+          <FurnitureWrapper
+            label="침대"
+            highlight={activeFurniture === 'bed'}
+            occupied={sonIsHome && currentAction === SonAction.SLEEPING}
+            occupiedLabel={'\uD83D\uDCA4'}
+            dimmed={isAdventuring}
+          >
+            <BedIllustration />
+          </FurnitureWrapper>
+        </div>
+
+        {/* Desk - top center */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.desk.top}%`, left: `${FURNITURE_POSITIONS.desk.left}%` }}>
+          <FurnitureWrapper
+            label="책상"
+            items={deskItems}
+            maxSlots={3}
+            onClick={() => setPlacementModal('book')}
+            highlight={activeFurniture === 'desk'}
+            dimmed={isAdventuring}
+          >
+            <DeskIllustration />
+          </FurnitureWrapper>
+        </div>
+
+        {/* Chair - left side */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.chair.top}%`, left: `${FURNITURE_POSITIONS.chair.left}%` }}>
+          <FurnitureWrapper
+            label="의자"
+            highlight={activeFurniture === 'chair'}
+            occupied={sonIsHome && currentAction === SonAction.RESTING}
+            occupiedLabel={'\uD83D\uDE0C'}
+            dimmed={isAdventuring}
+          >
+            <ChairIllustration />
+          </FurnitureWrapper>
+        </div>
+
+        {/* Potion Shelf - top right */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.potionShelf.top}%`, left: `${FURNITURE_POSITIONS.potionShelf.left}%` }}>
+          <FurnitureWrapper
+            label="포션 선반"
+            items={potionItems}
+            maxSlots={state.unlocks.potionSlots}
+            onClick={() => setPlacementModal('potion')}
+            highlight={activeFurniture === 'potionShelf'}
+            dimmed={isAdventuring}
+          >
+            <PotionShelfIllustration />
+          </FurnitureWrapper>
+        </div>
+
+        {/* Equipment Rack - right side */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.equipmentRack.top}%`, left: `${FURNITURE_POSITIONS.equipmentRack.left}%` }}>
+          <FurnitureWrapper
+            label="장비대"
+            items={equipmentItems}
+            maxSlots={3}
+            onClick={() => setPlacementModal('equipment')}
+            highlight={activeFurniture === 'equipmentRack'}
+            dimmed={isAdventuring}
+          >
+            <EquipmentRackIllustration />
+          </FurnitureWrapper>
+        </div>
+
+        {/* Training Dummy - bottom left */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.dummy.top}%`, left: `${FURNITURE_POSITIONS.dummy.left}%` }}>
+          <FurnitureWrapper
+            label="허수아비"
+            highlight={activeFurniture === 'dummy'}
+            occupied={sonIsHome && currentAction === SonAction.TRAINING}
+            occupiedLabel={'\u2694\uFE0F'}
+            dimmed={isAdventuring}
+          >
+            <DummyIllustration />
+          </FurnitureWrapper>
+        </div>
+
+        {/* Table - bottom center */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.table.top}%`, left: `${FURNITURE_POSITIONS.table.left}%` }}>
+          <FurnitureWrapper
+            label="식탁"
+            items={tableItems}
+            maxSlots={MAX_TABLE_FOOD}
+            onClick={() => setPlacementModal('food')}
+            highlight={activeFurniture === 'table'}
+            dimmed={isAdventuring}
+          >
+            <TableIllustration />
+          </FurnitureWrapper>
+        </div>
+
+        {/* Door - bottom right */}
+        <div className="absolute z-10" style={{ top: `${FURNITURE_POSITIONS.door.top}%`, left: `${FURNITURE_POSITIONS.door.left}%` }}>
+          <div
+            className={`
+              flex flex-col items-center gap-0.5 p-1.5 rounded-xl
+              border transition-all duration-300 backdrop-blur-sm
+              ${isDoorOpen && sonIsHome
+                ? 'bg-amber-100/30 border-2 border-cozy-amber/70 shadow-[0_0_16px_rgba(212,137,63,0.5)]'
+                : 'bg-white/15 border-white/15'
+              }
+              ${isAdventuring ? 'opacity-50' : ''}
+            `}
+          >
+            <DoorIllustration isOpen={isDoorOpen && sonIsHome} />
+            <span className="text-[9px] text-cream-100 drop-shadow-sm">
+              {isDoorOpen && sonIsHome ? '출발!' : '현관문'}
+            </span>
+          </div>
+        </div>
+
+        {/* === Son Character (animated movement) === */}
+        {sonIsHome && (
+          <div
+            className={`absolute z-20 ${isInitialRender.current ? '' : 'transition-all duration-700 ease-in-out'}`}
+            style={{
+              top: `${sonPosition.top}%`,
+              left: `${sonPosition.left}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            {/* Speech bubble above son */}
+            {dialogue && (
+              <div className="absolute bottom-full mb-1 w-[180px]" style={{
+                left: bubbleAlign === 'left' ? '0' : bubbleAlign === 'right' ? 'auto' : '50%',
+                right: bubbleAlign === 'right' ? '0' : 'auto',
+                transform: bubbleAlign === 'center' ? 'translateX(-50%)' : 'none',
+              }}>
+                <SpeechBubble text={dialogue} align={bubbleAlign} />
+              </div>
+            )}
+
+            {/* Action indicator chip */}
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm rounded-full px-2 py-0.5">
+                <span className="text-xs animate-pulse drop-shadow-md">{actionInfo.emoji}</span>
+                <span className="text-[10px] font-medium text-cream-100 drop-shadow-sm">{actionInfo.label}</span>
                 {son.actionTimer > 0 && (
-                  <span className="text-xs text-cream-200 tabular-nums ml-1 drop-shadow-sm">
-                    ({Math.ceil(son.actionTimer)}s)
+                  <span className="text-[9px] text-cream-200 tabular-nums drop-shadow-sm">
+                    {Math.ceil(son.actionTimer)}s
                   </span>
                 )}
               </div>
-
-              {/* Son character */}
-              <div className="flex justify-center">
-                <div
-                  className={`
-                    w-24 h-24 rounded-full
-                    bg-gradient-to-br from-amber-100/80 to-amber-200/80
-                    backdrop-blur-sm
-                    border-3 border-amber-300/70
-                    flex items-center justify-center
-                    shadow-lg
-                    transition-all duration-500
-                    ${currentAction === SonAction.TRAINING ? 'animate-bounce' : ''}
-                    ${currentAction === SonAction.SLEEPING ? 'opacity-80' : ''}
-                    ${currentAction === SonAction.DEPARTING ? 'animate-pulse' : ''}
-                  `}
-                >
-                  <span className="text-5xl select-none drop-shadow-md">
-                    {SON_STATE_EMOJI[currentAction] ?? '\uD83E\uDDD1'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Injury indicator */}
-              {son.isInjured && (
-                <div className="flex justify-center">
-                  <span className="text-xs bg-cozy-red/30 text-cream-100 px-2 py-0.5 rounded-full border border-cozy-red/40 backdrop-blur-sm">
-                    {'\uD83E\uDE79'} 부상 상태
-                  </span>
-                </div>
-              )}
             </div>
-          )}
 
-          {/* Empty house message (when son is away but not adventuring - brief transition state) */}
-          {!son.isHome && !isAdventuring && (
-            <div className="flex flex-col items-center justify-center py-8 gap-2">
+            {/* Son avatar */}
+            <div className="flex justify-center">
+              <div
+                className={`
+                  w-16 h-16 rounded-full
+                  bg-gradient-to-br from-amber-100/90 to-amber-200/90
+                  backdrop-blur-sm
+                  border-2 border-amber-300/70
+                  flex items-center justify-center
+                  shadow-lg
+                  transition-all duration-500
+                  ${currentAction === SonAction.TRAINING ? 'animate-bounce' : ''}
+                  ${currentAction === SonAction.SLEEPING ? 'opacity-80' : ''}
+                  ${currentAction === SonAction.DEPARTING ? 'animate-pulse' : ''}
+                `}
+              >
+                <span className="text-3xl select-none drop-shadow-md">
+                  {SON_STATE_EMOJI[currentAction] ?? '\uD83E\uDDD1'}
+                </span>
+              </div>
+            </div>
+
+            {/* Injury indicator */}
+            {son.isInjured && (
+              <div className="flex justify-center mt-0.5">
+                <span className="text-[9px] bg-cozy-red/40 text-cream-100 px-1.5 py-0.5 rounded-full border border-cozy-red/40 backdrop-blur-sm">
+                  {'\uD83E\uDE79'} 부상
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* === Empty house overlay (adventuring) === */}
+        {isAdventuring && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div className="text-center bg-black/30 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/10">
+              <span className="text-4xl drop-shadow-lg block mb-2">{'\uD83D\uDEB6'}</span>
+              <p className="text-sm text-cream-100 font-serif drop-shadow-sm">
+                아들이 모험을 떠났습니다...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Empty house (not adventuring, not home - brief transition) */}
+        {!son.isHome && !isAdventuring && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div className="text-center">
               <span className="text-5xl drop-shadow-lg">{'\uD83D\uDEB6'}</span>
               <p className="text-lg text-cream-100 font-serif drop-shadow-sm">
                 아들이 모험을 떠났습니다...
               </p>
             </div>
-          )}
-
-          {/* Spacer to push furniture to bottom */}
-          <div className="flex-1 min-h-[20px]" />
-
-          {/* === Furniture Grid (bottom half, glass-morphism) === */}
-          <div className="grid grid-cols-4 gap-2">
-            {/* Row 1: Bed, Dummy, Desk, Chair */}
-            <FurnitureWrapper
-              label="침대"
-              highlight={activeFurniture === 'bed'}
-              occupied={sonIsHome && currentAction === SonAction.SLEEPING}
-              occupiedLabel={'\uD83D\uDCA4'}
-              dimmed={isAdventuring}
-            >
-              <BedIllustration />
-            </FurnitureWrapper>
-            <FurnitureWrapper
-              label="허수아비"
-              highlight={activeFurniture === 'dummy'}
-              occupied={sonIsHome && currentAction === SonAction.TRAINING}
-              occupiedLabel={'\u2694\uFE0F'}
-              dimmed={isAdventuring}
-            >
-              <DummyIllustration />
-            </FurnitureWrapper>
-            <FurnitureWrapper
-              label="책상"
-              items={deskItems}
-              maxSlots={3}
-              onClick={() => setPlacementModal('book')}
-              highlight={activeFurniture === 'desk'}
-              dimmed={isAdventuring}
-            >
-              <DeskIllustration />
-            </FurnitureWrapper>
-            <FurnitureWrapper
-              label="의자"
-              highlight={activeFurniture === 'chair'}
-              occupied={sonIsHome && currentAction === SonAction.RESTING}
-              occupiedLabel={'\uD83D\uDE0C'}
-              dimmed={isAdventuring}
-            >
-              <ChairIllustration />
-            </FurnitureWrapper>
           </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {/* Row 2: Table, Potion Shelf, Equipment Rack */}
-            <FurnitureWrapper
-              label="식탁"
-              items={tableItems}
-              maxSlots={MAX_TABLE_FOOD}
-              onClick={() => setPlacementModal('food')}
-              highlight={activeFurniture === 'table'}
-              className="col-span-1"
-              dimmed={isAdventuring}
-            >
-              <TableIllustration />
-            </FurnitureWrapper>
-            <FurnitureWrapper
-              label="포션 선반"
-              items={potionItems}
-              maxSlots={state.unlocks.potionSlots}
-              onClick={() => setPlacementModal('potion')}
-              highlight={activeFurniture === 'potionShelf'}
-              className="col-span-1"
-              dimmed={isAdventuring}
-            >
-              <PotionShelfIllustration />
-            </FurnitureWrapper>
-            <FurnitureWrapper
-              label="장비대"
-              items={equipmentItems}
-              maxSlots={3}
-              onClick={() => setPlacementModal('equipment')}
-              highlight={false}
-              className="col-span-1"
-              dimmed={isAdventuring}
-            >
-              <EquipmentRackIllustration />
-            </FurnitureWrapper>
-          </div>
-
-          {/* Door (bottom-right) */}
-          <div className="flex justify-end">
-            <div
-              className={`
-                flex items-center gap-2 px-4 py-2 rounded-xl
-                border-2 transition-all duration-300 backdrop-blur-sm
-                ${isDoorOpen && sonIsHome
-                  ? 'bg-amber-100/30 border-cozy-amber/70 shadow-[0_0_12px_rgba(212,137,63,0.3)]'
-                  : 'bg-white/15 border-white/20'
-                }
-                ${isAdventuring ? 'opacity-60' : ''}
-              `}
-            >
-              <DoorIllustration isOpen={isDoorOpen && sonIsHome} />
-              <span className="text-xs text-cream-100 drop-shadow-sm">
-                {isDoorOpen && sonIsHome ? '출발 중...' : '현관문'}
-              </span>
-              {isDoorOpen && sonIsHome && (
-                <span className="text-lg animate-bounce">{'\uD83D\uDEB6'}</span>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Placement Modal */}
@@ -813,4 +809,9 @@ export default function HomePage() {
       />
     </>
   );
+}
+
+// Helper for default son position
+function SonPositionDefault(): Position {
+  return { top: 40, left: 48 };
 }
