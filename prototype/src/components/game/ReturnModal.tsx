@@ -12,10 +12,10 @@ import ProgressBar from '@/components/ui/ProgressBar';
 // ============================================================
 
 const OUTCOME_LABELS: Record<string, { label: string; color: string }> = {
-  overwhelming: { label: '\uC644\uC2B9', color: 'text-cozy-gold' },
-  victory: { label: '\uC2B9\uB9AC', color: 'text-cozy-forest' },
-  narrow: { label: '\uC2E0\uC2B9', color: 'text-cozy-amber' },
-  defeat: { label: '\uD328\uBC30', color: 'text-cozy-red' },
+  overwhelming: { label: '완승', color: 'text-cozy-gold' },
+  victory: { label: '승리', color: 'text-cozy-forest' },
+  narrow: { label: '신승', color: 'text-cozy-amber' },
+  defeat: { label: '패배', color: 'text-cozy-red' },
 };
 
 // ============================================================
@@ -23,31 +23,31 @@ const OUTCOME_LABELS: Record<string, { label: string; color: string }> = {
 // ============================================================
 
 const MATERIAL_NAMES: Partial<Record<MaterialKey, string>> = {
-  gold: '\uACE8\uB4DC',
-  wood: '\uB098\uBB34',
-  leather: '\uAC00\uC8FD',
-  ironOre: '\uCCA0\uAD11\uC11D',
-  mithril: '\uBBF8\uC2A4\uB9B4',
-  gems: '\uBCF4\uC11D',
-  enhancementStones: '\uAC15\uD654\uC11D',
-  specialOre: '\uD2B9\uC218 \uAD11\uC11D',
-  monsterTeeth: '\uBAC0\uC2A4\uD130 \uC774\uBE68',
-  monsterShell: '\uBAC0\uC2A4\uD130 \uAECD\uC9C8',
-  meat: '\uACE0\uAE30',
-  wheat: '\uBC00',
-  potato: '\uAC10\uC790',
-  carrot: '\uB2F9\uADFC',
-  apple: '\uC0AC\uACFC',
-  redHerb: '\uBD89\uC740 \uC57D\uCD08',
-  blueHerb: '\uD478\uB978 \uC57D\uCD08',
-  yellowHerb: '\uB178\uB780 \uC57D\uCD08',
-  wheatSeed: '\uBC00 \uC528\uC557',
-  potatoSeed: '\uAC10\uC790 \uC528\uC557',
-  carrotSeed: '\uB2F9\uADFC \uC528\uC557',
-  appleSeed: '\uC0AC\uACFC \uC528\uC557',
-  redHerbSeed: '\uBD89\uC740 \uC57D\uCD08 \uC528\uC557',
-  blueHerbSeed: '\uD478\uB978 \uC57D\uCD08 \uC528\uC557',
-  yellowHerbSeed: '\uB178\uB780 \uC57D\uCD08 \uC528\uC557',
+  gold: '골드',
+  wood: '나무',
+  leather: '가죽',
+  ironOre: '철광석',
+  mithril: '미스릴',
+  gems: '보석',
+  enhancementStones: '강화석',
+  specialOre: '특수 광석',
+  monsterTeeth: '몬스터 이빨',
+  monsterShell: '몬스터 껍질',
+  meat: '고기',
+  wheat: '밀',
+  potato: '감자',
+  carrot: '당근',
+  apple: '사과',
+  redHerb: '붉은 약초',
+  blueHerb: '푸른 약초',
+  yellowHerb: '노란 약초',
+  wheatSeed: '밀 씨앗',
+  potatoSeed: '감자 씨앗',
+  carrotSeed: '당근 씨앗',
+  appleSeed: '사과 씨앗',
+  redHerbSeed: '붉은 약초 씨앗',
+  blueHerbSeed: '푸른 약초 씨앗',
+  yellowHerbSeed: '노란 약초 씨앗',
 };
 
 // ============================================================
@@ -88,7 +88,7 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
       .filter(([, v]) => v && v > 0)
       .map(([key, value]) => ({
         key: key as MaterialKey,
-        emoji: EMOJI_MAP[key] ?? '\u2753',
+        emoji: EMOJI_MAP[key] ?? '❓',
         name: MATERIAL_NAMES[key as MaterialKey] ?? key,
         amount: value!,
       }));
@@ -103,9 +103,9 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
     : 100;
 
   const returnMood = useMemo(() => {
-    if (failed) return { emoji: '\uD83D\uDE22', label: '\uBAA8\uD5D8; \uC2E4\uD328...', bgClass: 'from-red-50 to-red-100' };
-    if (hpPercent < 50) return { emoji: '\uD83D\uDE23', label: '\uBD80\uC0C1 \uADC0\uD658', bgClass: 'from-orange-50 to-amber-100' };
-    return { emoji: '\uD83D\uDE0A', label: '\uBB34\uC0AC \uADC0\uD658!', bgClass: 'from-amber-50 to-yellow-100' };
+    if (failed) return { emoji: '😢', label: '모험 실패...', bgClass: 'from-red-50 to-red-100' };
+    if (hpPercent < 50) return { emoji: '😣', label: '부상 귀환', bgClass: 'from-orange-50 to-amber-100' };
+    return { emoji: '😊', label: '무사 귀환!', bgClass: 'from-amber-50 to-yellow-100' };
   }, [failed, hpPercent]);
 
   return (
@@ -114,7 +114,7 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
         {/* Header */}
         <div className="text-center">
           <h2 className="font-serif font-bold text-xl text-cream-950 mb-1">
-            {'\uD83C\uDFE0'} &#xC544;&#xB4E4;&#xC774; &#xB3CC;&#xC544;&#xC654;&#xC2B5;&#xB2C8;&#xB2E4;!
+            {'🏠'} 아들이 돌아왔습니다!
           </h2>
           <p className="text-sm text-cream-600">{returnMood.label}</p>
         </div>
@@ -135,18 +135,18 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
         {/* Injury notice */}
         {son.isInjured && (
           <div className="flex items-center gap-2 bg-cozy-red/10 border border-cozy-red/30 rounded-lg px-3 py-2 w-full">
-            <span>{'\uD83E\uDE79'}</span>
+            <span>{'🩹'}</span>
             <p className="text-sm text-cozy-red font-medium">
-              &#xC544;&#xB4E4;&#xC774; &#xBD80;&#xC0C1;&#xC744; &#xC785;&#xC5C8;&#xC2B5;&#xB2C8;&#xB2E4;. &#xD68C;&#xBCF5;&#xC774; &#xD544;&#xC694;&#xD569;&#xB2C8;&#xB2E4;.
+              아들이 부상을 입었습니다. 회복이 필요합니다.
             </p>
           </div>
         )}
 
         {failed && (
           <div className="flex items-center gap-2 bg-cozy-red/10 border border-cozy-red/30 rounded-lg px-3 py-2 w-full">
-            <span>{'\u26A0\uFE0F'}</span>
+            <span>{'⚠️'}</span>
             <p className="text-sm text-cozy-red font-medium">
-              &#xBAA8;&#xD5D8; &#xC2E4;&#xD328;&#xB85C; &#xBCF4;&#xC0C1;&#xC774; 50% &#xAC10;&#xC18C;&#xB418;&#xC5C8;&#xC2B5;&#xB2C8;&#xB2E4;.
+              모험 실패로 보상이 50% 감소되었습니다.
             </p>
           </div>
         )}
@@ -166,37 +166,37 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
         {/* Battle Summary */}
         <div className="w-full bg-cream-200 border border-cream-400 rounded-xl p-3">
           <h3 className="text-xs font-bold text-cream-700 mb-2">
-            {'\u2694\uFE0F'} &#xBAA8;&#xD5D8; &#xC694;&#xC57D;
+            {'⚔️'} 모험 요약
           </h3>
           <div className="flex items-center justify-between text-sm">
             <span className="text-cream-700">
-              &#xC804;&#xD22C;: {battleSummary.total}&#xD68C;
+              전투: {battleSummary.total}회
             </span>
             <div className="flex gap-2 text-xs">
               {battleSummary.overwhelming > 0 && (
                 <span className={OUTCOME_LABELS.overwhelming.color}>
-                  &#xC644;&#xC2B9; {battleSummary.overwhelming}
+                  완승 {battleSummary.overwhelming}
                 </span>
               )}
               {battleSummary.victory > 0 && (
                 <span className={OUTCOME_LABELS.victory.color}>
-                  &#xC2B9;&#xB9AC; {battleSummary.victory}
+                  승리 {battleSummary.victory}
                 </span>
               )}
               {battleSummary.narrow > 0 && (
                 <span className={OUTCOME_LABELS.narrow.color}>
-                  &#xC2E0;&#xC2B9; {battleSummary.narrow}
+                  신승 {battleSummary.narrow}
                 </span>
               )}
               {battleSummary.defeat > 0 && (
                 <span className={OUTCOME_LABELS.defeat.color}>
-                  &#xD328;&#xBC30; {battleSummary.defeat}
+                  패배 {battleSummary.defeat}
                 </span>
               )}
             </div>
           </div>
           <div className="mt-1.5 text-xs text-cream-600">
-            &#xD69D;&#xB4DD; EXP: <span className="font-bold text-cozy-teal">{expGained}</span>
+            획득 EXP: <span className="font-bold text-cozy-teal">{expGained}</span>
           </div>
         </div>
 
@@ -204,7 +204,7 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
         {rewardsList.length > 0 && (
           <div className="w-full bg-cream-200 border border-cream-400 rounded-xl p-3">
             <h3 className="text-xs font-bold text-cream-700 mb-2">
-              {'\uD83C\uDF81'} &#xBCF4;&#xC0C1;
+              {'🎁'} 보상
             </h3>
             <div className="flex flex-wrap gap-2">
               {rewardsList.map((reward) => (
@@ -254,7 +254,7 @@ export default function ReturnModal({ isOpen, onClose }: ReturnModalProps) {
             transition-all duration-150
           "
         >
-          &#xD655;&#xC778;
+          확인
         </button>
       </div>
     </Modal>

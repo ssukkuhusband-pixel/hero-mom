@@ -17,26 +17,26 @@ const STAT_LABEL: Record<string, string> = {
   agi: 'AGI',
   int: 'INT',
   hp: 'HP',
-  all: '\uC804\uC2A4\uD0EF',
+  all: '전스탯',
 };
 
 const STAT_EMOJI: Record<string, string> = {
-  str: '\u2694\uFE0F',
-  def: '\uD83D\uDEE1\uFE0F',
-  agi: '\uD83D\uDCA8',
-  int: '\uD83D\uDCD6',
-  hp: '\u2764\uFE0F',
-  all: '\u2728',
+  str: '⚔️',
+  def: '🛡️',
+  agi: '💨',
+  int: '📖',
+  hp: '❤️',
+  all: '✨',
 };
 
 const EFFECT_TYPE_LABEL: Record<string, string> = {
-  instant: '\uC988\uC2DC',
-  buff: '\uC9C0\uC18D',
+  instant: '즉시',
+  buff: '지속',
 };
 
 const EFFECT_TYPE_BADGE: Record<string, { label: string; className: string }> = {
-  instant: { label: '\uC988\uC2DC', className: 'bg-cozy-red/25 text-red-300' },
-  buff: { label: '\uC9C0\uC18D', className: 'bg-cozy-purple/25 text-purple-300' },
+  instant: { label: '즉시', className: 'bg-cozy-red/25 text-red-300' },
+  buff: { label: '지속', className: 'bg-cozy-purple/25 text-purple-300' },
 };
 
 // ============================================================
@@ -81,7 +81,7 @@ function PotionDetailPopup({
 
   const handleBrew = () => {
     actions.brewPotion(recipe.id);
-    addToast(`${recipe.name} \uC591\uC870 \uC644\uB8CC!`, 'success');
+    addToast(`${recipe.name} 양조 완료!`, 'success');
     onClose();
   };
 
@@ -94,9 +94,9 @@ function PotionDetailPopup({
     const statLabel = STAT_LABEL[recipe.stat] ?? recipe.stat;
     const statEmoji = STAT_EMOJI[recipe.stat] ?? '';
     if (recipe.effect === 'instant') {
-      effectDesc = `${statEmoji} ${statLabel} +${recipe.value} \uD68C\uBCF5`;
+      effectDesc = `${statEmoji} ${statLabel} +${recipe.value} 회복`;
     } else {
-      effectDesc = `${statEmoji} ${statLabel} +${recipe.value} (\uBAA8\uD5D8 1\uD68C)`;
+      effectDesc = `${statEmoji} ${statLabel} +${recipe.value} (모험 1회)`;
     }
   }
 
@@ -117,12 +117,12 @@ function PotionDetailPopup({
           onClick={onClose}
           className="absolute top-3 right-3 text-cream-300 hover:text-cream-100 text-lg leading-none"
         >
-          {'\u2715'}
+          {'✕'}
         </button>
 
         {/* Header */}
         <div className="flex flex-col items-center gap-1 mb-4">
-          <span className="text-5xl">{'\uD83E\uDDEA'}</span>
+          <span className="text-5xl">{'🧪'}</span>
           <h3 className="font-serif font-bold text-lg text-cream-100 drop-shadow">
             {recipe.name}
           </h3>
@@ -131,14 +131,14 @@ function PotionDetailPopup({
           </span>
           {!isUnlocked && (
             <span className="text-[10px] bg-black/40 text-cream-200 px-2.5 py-0.5 rounded-full mt-1">
-              {'\uD83D\uDD12'} Lv.{recipe.unlockLevel} \uD544\uC694
+              {'🔒'} Lv.{recipe.unlockLevel} 필요
             </span>
           )}
         </div>
 
         {/* Effect */}
         <div className="bg-purple-500/15 rounded-xl px-3 py-2.5 mb-3 border border-purple-400/20">
-          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">\uD6A8\uACFC</p>
+          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">효과</p>
           {effectDesc && (
             <p className="text-sm text-cream-100">{effectDesc}</p>
           )}
@@ -146,7 +146,7 @@ function PotionDetailPopup({
 
         {/* Materials */}
         <div className="bg-white/10 rounded-xl px-3 py-2.5 mb-4 border border-white/10">
-          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">\uC7AC\uB8CC</p>
+          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">재료</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             {materials.map(([key, amount]) => {
               const has = state.inventory.materials[key] ?? 0;
@@ -171,7 +171,7 @@ function PotionDetailPopup({
           disabled={!canBrew}
           className="btn-wood w-full text-sm !py-2.5"
         >
-          {isUnlocked ? '\u2697\uFE0F \uC591\uC870' : '\uD83D\uDD12 \uC7A0\uAE40'}
+          {isUnlocked ? '⚗️ 양조' : '🔒 잠김'}
         </button>
       </div>
     </div>
@@ -216,12 +216,12 @@ function PotionGridItem({
       {/* Lock overlay */}
       {!isUnlocked && (
         <span className="absolute top-1.5 right-1.5 text-[10px] bg-black/50 text-cream-200 px-1.5 py-0.5 rounded-full leading-none">
-          {'\uD83D\uDD12'}{recipe.unlockLevel}
+          {'🔒'}{recipe.unlockLevel}
         </span>
       )}
 
       {/* Potion emoji */}
-      <span className="text-[28px] leading-none">{'\uD83E\uDDEA'}</span>
+      <span className="text-[28px] leading-none">{'🧪'}</span>
 
       {/* Recipe name */}
       <span className="text-[11px] text-cream-200 font-medium text-center leading-tight truncate w-full">
@@ -262,7 +262,7 @@ function PotionInventory() {
   if (grouped.length === 0) {
     return (
       <div className="text-center py-3">
-        <p className="text-xs text-cream-400 italic">\uBCF4\uC720\uD55C \uD3EC\uC158\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</p>
+        <p className="text-xs text-cream-400 italic">보유한 포션이 없습니다</p>
       </div>
     );
   }
@@ -277,7 +277,7 @@ function PotionInventory() {
             key={potion.name}
             className="relative flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl bg-purple-500/10 border border-purple-400/20"
           >
-            <span className="text-2xl">{'\uD83E\uDDEA'}</span>
+            <span className="text-2xl">{'🧪'}</span>
             <span className="text-[10px] text-cream-300 truncate w-full text-center">{potion.name}</span>
             {/* Count badge */}
             <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-cream-100 bg-purple-700/90 rounded-full px-1 border border-purple-400/40">
@@ -316,19 +316,19 @@ export default function AlchemyPage() {
 
         <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
           <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
-            {'\u2697\uFE0F'} \uC5F0\uAE08\uC220 \uC5F0\uAD6C\uC18C
+            {'⚗️'} 연금술 연구소
           </h1>
 
           <div className="flex flex-col items-center gap-4 py-12">
-            <div className="text-6xl opacity-40">{'\uD83D\uDD12'}</div>
+            <div className="text-6xl opacity-40">{'🔒'}</div>
             <p className="text-sm text-cream-200 font-medium text-center">
-              {'\uD83D\uDD12'} \uC5F0\uAE08\uC220\uC740 \uC544\uB4E4 Lv.{UNLOCK_LEVELS.alchemy} \uC774\uD6C4 \uD574\uAE08\uB429\uB2C8\uB2E4
+              {'🔒'} 연금술은 아들 Lv.{UNLOCK_LEVELS.alchemy} 이후 해금됩니다
             </p>
             <p className="text-xs text-cream-400 text-center">
-              \uD604\uC7AC \uC544\uB4E4 \uB808\uBCA8: Lv.{sonLevel}
+              현재 아들 레벨: Lv.{sonLevel}
             </p>
             <p className="text-xs text-cream-400 italic text-center mt-4 max-w-[280px]">
-              {'\uC2E0\uBE44\uD55C \uC5F0\uAE30\uC640 \uBCF4\uB77C\uBE5B \uC561\uCCB4\uAC00 \uBD80\uAE00\uBD80\uAE00 \uB054\uC5B4\uC624\uB974\uB294 \uC5F0\uAD6C\uC18C...\n\uC544\uC9C1\uC740 \uBB38\uC774 \uC7A0\uACBC \uC788\uC2B5\uB2C8\uB2E4.'}
+              {'신비한 연기와 보랏빛 액체가 부글부글 끓어오르는 연구소...\n아직은 문이 잠겨 있습니다.'}
             </p>
           </div>
         </div>
@@ -350,13 +350,13 @@ export default function AlchemyPage() {
       <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
         {/* Header */}
         <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
-          {'\u2697\uFE0F'} \uC5F0\uAE08\uC220 \uC5F0\uAD6C\uC18C
+          {'⚗️'} 연금술 연구소
         </h1>
 
         {/* Recipe grid */}
         <div>
           <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
-            {'\uD83D\uDCD6'} \uD3EC\uC158 \uB808\uC2DC\uD53C
+            {'📖'} 포션 레시피
           </h2>
           <div className="grid grid-cols-3 gap-2">
             {POTION_RECIPES.map((recipe) => (
@@ -375,7 +375,7 @@ export default function AlchemyPage() {
         {/* Potion inventory */}
         <div>
           <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
-            {'\uD83E\uDDEA'} \uBCF4\uC720 \uD3EC\uC158
+            {'🧪'} 보유 포션
           </h2>
           <PotionInventory />
         </div>

@@ -7,8 +7,8 @@ import type { Equipment, EquipmentSlot, EquipmentGrade, MaterialKey, EquipmentRe
 import type { ShopItem } from '@/lib/constants';
 import { useToast } from '@/components/ui/Toast';
 
-const SLOT_EMOJI: Record<EquipmentSlot, string> = { weapon: '\u2694\uFE0F', armor: '\uD83D\uDEE1\uFE0F', accessory: '\uD83D\uDC8D' };
-const STAT_EMOJI: Record<string, string> = { str: '\u2694\uFE0F', def: '\uD83D\uDEE1\uFE0F', agi: '\uD83D\uDCA8', int: '\uD83D\uDCD6', hp: '\u2764\uFE0F' };
+const SLOT_EMOJI: Record<EquipmentSlot, string> = { weapon: '⚔️', armor: '🛡️', accessory: '💍' };
+const STAT_EMOJI: Record<string, string> = { str: '⚔️', def: '🛡️', agi: '💨', int: '📖', hp: '❤️' };
 const STAT_LABEL: Record<string, string> = { str: 'STR', def: 'DEF', agi: 'AGI', int: 'INT', hp: 'HP' };
 const GB: Record<EquipmentGrade, string> = { common: 'border-gray-400/40', uncommon: 'border-green-400/60', rare: 'border-blue-400/60', epic: 'border-purple-400/60' };
 type TabType = 'craft' | 'enhance' | 'gacha' | 'shop';
@@ -47,7 +47,7 @@ function RecipeGridItem({ recipe: r, onTap }: { recipe: EquipmentRecipe; onTap: 
       {can && ok && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-green-400 shadow-[0_0_4px_rgba(74,222,128,0.6)]" />}
       <span className="text-[28px] leading-none">{SLOT_EMOJI[r.slot]}</span>
       <span className="text-[10px] font-medium text-cream-100 leading-tight text-center line-clamp-2 px-1">{r.name}</span>
-      {!ok && <span className="text-[9px] text-cream-400">{'\uD83D\uDD12'} Lv.{r.unlockLevel}</span>}
+      {!ok && <span className="text-[9px] text-cream-400">{'🔒'} Lv.{r.unlockLevel}</span>}
     </button>
   );
 }
@@ -64,21 +64,21 @@ function RecipeDetailModal({ recipe: r, onClose }: { recipe: EquipmentRecipe; on
   return (
     <Overlay onClose={onClose}>
       <div className="bg-gradient-to-b from-[#2a1f14] to-[#1a1209] border border-white/20 rounded-2xl p-5 shadow-2xl">
-        <button onClick={onClose} className="absolute top-3 right-3 text-cream-400 hover:text-cream-100 text-lg">{'\u2715'}</button>
+        <button onClick={onClose} className="absolute top-3 right-3 text-cream-400 hover:text-cream-100 text-lg">{'✕'}</button>
         <div className="flex flex-col items-center gap-1 mb-4">
           <span className="text-5xl">{SLOT_EMOJI[r.slot]}</span>
           <p className="font-serif font-bold text-cream-100 text-lg drop-shadow">{r.name}</p>
           <p className="text-[11px] text-cream-400 capitalize">{r.grade}</p>
         </div>
         <div className="text-xs text-cream-100 bg-white/10 rounded-lg px-3 py-2 mb-3 text-center">{stats}</div>
-        <p className="text-[10px] text-cream-400 mb-1.5">{'\uD83D\uDCE6'} 필요 재료</p>
+        <p className="text-[10px] text-cream-400 mb-1.5">{'📦'} 필요 재료</p>
         <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-4">
           {mats.map(([k, amt]) => {
             const has = state.inventory.materials[k] ?? 0;
             return (<div key={k} className="flex items-center gap-1 text-xs"><span className="text-sm">{EMOJI_MAP[k] ?? '?'}</span><span className={`tabular-nums font-medium ${has >= amt ? 'text-cream-200' : 'text-red-400'}`}>{has}/{amt}</span></div>);
           })}
         </div>
-        <button onClick={craft} disabled={!can} className="btn-wood w-full text-sm !py-2.5">{ok ? '\u2692\uFE0F 제작' : '\uD83D\uDD12 잠김'}</button>
+        <button onClick={craft} disabled={!can} className="btn-wood w-full text-sm !py-2.5">{ok ? '🔨 제작' : '🔒 잠김'}</button>
       </div>
     </Overlay>
   );
@@ -124,7 +124,7 @@ function EnhanceTab() {
     if (aft && aft.enhanceLevel > bef) addToast(`${sel.name} +${bef + 1} 강화 성공!`, 'success');
     else addToast(`${sel.name} 강화 실패... 재료가 소모되었습니다`, 'error');
   };
-  if (!state.unlocks.systems.enhancement) return <div className="text-center py-6"><p className="text-sm text-cream-300">{'\uD83D\uDD12'} Lv.{UNLOCK_LEVELS.enhancement} 달성 시 해금됩니다</p></div>;
+  if (!state.unlocks.systems.enhancement) return <div className="text-center py-6"><p className="text-sm text-cream-300">{'🔒'} Lv.{UNLOCK_LEVELS.enhancement} 달성 시 해금됩니다</p></div>;
   return (
     <div className="flex flex-col gap-3">
       {allEq.length === 0 ? <p className="text-xs text-cream-400 italic text-center py-4">강화할 장비가 없습니다</p> : (
@@ -148,7 +148,7 @@ function EnhanceTab() {
               <p className="text-[10px]" style={{ color: GRADE_COLORS[sel.grade] }}>{sel.grade}</p>
             </div>
           </div>
-          {isMax ? <p className="text-sm font-bold text-cozy-gold text-center py-3">{'\u2728'} 최대 강화 달성! {'\u2728'}</p> : nxt ? (<>
+          {isMax ? <p className="text-sm font-bold text-cozy-gold text-center py-3">{'✨'} 최대 강화 달성! {'✨'}</p> : nxt ? (<>
             <div className="flex items-center gap-4 mb-2 text-xs">
               <div className="flex items-center gap-1"><span>{EMOJI_MAP.enhancementStones}</span><span className={`tabular-nums font-medium ${state.inventory.materials.enhancementStones >= nxt.stonesRequired ? 'text-cream-200' : 'text-red-400'}`}>{state.inventory.materials.enhancementStones}/{nxt.stonesRequired}</span></div>
               <div className="flex items-center gap-1"><span>{EMOJI_MAP.gold}</span><span className={`tabular-nums font-medium ${state.inventory.materials.gold >= nxt.goldCost ? 'text-cream-200' : 'text-red-400'}`}>{state.inventory.materials.gold}/{nxt.goldCost}</span></div>
@@ -160,10 +160,10 @@ function EnhanceTab() {
             <div className="bg-white/10 rounded-lg px-2.5 py-2 mb-3 text-xs">
               <p className="text-cream-300 mb-1 text-[10px]">강화 시 스탯 변화:</p>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                {Object.keys(pre).map((s) => <span key={s} className="text-cream-100">{STAT_EMOJI[s] ?? ''} {STAT_LABEL[s] ?? s} <span className="text-cream-300">{cur[s] ?? 0}</span>{' \u2192 '}<span className="text-green-400 font-bold">{pre[s]}</span></span>)}
+                {Object.keys(pre).map((s) => <span key={s} className="text-cream-100">{STAT_EMOJI[s] ?? ''} {STAT_LABEL[s] ?? s} <span className="text-cream-300">{cur[s] ?? 0}</span>{' → '}<span className="text-green-400 font-bold">{pre[s]}</span></span>)}
               </div>
             </div>
-            <button onClick={doEnhance} disabled={!canDo} className="btn-wood w-full text-sm !py-2">{'\uD83D\uDD2E'} +{sel.enhanceLevel} {'\u2192'} +{sel.enhanceLevel + 1} 강화</button>
+            <button onClick={doEnhance} disabled={!canDo} className="btn-wood w-full text-sm !py-2">{'🔮'} +{sel.enhanceLevel} {'→'} +{sel.enhanceLevel + 1} 강화</button>
           </>) : null}
         </div>
       )}
@@ -208,7 +208,7 @@ function GachaTab() {
         </div>
       </div>
       <button onClick={pull} disabled={!can || anim} className={`btn-wood w-full text-lg !py-4 relative overflow-hidden ${anim ? 'animate-pulse' : ''}`}>
-        {anim ? <span className="text-xl">{'\u2728'} 두근두근... {'\u2728'}</span> : <span>{'\uD83C\uDFB0'} 뽑기! ({EMOJI_MAP.specialOre}{cost})</span>}
+        {anim ? <span className="text-xl">{'✨'} 두근두근... {'✨'}</span> : <span>{'🎰'} 뽑기! ({EMOJI_MAP.specialOre}{cost})</span>}
       </button>
       {last && !anim && (
         <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 text-center animate-fade-in border-2" style={{ borderColor: GRADE_COLORS[last.grade] }}>
@@ -236,24 +236,24 @@ function ShopTab() {
     <div className="flex flex-col gap-3">
       <div className="flex gap-2">
         {(['buy', 'sell'] as const).map((t) => (
-          <button key={t} onClick={() => setSub(t)} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${sub === t ? 'bg-cozy-amber text-cream-50 shadow-md' : 'bg-cream-200 text-cream-700 hover:bg-cream-300'}`}>{t === 'buy' ? '\uD83D\uDED2 구매' : '\uD83D\uDCB0 판매'}</button>
+          <button key={t} onClick={() => setSub(t)} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${sub === t ? 'bg-cozy-amber text-cream-50 shadow-md' : 'bg-cream-200 text-cream-700 hover:bg-cream-300'}`}>{t === 'buy' ? '🛒 구매' : '💰 판매'}</button>
         ))}
       </div>
       {sub === 'buy' ? (
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-bold text-cream-200">{'\uD83D\uDCDA'} 서적</p>
+          <p className="text-xs font-bold text-cream-200">{'📚'} 서적</p>
           <div className="grid grid-cols-3 gap-2">
             {SHOP_INVENTORY.filter(i => i.category === 'book').map((it) => (
               <button key={it.id} onClick={() => buy(it)} disabled={gold < it.goldCost} className={gridCls(gold < it.goldCost)}>
-                <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-1 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'\uD83D\uDCB0'}{it.goldCost}</span>
+                <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-1 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'💰'}{it.goldCost}</span>
               </button>
             ))}
           </div>
-          <p className="text-xs font-bold text-cream-200">{'\uD83C\uDF31'} 씨앗</p>
+          <p className="text-xs font-bold text-cream-200">{'🌱'} 씨앗</p>
           <div className="grid grid-cols-3 gap-2">
             {SHOP_INVENTORY.filter(i => i.category === 'seed').map((it) => (
               <button key={it.id} onClick={() => buy(it)} disabled={gold < it.goldCost} className={gridCls(gold < it.goldCost)}>
-                <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-2 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'\uD83D\uDCB0'}{it.goldCost}</span>
+                <span className="text-2xl">{it.emoji}</span><span className="text-[10px] font-medium text-cream-100 text-center line-clamp-2 px-1">{it.name}</span><span className="text-[10px] font-bold text-cozy-amber">{'💰'}{it.goldCost}</span>
               </button>
             ))}
           </div>
@@ -261,15 +261,15 @@ function ShopTab() {
       ) : (
         <div className="flex flex-col gap-2">
           {state.inventory.food.length > 0 && (<>
-            <p className="text-xs font-bold text-cream-200">{'\uD83C\uDF56'} 음식 (개당 {SELL_PRICES.food}G)</p>
-            {state.inventory.food.map((f, i) => <button key={`f-${i}`} onClick={() => actions.sellFood(i)} className={sellCls}><span className="text-lg">{'\uD83C\uDF56'}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{f.name}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.food}G</span></button>)}
+            <p className="text-xs font-bold text-cream-200">{'🍖'} 음식 (개당 {SELL_PRICES.food}G)</p>
+            {state.inventory.food.map((f, i) => <button key={`f-${i}`} onClick={() => actions.sellFood(i)} className={sellCls}><span className="text-lg">{'🍖'}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{f.name}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.food}G</span></button>)}
           </>)}
           {state.inventory.potions.length > 0 && (<>
-            <p className="text-xs font-bold text-cream-200 mt-1">{'\uD83E\uDDEA'} 포션 (개당 {SELL_PRICES.potion}G)</p>
-            {state.inventory.potions.map((p, i) => <button key={`p-${i}`} onClick={() => actions.sellPotion(i)} className={sellCls}><span className="text-lg">{'\uD83E\uDDEA'}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{p.name}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.potion}G</span></button>)}
+            <p className="text-xs font-bold text-cream-200 mt-1">{'🧪'} 포션 (개당 {SELL_PRICES.potion}G)</p>
+            {state.inventory.potions.map((p, i) => <button key={`p-${i}`} onClick={() => actions.sellPotion(i)} className={sellCls}><span className="text-lg">{'🧪'}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{p.name}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.potion}G</span></button>)}
           </>)}
           {state.inventory.equipment.length > 0 && (<>
-            <p className="text-xs font-bold text-cream-200 mt-1">{'\u2694\uFE0F'} 장비 (등급별 가격)</p>
+            <p className="text-xs font-bold text-cream-200 mt-1">{'⚔️'} 장비 (등급별 가격)</p>
             {state.inventory.equipment.map((eq) => <button key={`e-${eq.id}`} onClick={() => actions.sellEquipment(eq.id)} className={sellCls}><span className="text-lg">{SLOT_EMOJI[eq.slot]}</span><span className="flex-1 text-sm font-medium text-cream-900 truncate">{eq.name}{eq.enhanceLevel > 0 ? ` +${eq.enhanceLevel}` : ''}</span><span className="text-xs font-bold text-green-600 shrink-0">+{SELL_PRICES.equipment[eq.grade]}G</span></button>)}
           </>)}
           {state.inventory.food.length === 0 && state.inventory.potions.length === 0 && state.inventory.equipment.length === 0 && <p className="text-sm text-cream-500 italic text-center py-4">판매할 아이템이 없습니다</p>}
@@ -284,8 +284,8 @@ export default function BlacksmithPage() {
   const [activeTab, setActiveTab] = useState<TabType>('craft');
   const gLock = state.son.stats.level < UNLOCK_LEVELS.gacha;
   const tabs: { key: TabType; label: string; locked?: boolean }[] = [
-    { key: 'craft', label: '\u2692\uFE0F 제작' }, { key: 'enhance', label: '\uD83D\uDD2E 강화' },
-    { key: 'gacha', label: '\uD83C\uDFB0 가챠', locked: gLock }, { key: 'shop', label: '\uD83D\uDED2 상점' },
+    { key: 'craft', label: '🔨 제작' }, { key: 'enhance', label: '🔮 강화' },
+    { key: 'gacha', label: '🎰 가챠', locked: gLock }, { key: 'shop', label: '🛒 상점' },
   ];
   const mats: MaterialKey[] = ['gold', 'wood', 'ironOre', 'mithril', 'leather', 'gems', 'enhancementStones', 'specialOre'];
   return (
@@ -293,7 +293,7 @@ export default function BlacksmithPage() {
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/blacksmith.png')" }} />
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
-        <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">{'\u2692\uFE0F'} 대장간</h1>
+        <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">{'🔨'} 대장간</h1>
         <div className="flex gap-1 bg-black/30 backdrop-blur-sm rounded-xl p-1 border border-white/10">
           {tabs.map((t) => (
             <button key={t.key} onClick={() => !t.locked && setActiveTab(t.key)} disabled={t.locked} className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${activeTab === t.key ? 'bg-white/20 text-cream-100 shadow-sm' : t.locked ? 'text-cream-500 cursor-not-allowed' : 'text-cream-300 hover:bg-white/10'}`}>
@@ -304,7 +304,7 @@ export default function BlacksmithPage() {
         {activeTab === 'craft' && <CraftTab />}
         {activeTab === 'enhance' && <EnhanceTab />}
         {activeTab === 'gacha' && !gLock && <GachaTab />}
-        {activeTab === 'gacha' && gLock && <div className="text-center py-8"><p className="text-sm text-cream-300">{'\uD83D\uDD12'} Lv.{UNLOCK_LEVELS.gacha} 달성 시 해금됩니다</p></div>}
+        {activeTab === 'gacha' && gLock && <div className="text-center py-8"><p className="text-sm text-cream-300">{'🔒'} Lv.{UNLOCK_LEVELS.gacha} 달성 시 해금됩니다</p></div>}
         {activeTab === 'shop' && <ShopTab />}
         <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30"><MaterialBar mk={mats} /></div>
       </div>

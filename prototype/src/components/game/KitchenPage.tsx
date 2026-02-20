@@ -12,11 +12,11 @@ import { useToast } from '@/components/ui/Toast';
 // ============================================================
 
 const FOOD_EMOJI: Record<string, string> = {
-  bread: '\uD83C\uDF5E',
-  vegetable_soup: '\uD83C\uDF72',
-  meat_stew: '\uD83C\uDF56',
-  fruit_pie: '\uD83E\uDD67',
-  hero_lunchbox: '\uD83C\uDF71',
+  bread: '🍞',
+  vegetable_soup: '🍲',
+  meat_stew: '🍖',
+  fruit_pie: '🥧',
+  hero_lunchbox: '🍱',
 };
 
 const STAT_LABEL: Record<string, string> = {
@@ -24,7 +24,7 @@ const STAT_LABEL: Record<string, string> = {
   def: 'DEF',
   agi: 'AGI',
   int: 'INT',
-  all: '\uC804\uC2A4\uD0EF',
+  all: '전스탯',
 };
 
 // ============================================================
@@ -66,23 +66,23 @@ function RecipeDetailPopup({
   const sonLevel = state.son.stats.level;
   const isUnlocked = sonLevel >= recipe.unlockLevel || recipe.unlockLevel === 0;
   const canCook = canCookFood(state, recipe.id);
-  const foodEmoji = FOOD_EMOJI[recipe.id] ?? '\uD83C\uDF5E';
+  const foodEmoji = FOOD_EMOJI[recipe.id] ?? '🍞';
 
   const handleCook = () => {
     actions.cookFood(recipe.id);
-    addToast(`${recipe.name} \uC694\uB9AC \uC644\uB8CC!`, 'success');
+    addToast(`${recipe.name} 요리 완료!`, 'success');
     onClose();
   };
 
   // Build effects list
   const effects: { icon: string; label: string }[] = [];
-  effects.push({ icon: '\uD83C\uDF56', label: `\uBC30\uACE0\uD514 +${recipe.hungerRestore}` });
+  effects.push({ icon: '🍖', label: `배고픔 +${recipe.hungerRestore}` });
   if (recipe.hpRestore) {
-    effects.push({ icon: '\u2764\uFE0F', label: `HP +${recipe.hpRestore}` });
+    effects.push({ icon: '❤️', label: `HP +${recipe.hpRestore}` });
   }
   if (recipe.tempBuff) {
     effects.push({
-      icon: '\u2B50',
+      icon: '⭐',
       label: `${STAT_LABEL[recipe.tempBuff.stat] ?? recipe.tempBuff.stat} +${recipe.tempBuff.value}`,
     });
   }
@@ -104,7 +104,7 @@ function RecipeDetailPopup({
           onClick={onClose}
           className="absolute top-3 right-3 text-cream-300 hover:text-cream-100 text-lg leading-none"
         >
-          {'\u2715'}
+          {'✕'}
         </button>
 
         {/* Header */}
@@ -115,14 +115,14 @@ function RecipeDetailPopup({
           </h3>
           {!isUnlocked && (
             <span className="text-[10px] bg-black/40 text-cream-200 px-2.5 py-0.5 rounded-full">
-              {'\uD83D\uDD12'} Lv.{recipe.unlockLevel} \uD544\uC694
+              {'🔒'} Lv.{recipe.unlockLevel} 필요
             </span>
           )}
         </div>
 
         {/* Effects */}
         <div className="bg-white/10 rounded-xl px-3 py-2.5 mb-3 border border-white/10">
-          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">\uD6A8\uACFC</p>
+          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">효과</p>
           <div className="flex flex-col gap-1">
             {effects.map((eff, i) => (
               <div key={i} className="flex items-center gap-2 text-sm text-cream-100">
@@ -135,7 +135,7 @@ function RecipeDetailPopup({
 
         {/* Materials */}
         <div className="bg-white/10 rounded-xl px-3 py-2.5 mb-4 border border-white/10">
-          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">\uC7AC\uB8CC</p>
+          <p className="text-[10px] text-cream-400 uppercase tracking-wider mb-1.5">재료</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             {materials.map(([key, amount]) => {
               const has = state.inventory.materials[key] ?? 0;
@@ -160,7 +160,7 @@ function RecipeDetailPopup({
           disabled={!canCook}
           className="btn-wood w-full text-sm !py-2.5"
         >
-          {isUnlocked ? '\uD83C\uDF73 \uC694\uB9AC' : '\uD83D\uDD12 \uC7A0\uAE40'}
+          {isUnlocked ? '🍳 요리' : '🔒 잠김'}
         </button>
       </div>
     </div>
@@ -182,7 +182,7 @@ function RecipeGridItem({
   const sonLevel = state.son.stats.level;
   const isUnlocked = sonLevel >= recipe.unlockLevel || recipe.unlockLevel === 0;
   const canCook = canCookFood(state, recipe.id);
-  const foodEmoji = FOOD_EMOJI[recipe.id] ?? '\uD83C\uDF5E';
+  const foodEmoji = FOOD_EMOJI[recipe.id] ?? '🍞';
 
   return (
     <button
@@ -205,7 +205,7 @@ function RecipeGridItem({
       {/* Lock overlay */}
       {!isUnlocked && (
         <span className="absolute top-1.5 right-1.5 text-[10px] bg-black/50 text-cream-200 px-1.5 py-0.5 rounded-full leading-none">
-          {'\uD83D\uDD12'}{recipe.unlockLevel}
+          {'🔒'}{recipe.unlockLevel}
         </span>
       )}
 
@@ -244,7 +244,7 @@ function FoodInventory() {
   if (grouped.length === 0) {
     return (
       <div className="text-center py-3">
-        <p className="text-xs text-cream-400 italic">\uBCF4\uC720\uD55C \uC74C\uC2DD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</p>
+        <p className="text-xs text-cream-400 italic">보유한 음식이 없습니다</p>
       </div>
     );
   }
@@ -255,7 +255,7 @@ function FoodInventory() {
         const matchedEmoji =
           Object.entries(FOOD_EMOJI).find(
             ([key]) => food.name === FOOD_RECIPES.find((r) => r.id === key)?.name
-          )?.[1] ?? '\uD83C\uDF5E';
+          )?.[1] ?? '🍞';
 
         return (
           <div
@@ -299,13 +299,13 @@ export default function KitchenPage() {
       <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
         {/* Header */}
         <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
-          {'\uD83C\uDF73'} \uC8FC\uBC29
+          {'🍳'} 주방
         </h1>
 
         {/* Recipe grid */}
         <div>
           <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
-            {'\uD83D\uDCD6'} \uB808\uC2DC\uD53C
+            {'📖'} 레시피
           </h2>
           <div className="grid grid-cols-3 gap-2">
             {FOOD_RECIPES.map((recipe) => (
@@ -324,7 +324,7 @@ export default function KitchenPage() {
         {/* Food inventory */}
         <div>
           <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
-            {'\uD83C\uDF5E'} \uBCF4\uC720 \uC74C\uC2DD
+            {'🍞'} 보유 음식
           </h2>
           <FoodInventory />
         </div>

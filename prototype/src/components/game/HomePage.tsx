@@ -30,29 +30,29 @@ interface RoomDef {
 const ROOMS: RoomDef[] = [
   {
     id: 'living',
-    name: '\uAC70\uC2E4',
-    emoji: '\uD83D\uDECB\uFE0F',
+    name: '거실',
+    emoji: '🛋️',
     furniture: ['chair', 'dummy', 'door'],
     bgGradient: 'from-amber-900/80 via-amber-800/60 to-stone-900/80',
   },
   {
     id: 'kitchen',
-    name: '\uC8FC\uBC29',
-    emoji: '\uD83C\uDF73',
+    name: '주방',
+    emoji: '🍳',
     furniture: ['table'],
     bgGradient: 'from-orange-900/80 via-orange-800/60 to-amber-950/80',
   },
   {
     id: 'study',
-    name: '\uC11C\uC7AC',
-    emoji: '\uD83D\uDCDA',
+    name: '서재',
+    emoji: '📚',
     furniture: ['desk'],
     bgGradient: 'from-emerald-900/80 via-teal-900/60 to-stone-900/80',
   },
   {
     id: 'sonRoom',
-    name: '\uC544\uB4E4\uBC29',
-    emoji: '\uD83D\uDECF\uFE0F',
+    name: '아들방',
+    emoji: '🛏️',
     furniture: ['bed', 'potionShelf', 'equipmentRack'],
     bgGradient: 'from-indigo-900/80 via-blue-900/60 to-slate-900/80',
   },
@@ -209,7 +209,7 @@ export default function HomePage() {
   const potionItems = home.potionShelf.map((p) => ({ emoji: EMOJI_MAP.potion, name: p.name }));
   const deskItems = home.desk.map((b) => ({ emoji: EMOJI_MAP.book, name: b.name }));
   const equipmentItems = home.equipmentRack.map((e) => ({
-    emoji: EMOJI_MAP[e.slot] ?? '\u2694\uFE0F', name: e.name,
+    emoji: EMOJI_MAP[e.slot] ?? '⚔️', name: e.name,
   }));
 
   const dialogue = son.dialogue;
@@ -305,9 +305,9 @@ export default function HomePage() {
               />
             ) : isAdventuring ? (
               <div className="text-center bg-black/30 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/10">
-                <span className="text-3xl drop-shadow-lg block mb-1">{'\uD83D\uDEB6'}</span>
+                <span className="text-3xl drop-shadow-lg block mb-1">{'🚶'}</span>
                 <p className="text-xs text-cream-100 font-serif drop-shadow-sm">
-                  {'\uC544\uB4E4\uC774 \uBAA8\uD5D8\uC744 \uB5A0\uB0AC\uC2B5\uB2C8\uB2E4...'}
+                  {'아들이 모험을 떠났습니다...'}
                 </p>
               </div>
             ) : sonIsHome && !sonInThisRoom ? (
@@ -317,14 +317,14 @@ export default function HomePage() {
               >
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <span className="text-xs text-cream-200">
-                  {'\uC544\uB4E4\uC740'} <strong className="text-cream-100">{sonRoomName}</strong>{'\uC5D0 \uC788\uC2B5\uB2C8\uB2E4'}
+                  {'아들은'} <strong className="text-cream-100">{sonRoomName}</strong>{'에 있습니다'}
                 </span>
               </button>
             ) : !son.isHome && !isAdventuring ? (
               <div className="text-center">
-                <span className="text-3xl drop-shadow-lg">{'\uD83D\uDEB6'}</span>
+                <span className="text-3xl drop-shadow-lg">{'🚶'}</span>
                 <p className="text-xs text-cream-100 font-serif drop-shadow-sm mt-1">
-                  {'\uC544\uB4E4\uC774 \uBAA8\uD5D8\uC744 \uB5A0\uB0AC\uC2B5\uB2C8\uB2E4...'}
+                  {'아들이 모험을 떠났습니다...'}
                 </p>
               </div>
             ) : null}
