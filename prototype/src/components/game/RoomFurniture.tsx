@@ -156,6 +156,7 @@ export function DoorIllustration({ isOpen }: { isOpen: boolean }) {
 export interface FurnitureCardProps {
   children: React.ReactNode;
   label: string;
+  furnitureKey?: string;
   items?: Array<{ emoji: string; name: string }>;
   maxSlots?: number;
   onClick?: () => void;
@@ -163,13 +164,12 @@ export interface FurnitureCardProps {
   occupied?: boolean;
   occupiedLabel?: string;
   dimmed?: boolean;
-  /** Render node to show the son character attached to this furniture */
-  sonNode?: React.ReactNode;
 }
 
 export function FurnitureCard({
   children,
   label,
+  furnitureKey,
   items = [],
   maxSlots,
   onClick,
@@ -177,69 +177,60 @@ export function FurnitureCard({
   occupied = false,
   occupiedLabel,
   dimmed = false,
-  sonNode,
 }: FurnitureCardProps) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <button
-        onClick={onClick}
-        disabled={!onClick && !highlight}
-        className={`
-          relative flex flex-col items-center gap-1.5 p-3 rounded-2xl
-          backdrop-blur-sm transition-all duration-300 min-w-[90px]
-          ${dimmed
-            ? 'bg-white/10 border-2 border-white/10 opacity-40 pointer-events-none'
-            : highlight
-              ? 'bg-white/30 border-2 border-cozy-amber shadow-[0_0_20px_rgba(212,137,63,0.5)] scale-105'
-              : 'bg-white/15 border border-white/20 hover:bg-white/25'
-          }
-          ${onClick ? 'cursor-pointer hover:border-cozy-amber/50 hover:shadow-md active:scale-95' : 'cursor-default'}
-        `}
-      >
-        {/* Occupied badge */}
-        {occupied && occupiedLabel && (
-          <span className="absolute -top-2 -right-2 text-base bg-cozy-amber/90 text-cream-50 w-7 h-7 flex items-center justify-center rounded-full font-bold shadow-md border-2 border-white/30 animate-pulse">
-            {occupiedLabel}
-          </span>
-        )}
+    <button
+      data-furniture={furnitureKey}
+      onClick={onClick}
+      disabled={!onClick && !highlight}
+      className={`
+        relative flex flex-col items-center gap-1.5 p-3 rounded-2xl
+        backdrop-blur-sm transition-all duration-300 min-w-[90px]
+        ${dimmed
+          ? 'bg-white/10 border-2 border-white/10 opacity-40 pointer-events-none'
+          : highlight
+            ? 'bg-white/30 border-2 border-cozy-amber shadow-[0_0_20px_rgba(212,137,63,0.5)] scale-105'
+            : 'bg-white/15 border border-white/20 hover:bg-white/25'
+        }
+        ${onClick ? 'cursor-pointer hover:border-cozy-amber/50 hover:shadow-md active:scale-95' : 'cursor-default'}
+      `}
+    >
+      {/* Occupied badge */}
+      {occupied && occupiedLabel && (
+        <span className="absolute -top-2 -right-2 text-base bg-cozy-amber/90 text-cream-50 w-7 h-7 flex items-center justify-center rounded-full font-bold shadow-md border-2 border-white/30 animate-pulse">
+          {occupiedLabel}
+        </span>
+      )}
 
-        {/* Furniture illustration */}
-        <div className="flex items-center justify-center min-h-[48px]">
-          {children}
-        </div>
+      {/* Furniture illustration */}
+      <div className="flex items-center justify-center min-h-[48px]">
+        {children}
+      </div>
 
-        {/* Label */}
-        <span className="text-[11px] text-cream-100 font-medium drop-shadow-sm leading-tight">{label}</span>
+      {/* Label */}
+      <span className="text-[11px] text-cream-100 font-medium drop-shadow-sm leading-tight">{label}</span>
 
-        {/* Placed items preview */}
-        {items.length > 0 && (
-          <div className="flex gap-1 flex-wrap justify-center max-w-[80px]">
-            {items.slice(0, 4).map((item, i) => (
-              <span key={i} className="text-sm drop-shadow-sm" title={item.name}>
-                {item.emoji}
-              </span>
-            ))}
-            {items.length > 4 && (
-              <span className="text-[10px] text-cream-300/70">+{items.length - 4}</span>
-            )}
-          </div>
-        )}
-
-        {/* Empty slot hint */}
-        {items.length === 0 && maxSlots && onClick && (
-          <span className="text-[9px] text-cream-300/60 leading-tight">
-            탭하여 배치
-          </span>
-        )}
-      </button>
-
-      {/* Son character attached to this furniture */}
-      {sonNode && (
-        <div className="flex flex-col items-center -mt-1 transition-all duration-300">
-          {sonNode}
+      {/* Placed items preview */}
+      {items.length > 0 && (
+        <div className="flex gap-1 flex-wrap justify-center max-w-[80px]">
+          {items.slice(0, 4).map((item, i) => (
+            <span key={i} className="text-sm drop-shadow-sm" title={item.name}>
+              {item.emoji}
+            </span>
+          ))}
+          {items.length > 4 && (
+            <span className="text-[10px] text-cream-300/70">+{items.length - 4}</span>
+          )}
         </div>
       )}
-    </div>
+
+      {/* Empty slot hint */}
+      {items.length === 0 && maxSlots && onClick && (
+        <span className="text-[9px] text-cream-300/60 leading-tight">
+          탭하여 배치
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -260,7 +251,6 @@ export function FurnitureSlot({
   equipmentItems,
   potionSlots,
   onOpenPlacement,
-  sonNode,
 }: {
   furnitureKey: FurnitureKey;
   activeFurniture: FurnitureKey | null;
@@ -274,22 +264,19 @@ export function FurnitureSlot({
   equipmentItems: Array<{ emoji: string; name: string }>;
   potionSlots: number;
   onOpenPlacement: (type: PlacementType) => void;
-  /** Son character node to render below this furniture when son is using it */
-  sonNode?: React.ReactNode;
 }) {
   const isHighlighted = activeFurniture === furnitureKey;
-  const showSon = isHighlighted && sonNode;
 
   switch (furnitureKey) {
     case 'bed':
       return (
         <FurnitureCard
           label={'침대'}
+          furnitureKey={furnitureKey}
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.SLEEPING}
           occupiedLabel={'💤'}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <BedIllustration />
         </FurnitureCard>
@@ -298,11 +285,11 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'허수아비'}
+          furnitureKey={furnitureKey}
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.TRAINING}
           occupiedLabel={'⚔️'}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <DummyIllustration />
         </FurnitureCard>
@@ -311,12 +298,12 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'책상'}
+          furnitureKey={furnitureKey}
           items={deskItems}
           maxSlots={3}
           onClick={() => onOpenPlacement('book')}
           highlight={isHighlighted}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <DeskIllustration />
         </FurnitureCard>
@@ -325,11 +312,11 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'의자'}
+          furnitureKey={furnitureKey}
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.RESTING}
           occupiedLabel={'😌'}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <ChairIllustration />
         </FurnitureCard>
@@ -338,12 +325,12 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'식탁'}
+          furnitureKey={furnitureKey}
           items={tableItems}
           maxSlots={MAX_TABLE_FOOD}
           onClick={() => onOpenPlacement('food')}
           highlight={isHighlighted}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <TableIllustration />
         </FurnitureCard>
@@ -352,12 +339,12 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'포션 선반'}
+          furnitureKey={furnitureKey}
           items={potionItems}
           maxSlots={potionSlots}
           onClick={() => onOpenPlacement('potion')}
           highlight={isHighlighted}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <PotionShelfIllustration />
         </FurnitureCard>
@@ -366,12 +353,12 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'장비대'}
+          furnitureKey={furnitureKey}
           items={equipmentItems}
           maxSlots={3}
           onClick={() => onOpenPlacement('equipment')}
           highlight={isHighlighted}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <EquipmentRackIllustration />
         </FurnitureCard>
@@ -380,9 +367,9 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={isDoorOpen && sonIsHome ? '출발!' : '현관문'}
+          furnitureKey={furnitureKey}
           highlight={isDoorOpen && sonIsHome}
           dimmed={isAdventuring}
-          sonNode={(isDoorOpen && sonIsHome && sonNode) ? sonNode : undefined}
         >
           <DoorIllustration isOpen={isDoorOpen && sonIsHome} />
         </FurnitureCard>
@@ -391,6 +378,7 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'화덕'}
+          furnitureKey={furnitureKey}
           onClick={() => onOpenPlacement('cooking' as PlacementType)}
           highlight={isHighlighted}
           dimmed={isAdventuring}
@@ -402,12 +390,12 @@ export function FurnitureSlot({
       return (
         <FurnitureCard
           label={'농장'}
+          furnitureKey={furnitureKey}
           onClick={() => onOpenPlacement('farming' as PlacementType)}
           highlight={isHighlighted}
           occupied={sonIsHome && currentAction === SonAction.FARMING}
           occupiedLabel={'🌱'}
           dimmed={isAdventuring}
-          sonNode={showSon ? sonNode : undefined}
         >
           <FarmIllustration />
         </FurnitureCard>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useGameState, useGameActions } from '@/lib/gameState';
 import { SonAction } from '@/lib/types';
 import type { FurnitureKey } from '@/lib/types';
@@ -234,6 +234,38 @@ export default function HomePage() {
   const isDoorOpen = currentAction === SonAction.DEPARTING;
   const sonRoomName = sonRoom ? ROOMS.find(r => r.id === sonRoom)?.name ?? '' : '';
 
+  // Track position of active furniture for son overlay
+  const roomContainerRef = useRef<HTMLDivElement>(null);
+  const [sonPos, setSonPos] = useState<{ x: number; y: number } | null>(null);
+
+  const updateSonPosition = useCallback(() => {
+    if (!activeFurniture || !roomContainerRef.current) {
+      setSonPos(null);
+      return;
+    }
+    const container = roomContainerRef.current;
+    const el = container.querySelector(`[data-furniture="${activeFurniture}"]`);
+    if (!el) { setSonPos(null); return; }
+
+    const containerRect = container.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+
+    setSonPos({
+      x: elRect.left + elRect.width / 2 - containerRect.left,
+      y: elRect.bottom - containerRect.top + 4,
+    });
+  }, [activeFurniture]);
+
+  useEffect(() => {
+    updateSonPosition();
+  }, [updateSonPosition, activeRoom]);
+
+  // Re-measure on resize
+  useEffect(() => {
+    window.addEventListener('resize', updateSonPosition);
+    return () => window.removeEventListener('resize', updateSonPosition);
+  }, [updateSonPosition]);
+
   return (
     <>
       {/* Room tabs */}
@@ -241,6 +273,7 @@ export default function HomePage() {
 
       {/* Room viewport */}
       <div
+        ref={roomContainerRef}
         className={`relative overflow-hidden bg-gradient-to-b ${currentRoomDef.bgGradient} transition-all duration-500`}
         style={{ height: 'calc(100vh - 180px)' }}
       >
@@ -274,10 +307,10 @@ export default function HomePage() {
             <span className="text-xs text-cream-100 font-medium">{currentRoomDef.name}</span>
           </div>
 
-          {/* Furniture grid + Son character (attached to active furniture) */}
+          {/* Furniture grid (layout fixed — never affected by son) */}
           <div className="flex-1 flex items-center justify-center w-full">
-            <div className={`flex flex-wrap gap-3 justify-center items-start ${
-              currentRoomDef.furniture.length === 1 ? 'max-w-[160px]' : 'max-w-[320px]'
+            <div className={`flex flex-wrap gap-3 justify-center items-center ${
+              currentRoomDef.furniture.length === 1 ? 'max-w-[140px]' : 'max-w-[300px]'
             }`}>
               {currentRoomDef.furniture.map((fKey) => (
                 <FurnitureSlot
@@ -302,40 +335,18 @@ export default function HomePage() {
                       setPlacementModal(type);
                     }
                   }}
-                  sonNode={
-                    <SonCharacter
-                      currentAction={currentAction}
-                      actionTimer={son.actionTimer}
-                      isInjured={son.isInjured}
-                      dialogue={dialogue}
-                      activeDialogue={activeDialogue}
-                      respondDialogue={respondDialogue}
-                      dismissDlg={dismissDlg}
-                      gameTime={state.gameTime}
-                    />
-                  }
                 />
               ))}
             </div>
           </div>
 
-          {/* Son character when IDLE (no furniture) or not in this room */}
-          <div className="w-full flex flex-col items-center justify-end min-h-[60px]">
-            {/* Son in this room but not at any furniture (IDLE) */}
-            {sonInThisRoom && sonIsHome && !activeFurniture && (
-              <SonCharacter
-                currentAction={currentAction}
-                actionTimer={son.actionTimer}
-                isInjured={son.isInjured}
-                dialogue={dialogue}
-                activeDialogue={activeDialogue}
-                respondDialogue={respondDialogue}
-                dismissDlg={dismissDlg}
-                gameTime={state.gameTime}
-              />
-            )}
+          {/* Departure readiness indicator */}
+          {sonIsHome && !isAdventuring && currentAction !== SonAction.DEPARTING && (
+            <DepartureIndicator hp={son.stats.hp} maxHp={son.stats.maxHp} hunger={son.stats.hunger} />
+          )}
 
-            {/* Adventuring indicator */}
+          {/* Son status when not in this room */}
+          <div className="w-full flex flex-col items-center justify-end min-h-[40px]">
             {isAdventuring && (
               <div className="text-center bg-black/30 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/10">
                 <span className="text-3xl drop-shadow-lg block mb-1">{'🚶'}</span>
@@ -344,8 +355,6 @@ export default function HomePage() {
                 </p>
               </div>
             )}
-
-            {/* Son in another room */}
             {sonIsHome && !sonInThisRoom && (
               <button
                 onClick={() => sonRoom && setActiveRoom(sonRoom)}
@@ -357,8 +366,6 @@ export default function HomePage() {
                 </span>
               </button>
             )}
-
-            {/* Son left but not adventuring */}
             {!son.isHome && !isAdventuring && (
               <div className="text-center">
                 <span className="text-3xl drop-shadow-lg">{'🚶'}</span>
@@ -368,12 +375,30 @@ export default function HomePage() {
               </div>
             )}
           </div>
-
-          {/* Departure readiness indicator */}
-          {sonIsHome && !isAdventuring && currentAction !== SonAction.DEPARTING && (
-            <DepartureIndicator hp={son.stats.hp} maxHp={son.stats.maxHp} hunger={son.stats.hunger} />
-          )}
         </div>
+
+        {/* Son character overlay — absolute positioned near active furniture */}
+        {sonInThisRoom && sonIsHome && (
+          <div
+            className="absolute z-20 transition-all duration-500 ease-out"
+            style={
+              sonPos
+                ? { left: sonPos.x, top: sonPos.y, transform: 'translateX(-50%)' }
+                : { left: '50%', bottom: 60, transform: 'translateX(-50%)' }
+            }
+          >
+            <SonCharacter
+              currentAction={currentAction}
+              actionTimer={son.actionTimer}
+              isInjured={son.isInjured}
+              dialogue={dialogue}
+              activeDialogue={activeDialogue}
+              respondDialogue={respondDialogue}
+              dismissDlg={dismissDlg}
+              gameTime={state.gameTime}
+            />
+          </div>
+        )}
 
         {/* Quest Badge */}
         <QuestBadge
