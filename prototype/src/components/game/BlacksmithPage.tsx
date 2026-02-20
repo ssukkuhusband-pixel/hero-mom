@@ -77,11 +77,11 @@ function MaterialBar({ materialKeys }: { materialKeys: MaterialKey[] }) {
   const { state } = useGameState();
 
   return (
-    <div className="flex flex-wrap gap-2 px-3 py-2 bg-cream-300/80 rounded-xl border border-cream-500/50">
+    <div className="flex flex-wrap gap-2 px-3 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/20">
       {materialKeys.map((key) => (
         <div key={key} className="flex items-center gap-1 text-xs">
           <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
-          <span className="font-medium text-cream-800 tabular-nums">
+          <span className="font-medium text-cream-200 tabular-nums">
             {state.inventory.materials[key]}
           </span>
         </div>
@@ -120,7 +120,7 @@ function RecipeCard({ recipe }: { recipe: EquipmentRecipe }) {
   return (
     <div
       className={`
-        card-parchment !p-4 transition-opacity
+        bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4 transition-opacity
         ${!isUnlocked ? 'opacity-50' : ''}
       `}
     >
@@ -128,22 +128,22 @@ function RecipeCard({ recipe }: { recipe: EquipmentRecipe }) {
       <div className="flex items-center gap-2 mb-2">
         <span className="text-2xl">{SLOT_EMOJI[recipe.slot]}</span>
         <div className="flex-1 min-w-0">
-          <p className="font-serif font-bold text-cream-900 text-sm truncate">
+          <p className="font-serif font-bold text-cream-100 text-sm truncate drop-shadow">
             {recipe.name}
           </p>
-          <p className="text-[10px] text-cream-600">
+          <p className="text-[10px] text-cream-300">
             Common
           </p>
         </div>
         {!isUnlocked && (
-          <span className="text-[10px] bg-cream-700 text-cream-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+          <span className="text-[10px] bg-black/40 text-cream-100 px-2 py-0.5 rounded-full whitespace-nowrap">
             Lv.{recipe.unlockLevel} 필요
           </span>
         )}
       </div>
 
       {/* Stats preview */}
-      <div className="text-xs text-cream-800 mb-2 bg-cream-200/80 rounded-lg px-2.5 py-1.5">
+      <div className="text-xs text-cream-100 mb-2 bg-white/10 rounded-lg px-2.5 py-1.5">
         {statsPreview}
       </div>
 
@@ -155,7 +155,7 @@ function RecipeCard({ recipe }: { recipe: EquipmentRecipe }) {
           return (
             <div key={key} className="flex items-center gap-1 text-xs">
               <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
-              <span className={`tabular-nums font-medium ${enough ? 'text-cream-800' : 'text-cozy-red'}`}>
+              <span className={`tabular-nums font-medium ${enough ? 'text-cream-200' : 'text-red-400'}`}>
                 {has}/{amount}
               </span>
             </div>
@@ -259,7 +259,7 @@ function EnhanceTab() {
       {/* Enhancement unlock check */}
       {!state.unlocks.systems.enhancement && (
         <div className="text-center py-6">
-          <p className="text-sm text-cream-600">
+          <p className="text-sm text-cream-300">
             {'\uD83D\uDD12'} Lv.{UNLOCK_LEVELS.enhancement} 달성 시 해금됩니다
           </p>
         </div>
@@ -270,7 +270,7 @@ function EnhanceTab() {
           {/* Equipment list */}
           <div className="flex flex-col gap-1.5 max-h-[180px] overflow-y-auto">
             {allEquipment.length === 0 && (
-              <p className="text-xs text-cream-500 italic text-center py-4">
+              <p className="text-xs text-cream-400 italic text-center py-4">
                 강화할 장비가 없습니다
               </p>
             )}
@@ -282,20 +282,20 @@ function EnhanceTab() {
                   flex items-center gap-2.5 w-full text-left
                   px-3 py-2 rounded-lg border-2 transition-all
                   ${eq.id === selectedId
-                    ? 'border-cozy-amber bg-amber-50 shadow-sm'
-                    : 'border-cream-400 bg-cream-100 hover:border-cream-600'
+                    ? 'border-cozy-amber bg-amber-900/40 shadow-sm'
+                    : 'border-white/20 bg-white/10 hover:border-white/40'
                   }
                 `}
               >
                 <span className="text-xl">{SLOT_EMOJI[eq.slot]}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-cream-900 truncate">
+                  <p className="text-sm font-medium text-cream-100 truncate">
                     {eq.name}
                     {eq.enhanceLevel > 0 && (
                       <span className="text-cozy-amber ml-1">+{eq.enhanceLevel}</span>
                     )}
                   </p>
-                  <p className="text-[10px] text-cream-600">
+                  <p className="text-[10px] text-cream-300">
                     {location} &middot;{' '}
                     <span style={{ color: GRADE_COLORS[eq.grade] }}>
                       {eq.grade}
@@ -313,11 +313,11 @@ function EnhanceTab() {
 
           {/* Enhancement detail */}
           {selectedEq && (
-            <div className="card-parchment !p-4">
+            <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-2xl">{SLOT_EMOJI[selectedEq.slot]}</span>
                 <div>
-                  <p className="font-serif font-bold text-cream-900 text-sm">
+                  <p className="font-serif font-bold text-cream-100 text-sm drop-shadow">
                     {selectedEq.name}
                     {selectedEq.enhanceLevel > 0 && (
                       <span className="text-cozy-amber ml-1">+{selectedEq.enhanceLevel}</span>
@@ -344,8 +344,8 @@ function EnhanceTab() {
                       <span
                         className={`tabular-nums font-medium ${
                           state.inventory.materials.enhancementStones >= nextEnhanceLevel.stonesRequired
-                            ? 'text-cream-800'
-                            : 'text-cozy-red'
+                            ? 'text-cream-200'
+                            : 'text-red-400'
                         }`}
                       >
                         {state.inventory.materials.enhancementStones}/{nextEnhanceLevel.stonesRequired}
@@ -356,8 +356,8 @@ function EnhanceTab() {
                       <span
                         className={`tabular-nums font-medium ${
                           state.inventory.materials.gold >= nextEnhanceLevel.goldCost
-                            ? 'text-cream-800'
-                            : 'text-cozy-red'
+                            ? 'text-cream-200'
+                            : 'text-red-400'
                         }`}
                       >
                         {state.inventory.materials.gold}/{nextEnhanceLevel.goldCost}
@@ -368,12 +368,12 @@ function EnhanceTab() {
                   {/* Success rate */}
                   <div className="mb-2">
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-cream-700">성공률</span>
-                      <span className="font-bold text-cream-900">
+                      <span className="text-cream-300">성공률</span>
+                      <span className="font-bold text-cream-100">
                         {Math.round(nextEnhanceLevel.successRate * 100)}%
                       </span>
                     </div>
-                    <div className="w-full h-2 bg-cream-400 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-cozy-forest rounded-full transition-all"
                         style={{ width: `${nextEnhanceLevel.successRate * 100}%` }}
@@ -382,15 +382,15 @@ function EnhanceTab() {
                   </div>
 
                   {/* Stat preview */}
-                  <div className="bg-cream-200/80 rounded-lg px-2.5 py-2 mb-3 text-xs">
-                    <p className="text-cream-600 mb-1 text-[10px]">강화 시 스탯 변화:</p>
+                  <div className="bg-white/10 rounded-lg px-2.5 py-2 mb-3 text-xs">
+                    <p className="text-cream-300 mb-1 text-[10px]">강화 시 스탯 변화:</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                       {Object.keys(previewStats).map((stat) => (
-                        <span key={stat} className="text-cream-800">
+                        <span key={stat} className="text-cream-100">
                           {STAT_EMOJI[stat] ?? ''} {STAT_LABEL[stat] ?? stat}{' '}
-                          <span className="text-cream-600">{currentStats[stat] ?? 0}</span>
+                          <span className="text-cream-300">{currentStats[stat] ?? 0}</span>
                           {' \u2192 '}
-                          <span className="text-cozy-forest font-bold">{previewStats[stat]}</span>
+                          <span className="text-green-400 font-bold">{previewStats[stat]}</span>
                         </span>
                       ))}
                     </div>
@@ -478,15 +478,15 @@ function GachaTab() {
       {/* Special ore count */}
       <div className="flex items-center justify-center gap-2 py-2">
         <span className="text-2xl">{EMOJI_MAP.specialOre}</span>
-        <span className="text-lg font-bold text-cream-900 tabular-nums">
+        <span className="text-lg font-bold text-cream-100 tabular-nums">
           {specialOreCount}
         </span>
-        <span className="text-sm text-cream-600">/ {gachaCostAmount} 필요</span>
+        <span className="text-sm text-cream-300">/ {gachaCostAmount} 필요</span>
       </div>
 
       {/* Grade probability display */}
-      <div className="card-parchment !p-3">
-        <p className="text-xs text-cream-700 mb-2 font-medium text-center">등급 확률</p>
+      <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-3">
+        <p className="text-xs text-cream-300 mb-2 font-medium text-center">등급 확률</p>
         <div className="flex flex-col gap-1.5">
           {GACHA_RATES.map((rate) => (
             <div key={rate.grade} className="flex items-center gap-2">
@@ -494,11 +494,11 @@ function GachaTab() {
                 className="w-3 h-3 rounded-full border"
                 style={{ backgroundColor: GRADE_COLORS[rate.grade], borderColor: GRADE_COLORS[rate.grade] }}
               />
-              <span className="text-xs text-cream-800 flex-1 capitalize">{rate.grade}</span>
-              <span className="text-xs font-bold text-cream-900 tabular-nums">
+              <span className="text-xs text-cream-100 flex-1 capitalize">{rate.grade}</span>
+              <span className="text-xs font-bold text-cream-100 tabular-nums">
                 {Math.round(rate.chance * 100)}%
               </span>
-              <div className="w-16 h-1.5 bg-cream-400 rounded-full overflow-hidden">
+              <div className="w-16 h-1.5 bg-white/20 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full"
                   style={{ width: `${rate.chance * 100}%`, backgroundColor: GRADE_COLORS[rate.grade] }}
@@ -529,14 +529,14 @@ function GachaTab() {
       {lastResult && !animating && (
         <div
           className={`
-            card-parchment !p-4 text-center animate-fade-in
+            bg-white/15 backdrop-blur-sm rounded-xl p-4 text-center animate-fade-in
             border-2
           `}
           style={{ borderColor: GRADE_COLORS[lastResult.grade] }}
         >
-          <p className="text-xs text-cream-600 mb-1">획득!</p>
+          <p className="text-xs text-cream-300 mb-1">획득!</p>
           <span className="text-4xl block mb-2">{SLOT_EMOJI[lastResult.slot]}</span>
-          <p className="font-serif font-bold text-cream-900 text-lg">
+          <p className="font-serif font-bold text-cream-100 text-lg drop-shadow">
             {lastResult.name}
           </p>
           <p
@@ -545,7 +545,7 @@ function GachaTab() {
           >
             {lastResult.grade}
           </p>
-          <div className="flex flex-wrap justify-center gap-2 text-xs text-cream-800">
+          <div className="flex flex-wrap justify-center gap-2 text-xs text-cream-200">
             {Object.entries(calculateEquipmentStats(lastResult))
               .filter(([, v]) => v > 0)
               .map(([stat, val]) => (
@@ -584,62 +584,72 @@ export default function BlacksmithPage() {
   ];
 
   return (
-    <div className="px-3 py-4 flex flex-col gap-4 pb-24">
-      {/* Header */}
-      <h1 className="font-serif font-bold text-xl text-cream-950 text-center">
-        {'\u2692\uFE0F'} 대장간
-      </h1>
+    <div className="relative min-h-[calc(100vh-140px)]">
+      {/* Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/blacksmith.png')" }}
+      />
+      <div className="absolute inset-0 bg-black/40" />
 
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-cream-300 rounded-xl p-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => !tab.locked && setActiveTab(tab.key)}
-            disabled={tab.locked}
-            className={`
-              flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all
-              ${activeTab === tab.key
-                ? 'bg-cream-50 text-cream-900 shadow-sm'
-                : tab.locked
-                  ? 'text-cream-500 cursor-not-allowed'
-                  : 'text-cream-700 hover:bg-cream-200'
-              }
-            `}
-          >
-            {tab.label}
-            {tab.locked && (
-              <span className="block text-[9px] text-cream-500">
-                Lv.{UNLOCK_LEVELS.gacha}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* Content */}
+      <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
+        {/* Header */}
+        <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
+          {'\u2692\uFE0F'} 대장간
+        </h1>
 
-      {/* Tab content */}
-      {activeTab === 'craft' && (
-        <div className="flex flex-col gap-3">
-          {EQUIPMENT_RECIPES.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
+        {/* Tab bar */}
+        <div className="flex gap-1 bg-black/30 backdrop-blur-sm rounded-xl p-1 border border-white/10">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => !tab.locked && setActiveTab(tab.key)}
+              disabled={tab.locked}
+              className={`
+                flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all
+                ${activeTab === tab.key
+                  ? 'bg-white/20 text-cream-100 shadow-sm'
+                  : tab.locked
+                    ? 'text-cream-500 cursor-not-allowed'
+                    : 'text-cream-300 hover:bg-white/10'
+                }
+              `}
+            >
+              {tab.label}
+              {tab.locked && (
+                <span className="block text-[9px] text-cream-500">
+                  Lv.{UNLOCK_LEVELS.gacha}
+                </span>
+              )}
+            </button>
           ))}
         </div>
-      )}
 
-      {activeTab === 'enhance' && <EnhanceTab />}
+        {/* Tab content */}
+        {activeTab === 'craft' && (
+          <div className="flex flex-col gap-3">
+            {EQUIPMENT_RECIPES.map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
+        )}
 
-      {activeTab === 'gacha' && !gachaLocked && <GachaTab />}
-      {activeTab === 'gacha' && gachaLocked && (
-        <div className="text-center py-8">
-          <p className="text-sm text-cream-600">
-            {'\uD83D\uDD12'} Lv.{UNLOCK_LEVELS.gacha} 달성 시 해금됩니다
-          </p>
+        {activeTab === 'enhance' && <EnhanceTab />}
+
+        {activeTab === 'gacha' && !gachaLocked && <GachaTab />}
+        {activeTab === 'gacha' && gachaLocked && (
+          <div className="text-center py-8">
+            <p className="text-sm text-cream-300">
+              {'\uD83D\uDD12'} Lv.{UNLOCK_LEVELS.gacha} 달성 시 해금됩니다
+            </p>
+          </div>
+        )}
+
+        {/* Bottom material bar */}
+        <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
+          <MaterialBar materialKeys={blacksmithMaterials} />
         </div>
-      )}
-
-      {/* Bottom material bar */}
-      <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
-        <MaterialBar materialKeys={blacksmithMaterials} />
       </div>
     </div>
   );

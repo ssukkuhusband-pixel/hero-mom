@@ -42,11 +42,11 @@ function MaterialBar({ materialKeys }: { materialKeys: MaterialKey[] }) {
   const { state } = useGameState();
 
   return (
-    <div className="flex flex-wrap gap-2 px-3 py-2 bg-cream-300/80 rounded-xl border border-cream-500/50">
+    <div className="flex flex-wrap gap-2 px-3 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/20">
       {materialKeys.map((key) => (
         <div key={key} className="flex items-center gap-1 text-xs">
           <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
-          <span className="font-medium text-cream-800 tabular-nums">
+          <span className="font-medium text-cream-200 tabular-nums">
             {state.inventory.materials[key]}
           </span>
         </div>
@@ -96,7 +96,7 @@ function PotionRecipeCard({ recipe }: { recipe: PotionRecipe }) {
   return (
     <div
       className={`
-        card-parchment !p-4 transition-opacity
+        bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4 transition-opacity
         ${!isUnlocked ? 'opacity-50' : ''}
       `}
       style={{
@@ -107,7 +107,7 @@ function PotionRecipeCard({ recipe }: { recipe: PotionRecipe }) {
       <div className="flex items-center gap-2 mb-2">
         <span className="text-2xl">{'\uD83E\uDDEA'}</span>
         <div className="flex-1 min-w-0">
-          <p className="font-serif font-bold text-cream-900 text-sm truncate">
+          <p className="font-serif font-bold text-cream-100 text-sm truncate drop-shadow">
             {recipe.name}
           </p>
         </div>
@@ -116,14 +116,14 @@ function PotionRecipeCard({ recipe }: { recipe: PotionRecipe }) {
           {effectTypeBadge.label}
         </span>
         {!isUnlocked && (
-          <span className="text-[10px] bg-cream-700 text-cream-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+          <span className="text-[10px] bg-black/40 text-cream-100 px-2 py-0.5 rounded-full whitespace-nowrap">
             Lv.{recipe.unlockLevel} \uD544\uC694
           </span>
         )}
       </div>
 
       {/* Effect details */}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mb-2 text-xs text-cream-800 bg-purple-50/60 rounded-lg px-2.5 py-1.5 border border-purple-200/30">
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mb-2 text-xs text-cream-100 bg-purple-500/20 rounded-lg px-2.5 py-1.5 border border-purple-400/30">
         {effectDetails.map((eff, i) => (
           <span key={i}>{eff}</span>
         ))}
@@ -138,7 +138,7 @@ function PotionRecipeCard({ recipe }: { recipe: PotionRecipe }) {
             <div key={key} className="flex items-center gap-1 text-xs">
               <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
               <span
-                className={`tabular-nums font-medium ${enough ? 'text-cream-800' : 'text-cozy-red'}`}
+                className={`tabular-nums font-medium ${enough ? 'text-cream-200' : 'text-red-400'}`}
               >
                 {has}/{amount}
               </span>
@@ -184,7 +184,7 @@ function PotionInventory() {
   if (grouped.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-xs text-cream-500 italic">
+        <p className="text-xs text-cream-400 italic">
           {'\uBCF4\uC720\uD55C \uD3EC\uC158\uC774 \uC5C6\uC2B5\uB2C8\uB2E4'}{/* 보유한 포션이 없습니다 */}
         </p>
       </div>
@@ -208,18 +208,18 @@ function PotionInventory() {
         return (
           <div
             key={potion.name}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-purple-200/50 bg-purple-50/30"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-purple-400/30 bg-purple-500/15"
           >
             <span className="text-xl">{'\uD83E\uDDEA'}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-cream-900 truncate">
+              <p className="text-sm font-medium text-cream-100 truncate">
                 {potion.name}
               </p>
-              <p className="text-[10px] text-cream-600">
+              <p className="text-[10px] text-cream-300">
                 {effectTypeLabel} &middot; {effectParts.join('  ')}
               </p>
             </div>
-            <span className="text-sm font-bold text-cream-800 tabular-nums bg-cream-300 px-2 py-0.5 rounded-lg">
+            <span className="text-sm font-bold text-cream-200 tabular-nums bg-white/15 px-2 py-0.5 rounded-lg">
               x{count}
             </span>
           </div>
@@ -246,22 +246,32 @@ export default function AlchemyPage() {
   // Locked state
   if (!isUnlocked) {
     return (
-      <div className="px-3 py-4 flex flex-col gap-4 pb-24">
-        <h1 className="font-serif font-bold text-xl text-cream-950 text-center">
-          {'\u2697\uFE0F'} {'\uC5F0\uAE08\uC220 \uC5F0\uAD6C\uC18C'}{/* 연금술 연구소 */}
-        </h1>
+      <div className="relative min-h-[calc(100vh-140px)]">
+        {/* Background - dimmed and blurred more heavily for locked state */}
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-sm"
+          style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/alchemy.png')" }}
+        />
+        <div className="absolute inset-0 bg-black/60" />
 
-        <div className="flex flex-col items-center gap-4 py-12">
-          <div className="text-6xl opacity-30">{'\uD83D\uDD12'}</div>
-          <p className="text-sm text-cream-700 font-medium text-center">
-            {'\uD83D\uDD12 \uC5F0\uAE08\uC220\uC740 \uC544\uB4E4 Lv.'}{UNLOCK_LEVELS.alchemy}{' \uC774\uD6C4 \uD574\uAE08\uB429\uB2C8\uB2E4'}
-          </p>
-          <p className="text-xs text-cream-500 text-center">
-            {'\uD604\uC7AC \uC544\uB4E4 \uB808\uBCA8: Lv.'}{sonLevel}
-          </p>
-          <p className="text-xs text-cream-500 italic text-center mt-4 max-w-[280px]">
-            {'\uC2E0\uBE44\uD55C \uC5F0\uAE30\uC640 \uBCF4\uB77C\uBE5B \uC561\uCCB4\uAC00 \uBD80\uAE00\uBD80\uAE00 \uB044\uC5B4\uC624\uB974\uB294 \uC5F0\uAD6C\uC18C...\n\uC544\uC9C1\uC740 \uBB38\uC774 \uC7A0\uACBC \uC788\uC2B5\uB2C8\uB2E4.'}
-          </p>
+        {/* Content */}
+        <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
+          <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
+            {'\u2697\uFE0F'} {'\uC5F0\uAE08\uC220 \uC5F0\uAD6C\uC18C'}{/* 연금술 연구소 */}
+          </h1>
+
+          <div className="flex flex-col items-center gap-4 py-12">
+            <div className="text-6xl opacity-40">{'\uD83D\uDD12'}</div>
+            <p className="text-sm text-cream-200 font-medium text-center">
+              {'\uD83D\uDD12 \uC5F0\uAE08\uC220\uC740 \uC544\uB4E4 Lv.'}{UNLOCK_LEVELS.alchemy}{' \uC774\uD6C4 \uD574\uAE08\uB429\uB2C8\uB2E4'}
+            </p>
+            <p className="text-xs text-cream-400 text-center">
+              {'\uD604\uC7AC \uC544\uB4E4 \uB808\uBCA8: Lv.'}{sonLevel}
+            </p>
+            <p className="text-xs text-cream-400 italic text-center mt-4 max-w-[280px]">
+              {'\uC2E0\uBE44\uD55C \uC5F0\uAE30\uC640 \uBCF4\uB77C\uBE5B \uC561\uCCB4\uAC00 \uBD80\uAE00\uBD80\uAE00 \uB044\uC5B4\uC624\uB974\uB294 \uC5F0\uAD6C\uC18C...\n\uC544\uC9C1\uC740 \uBB38\uC774 \uC7A0\uACBC \uC788\uC2B5\uB2C8\uB2E4.'}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -269,38 +279,48 @@ export default function AlchemyPage() {
 
   // Unlocked state
   return (
-    <div className="px-3 py-4 flex flex-col gap-4 pb-24">
-      {/* Header */}
-      <h1 className="font-serif font-bold text-xl text-cream-950 text-center">
-        {'\u2697\uFE0F'} {'\uC5F0\uAE08\uC220 \uC5F0\uAD6C\uC18C'}
-      </h1>
+    <div className="relative min-h-[calc(100vh-140px)]">
+      {/* Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/alchemy.png')" }}
+      />
+      <div className="absolute inset-0 bg-black/40" />
 
-      {/* Recipe list */}
-      <div>
-        <h2 className="font-serif font-bold text-sm text-cream-800 mb-2">
-          {'\uD83D\uDCD6'} {'\uD3EC\uC158 \uB808\uC2DC\uD53C'}{/* 포션 레시피 */}
-        </h2>
-        <div className="flex flex-col gap-3">
-          {POTION_RECIPES.map((recipe) => (
-            <PotionRecipeCard key={recipe.id} recipe={recipe} />
-          ))}
+      {/* Content */}
+      <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
+        {/* Header */}
+        <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
+          {'\u2697\uFE0F'} {'\uC5F0\uAE08\uC220 \uC5F0\uAD6C\uC18C'}
+        </h1>
+
+        {/* Recipe list */}
+        <div>
+          <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
+            {'\uD83D\uDCD6'} {'\uD3EC\uC158 \uB808\uC2DC\uD53C'}{/* 포션 레시피 */}
+          </h2>
+          <div className="flex flex-col gap-3">
+            {POTION_RECIPES.map((recipe) => (
+              <PotionRecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Divider */}
-      <div className="border-t-2 border-cream-400 my-1" />
+        {/* Divider */}
+        <div className="border-t-2 border-white/20 my-1" />
 
-      {/* Current potion inventory */}
-      <div>
-        <h2 className="font-serif font-bold text-sm text-cream-800 mb-2">
-          {'\uD83E\uDDEA'} {'\uBCF4\uC720 \uD3EC\uC158'}{/* 보유 포션 */}
-        </h2>
-        <PotionInventory />
-      </div>
+        {/* Current potion inventory */}
+        <div>
+          <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
+            {'\uD83E\uDDEA'} {'\uBCF4\uC720 \uD3EC\uC158'}{/* 보유 포션 */}
+          </h2>
+          <PotionInventory />
+        </div>
 
-      {/* Bottom material bar */}
-      <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
-        <MaterialBar materialKeys={alchemyMaterials} />
+        {/* Bottom material bar */}
+        <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
+          <MaterialBar materialKeys={alchemyMaterials} />
+        </div>
       </div>
     </div>
   );

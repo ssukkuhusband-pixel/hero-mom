@@ -28,6 +28,7 @@ import {
   LETTER_TEMPLATES,
   GRADE_MULTIPLIERS,
   ENHANCEMENT_TABLE,
+  ADVENTURE_IMAGES,
 } from '../constants';
 
 function uid(): string {
@@ -106,14 +107,18 @@ export function startAdventure(state: GameState): GameState {
     sonHpPercent: failed ? 0 : Math.max(0, (sonHp / son.stats.maxHp) * 100),
   };
 
-  // Send initial letter
-  adventure.letters.push({
+  // Send initial letter (sometimes with forest/camp image)
+  const startLetter: Letter = {
     id: uid(),
     text: pick(LETTER_TEMPLATES.start),
     timestamp: now,
     hpPercent: 100,
     battlesCompleted: 0,
-  });
+  };
+  if (Math.random() < 0.6) {
+    startLetter.imageUrl = pickAdventureImage(['forest', 'camp']);
+  }
+  adventure.letters.push(startLetter);
 
   // Update son state
   son.isHome = false;
@@ -174,6 +179,7 @@ export function processAdventureTick(state: GameState): GameState {
       timestamp: now,
       hpPercent: adventure.sonHpPercent,
       battlesCompleted: adventure.totalBattles,
+      imageUrl: pickAdventureImage(['return', 'home']),
     };
     adventure.letters.push(letter);
     newState.letters.push(letter);
@@ -434,6 +440,22 @@ function generateBattleLoot(
 }
 
 // -----------------------------------------------------------------
+// Adventure image selection helper
+// -----------------------------------------------------------------
+
+function pickAdventureImage(sceneKeywords: string[]): string | undefined {
+  // Try to find an image matching any of the scene keywords
+  for (const keyword of sceneKeywords) {
+    const matches = ADVENTURE_IMAGES.filter(img =>
+      img.scenes.includes(keyword)
+    );
+    if (matches.length > 0) return pick(matches).url;
+  }
+  // Fallback: random adventure image
+  return pick(ADVENTURE_IMAGES).url;
+}
+
+// -----------------------------------------------------------------
 // Generate letter from battle result
 // -----------------------------------------------------------------
 
@@ -443,25 +465,44 @@ function generateLetter(
   battlesCompleted: number
 ): Letter {
   let text: string;
+  let imageUrl: string | undefined;
+
+  // About 60% of letters should have an image attached
+  const shouldAttachImage = Math.random() < 0.6;
 
   if (battle.isBoss) {
     text = pick(LETTER_TEMPLATES.boss);
+    if (shouldAttachImage) imageUrl = pickAdventureImage(['boss', 'danger', 'monster']);
   } else if (adventure.sonHpPercent < 30) {
     text = pick(LETTER_TEMPLATES.lowHp);
+    if (shouldAttachImage) imageUrl = pickAdventureImage(['injured', 'hurt']);
   } else {
     text = pick(LETTER_TEMPLATES[battle.outcome]);
+    if (shouldAttachImage) {
+      if (battle.outcome === 'overwhelming' || battle.outcome === 'victory') {
+        imageUrl = pickAdventureImage(['victory', 'slime', 'goblin']);
+      } else if (battle.outcome === 'narrow') {
+        imageUrl = pickAdventureImage(['wolf', 'forest']);
+      } else if (battle.outcome === 'defeat') {
+        imageUrl = pickAdventureImage(['injured']);
+      }
+    }
   }
 
   // Occasionally mention treasure
   if (Math.random() < 0.2 && battle.outcome !== 'defeat') {
     text += ' ' + pick(LETTER_TEMPLATES.treasure);
+    if (shouldAttachImage) imageUrl = pickAdventureImage(['treasure', 'loot']);
   }
 
-  return {
+  const letter: Letter = {
     id: uid(),
     text,
     timestamp: Date.now(),
     hpPercent: adventure.sonHpPercent,
     battlesCompleted,
   };
+  if (imageUrl) letter.imageUrl = imageUrl;
+
+  return letter;
 }

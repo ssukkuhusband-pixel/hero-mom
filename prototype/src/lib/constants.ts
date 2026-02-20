@@ -436,6 +436,20 @@ export const LETTER_TEMPLATES = {
   ],
 };
 
+// --- Adventure Scene Images ---
+export const ADVENTURE_IMAGES: { url: string; scenes: string[] }[] = [
+  { url: '/hero-mom/assets/adventure/adventure_goblin.png', scenes: ['goblin', 'battle', 'overwhelming'] },
+  { url: '/hero-mom/assets/adventure/adventure_slime.png', scenes: ['slime', 'easy', 'victory'] },
+  { url: '/hero-mom/assets/adventure/adventure_wolf.png', scenes: ['wolf', 'narrow', 'tense'] },
+  { url: '/hero-mom/assets/adventure/adventure_treasure.png', scenes: ['treasure', 'loot', 'gold'] },
+  { url: '/hero-mom/assets/adventure/adventure_forest.png', scenes: ['forest', 'path', 'travel'] },
+  { url: '/hero-mom/assets/adventure/adventure_camp.png', scenes: ['camp', 'rest', 'night'] },
+  { url: '/hero-mom/assets/adventure/adventure_injured.png', scenes: ['injured', 'hurt', 'defeat'] },
+  { url: '/hero-mom/assets/adventure/adventure_victory.png', scenes: ['victory', 'win', 'triumph'] },
+  { url: '/hero-mom/assets/adventure/adventure_boss.png', scenes: ['boss', 'danger', 'monster'] },
+  { url: '/hero-mom/assets/adventure/adventure_return.png', scenes: ['return', 'home', 'coming'] },
+];
+
 // --- Loot drop table ---
 
 export const LOOT_TABLE: { item: MaterialKey; chance: number; min: number; max: number }[] = [

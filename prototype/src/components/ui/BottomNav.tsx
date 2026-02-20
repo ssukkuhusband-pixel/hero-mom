@@ -4,17 +4,29 @@ import React from 'react';
 import { useGameState } from '@/lib/gameState';
 import { UNLOCK_LEVELS } from '@/lib/constants';
 
-export type PageId = 'home' | 'blacksmith' | 'kitchen' | 'alchemy' | 'farm';
+export type PageId = 'home' | 'mailbox' | 'blacksmith' | 'kitchen' | 'alchemy' | 'farm';
 
 interface NavTab {
   id: PageId;
   label: string;
   emoji: string;
   unlockLevel?: number;
+  /** Show a badge with this count when > 0 */
+  badgeCount?: (state: ReturnType<typeof useGameState>['state']) => number;
 }
 
 const TABS: NavTab[] = [
   { id: 'home', label: '집', emoji: '\uD83C\uDFE0' },
+  {
+    id: 'mailbox',
+    label: '우편함',
+    emoji: '\uD83D\uDCEC',
+    badgeCount: (state) => {
+      // Count adventure letters (unread = from current adventure)
+      const adventureLetterCount = state.adventure?.active ? (state.adventure.letters?.length ?? 0) : 0;
+      return adventureLetterCount;
+    },
+  },
   { id: 'blacksmith', label: '대장간', emoji: '\u2692\uFE0F' },
   { id: 'kitchen', label: '주방', emoji: '\uD83C\uDF73' },
   { id: 'alchemy', label: '연금술', emoji: '\u2697\uFE0F', unlockLevel: UNLOCK_LEVELS.alchemy },
@@ -44,6 +56,7 @@ export default function BottomNav({ currentPage, onNavigate }: BottomNavProps) {
       {TABS.map((tab) => {
         const isActive = currentPage === tab.id;
         const isLocked = tab.unlockLevel != null && sonLevel < tab.unlockLevel;
+        const badge = tab.badgeCount ? tab.badgeCount(state) : 0;
 
         return (
           <button
@@ -72,6 +85,12 @@ export default function BottomNav({ currentPage, onNavigate }: BottomNavProps) {
             {/* Icon */}
             <span className="text-[26px] leading-none relative">
               {isLocked ? '\uD83D\uDD12' : tab.emoji}
+              {/* Notification badge */}
+              {badge > 0 && !isLocked && (
+                <span className="absolute -top-1.5 -right-2.5 bg-cozy-red text-cream-50 text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
+                  {badge}
+                </span>
+              )}
             </span>
 
             {/* Label */}

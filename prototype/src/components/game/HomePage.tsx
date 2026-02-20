@@ -6,12 +6,9 @@ import { SonAction } from '@/lib/types';
 import type { Food, Potion, Book, Equipment } from '@/lib/types';
 import {
   EMOJI_MAP,
-  SON_DIALOGUES,
   MAX_TABLE_FOOD,
 } from '@/lib/constants';
-import ItemSlot from '@/components/ui/ItemSlot';
 import Modal from '@/components/ui/Modal';
-import AdventurePanel from './AdventurePanel';
 import ReturnModal from './ReturnModal';
 
 // ============================================================
@@ -51,7 +48,7 @@ const ACTION_INDICATOR: Record<string, { emoji: string; label: string }> = {
 type PlacementType = 'food' | 'potion' | 'book' | 'equipment';
 
 // ============================================================
-// Furniture Item Component
+// Furniture Item Component (glass-morphism style for overlay)
 // ============================================================
 
 interface FurnitureProps {
@@ -64,6 +61,7 @@ interface FurnitureProps {
   occupied?: boolean;
   occupiedLabel?: string;
   className?: string;
+  dimmed?: boolean;
 }
 
 function FurnitureItem({
@@ -76,6 +74,7 @@ function FurnitureItem({
   occupied = false,
   occupiedLabel,
   className = '',
+  dimmed = false,
 }: FurnitureProps) {
   return (
     <button
@@ -83,23 +82,24 @@ function FurnitureItem({
       disabled={!onClick}
       className={`
         relative flex flex-col items-center gap-1 p-2 rounded-xl
-        bg-gradient-to-br from-cream-200/80 to-cream-300/80
-        border-2 transition-all duration-200
-        ${highlight
-          ? 'border-cozy-amber shadow-[0_0_12px_rgba(212,137,63,0.3)]'
-          : 'border-cream-500/50'
+        backdrop-blur-sm transition-all duration-200
+        ${dimmed
+          ? 'bg-white/10 border-2 border-white/10 opacity-60'
+          : highlight
+            ? 'bg-white/25 border-2 border-cozy-amber shadow-[0_0_12px_rgba(212,137,63,0.3)]'
+            : 'bg-white/20 border-2 border-white/20'
         }
-        ${onClick ? 'cursor-pointer hover:border-cozy-amber hover:shadow-md active:scale-95' : 'cursor-default'}
+        ${onClick ? 'cursor-pointer hover:bg-white/30 hover:border-cozy-amber/50 hover:shadow-md active:scale-95' : 'cursor-default'}
         ${className}
       `}
     >
       {/* Furniture emoji */}
-      <span className="text-2xl leading-none">{emoji}</span>
-      <span className="text-[10px] text-cream-700 font-medium">{label}</span>
+      <span className="text-2xl leading-none drop-shadow-md">{emoji}</span>
+      <span className="text-[10px] text-cream-100 font-medium drop-shadow-sm">{label}</span>
 
       {/* Occupied overlay */}
       {occupied && occupiedLabel && (
-        <span className="absolute -top-1 -right-1 text-[10px] bg-cozy-amber text-cream-50 px-1.5 py-0.5 rounded-full font-bold">
+        <span className="absolute -top-1 -right-1 text-[10px] bg-cozy-amber text-cream-50 px-1.5 py-0.5 rounded-full font-bold shadow-sm">
           {occupiedLabel}
         </span>
       )}
@@ -108,17 +108,17 @@ function FurnitureItem({
       {items.length > 0 && (
         <div className="flex gap-0.5 flex-wrap justify-center">
           {items.map((item, i) => (
-            <span key={i} className="text-sm" title={item.name}>
+            <span key={i} className="text-sm drop-shadow-sm" title={item.name}>
               {item.emoji}
             </span>
           ))}
           {maxSlots && items.length < maxSlots && (
-            <span className="text-sm text-cream-500">+</span>
+            <span className="text-sm text-cream-300/70">+</span>
           )}
         </div>
       )}
       {items.length === 0 && maxSlots && (
-        <span className="text-[9px] text-cream-500">
+        <span className="text-[9px] text-cream-300/70">
           {onClick ? '클릭하여 배치' : '비어있음'}
         </span>
       )}
@@ -133,17 +133,57 @@ function FurnitureItem({
 function SpeechBubble({ text }: { text: string }) {
   return (
     <div className="relative max-w-[280px] mx-auto animate-fade-in">
-      <div className="bg-cream-50 border-2 border-cream-500 rounded-xl px-4 py-2.5 shadow-md">
+      <div className="bg-cream-50/90 backdrop-blur-sm border-2 border-cream-500/80 rounded-xl px-4 py-2.5 shadow-md">
         <p className="text-sm font-serif text-cream-900 text-center italic">
           &ldquo;{text}&rdquo;
         </p>
       </div>
       {/* Triangle pointer */}
-      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0
+      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0
                       border-l-[8px] border-l-transparent
-                      border-b-[8px] border-b-cream-500
-                      border-r-[8px] border-r-transparent
-                      rotate-180" />
+                      border-t-[8px] border-t-cream-500/80
+                      border-r-[8px] border-r-transparent" />
+    </div>
+  );
+}
+
+// ============================================================
+// Adventure Status Indicator (floating mini widget)
+// ============================================================
+
+function AdventureStatusIndicator() {
+  const { state } = useGameState();
+  const { adventure } = state;
+
+  const timeInfo = useMemo(() => {
+    if (!adventure?.active) {
+      return { display: '0:00', percent: 0 };
+    }
+    const elapsed = Date.now() - adventure.startTime;
+    const remaining = Math.max(0, adventure.duration - elapsed);
+    const totalSecs = Math.ceil(remaining / 1000);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    const percent = Math.min(100, (elapsed / adventure.duration) * 100);
+    return {
+      display: `${mins}:${secs.toString().padStart(2, '0')}`,
+      percent,
+    };
+  }, [adventure]);
+
+  if (!adventure?.active) return null;
+
+  return (
+    <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg border border-white/10">
+      <span className="text-sm animate-pulse">{'\u2694\uFE0F'}</span>
+      <span className="text-xs text-cream-100 font-medium">아들이 모험 중...</span>
+      <span className="text-xs text-cozy-gold font-bold tabular-nums">{timeInfo.display}</span>
+      <div className="w-12 h-1.5 bg-black/30 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-cozy-forest to-[#7BC67B] rounded-full transition-[width] duration-1000 ease-linear"
+          style={{ width: `${timeInfo.percent}%` }}
+        />
+      </div>
     </div>
   );
 }
@@ -321,7 +361,7 @@ function PlacementModal({ type, isOpen, onClose }: PlacementModalProps) {
 
 export default function HomePage() {
   const { state } = useGameState();
-  const { son, home, adventure, letters } = state;
+  const { son, home, adventure } = state;
 
   const [placementModal, setPlacementModal] = useState<PlacementType | null>(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
@@ -340,10 +380,12 @@ export default function HomePage() {
   }, [adventure?.active, son.isHome]);
 
   const isAdventuring = adventure?.active ?? false;
+  const sonIsHome = son.isHome && !isAdventuring;
   const currentAction = son.currentAction;
 
   // Get the furniture highlight based on son's current action
   const activeFurniture = useMemo(() => {
+    if (!sonIsHome) return null;
     switch (currentAction) {
       case SonAction.SLEEPING: return 'bed';
       case SonAction.EATING: return 'table';
@@ -354,7 +396,7 @@ export default function HomePage() {
       case SonAction.DEPARTING: return 'door';
       default: return null;
     }
-  }, [currentAction]);
+  }, [currentAction, sonIsHome]);
 
   // Prepare table items preview
   const tableItems = home.table.map((f) => ({
@@ -386,166 +428,190 @@ export default function HomePage() {
   // Is door open (son departing)?
   const isDoorOpen = currentAction === SonAction.DEPARTING;
 
-  // If son is adventuring, show adventure panel
-  if (isAdventuring) {
-    return (
-      <>
-        <AdventurePanel />
-        <ReturnModal
-          isOpen={showReturnModal}
-          onClose={() => setShowReturnModal(false)}
-        />
-      </>
-    );
-  }
-
   return (
     <>
-      <div className="px-3 py-4 flex flex-col gap-4">
-        {/* === Son Display Area === */}
-        <div className="relative bg-gradient-to-b from-cream-200 to-cream-300 rounded-2xl border-2 border-cream-500 p-4 shadow-inner">
-          {/* Action indicator */}
-          <div className="flex items-center justify-center gap-1.5 mb-3">
-            <span className="text-lg animate-pulse">{actionInfo.emoji}</span>
-            <span className="text-sm font-medium text-cream-700">{actionInfo.label}</span>
-            {son.actionTimer > 0 && (
-              <span className="text-xs text-cream-600 tabular-nums ml-1">
-                ({Math.ceil(son.actionTimer)}s)
-              </span>
-            )}
-          </div>
+      {/* Full-screen background with home interior */}
+      <div
+        className="relative min-h-[calc(100vh-140px)] flex flex-col"
+        style={{
+          backgroundImage: "url('/hero-mom/assets/backgrounds/home.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/35 pointer-events-none" />
 
-          {/* Son character */}
-          <div className="flex justify-center mb-3">
-            <div
-              className={`
-                w-24 h-24 rounded-full
-                bg-gradient-to-br from-amber-100 to-amber-200
-                border-3 border-amber-300
-                flex items-center justify-center
-                shadow-lg
-                transition-all duration-500
-                ${currentAction === SonAction.TRAINING ? 'animate-bounce' : ''}
-                ${currentAction === SonAction.SLEEPING ? 'opacity-80' : ''}
-                ${currentAction === SonAction.DEPARTING ? 'animate-pulse' : ''}
-              `}
-            >
-              <span className="text-5xl select-none">
-                {SON_STATE_EMOJI[currentAction] ?? '\uD83E\uDDD1'}
-              </span>
-            </div>
-          </div>
+        {/* Content layer */}
+        <div className="relative z-10 flex flex-col flex-1 px-3 py-3 gap-3">
 
-          {/* Injury indicator */}
-          {son.isInjured && (
-            <div className="flex justify-center mb-2">
-              <span className="text-xs bg-cozy-red/20 text-cozy-red px-2 py-0.5 rounded-full border border-cozy-red/30">
-                {'\uD83E\uDE79'} 부상 상태
-              </span>
+          {/* === Adventure Status Indicator (when son is away) === */}
+          {isAdventuring && (
+            <div className="flex justify-center pt-1">
+              <AdventureStatusIndicator />
             </div>
           )}
 
-          {/* Speech bubble */}
-          {dialogue && <SpeechBubble text={dialogue} />}
-        </div>
+          {/* === Son Display Area (center-top, overlaid on background) === */}
+          {sonIsHome && (
+            <div className="flex flex-col items-center gap-2 pt-2">
+              {/* Speech bubble above son */}
+              {dialogue && <SpeechBubble text={dialogue} />}
 
-        {/* === Furniture Grid === */}
-        <div className="grid grid-cols-4 gap-2">
-          {/* Row 1: Bed, Dummy, Desk, Chair */}
-          <FurnitureItem
-            emoji={'\uD83D\uDECF\uFE0F'}
-            label="침대"
-            highlight={activeFurniture === 'bed'}
-            occupied={currentAction === SonAction.SLEEPING}
-            occupiedLabel={'\uD83D\uDCA4'}
-          />
-          <FurnitureItem
-            emoji={'\uD83C\uDFAF'}
-            label="허수아비"
-            highlight={activeFurniture === 'dummy'}
-            occupied={currentAction === SonAction.TRAINING}
-            occupiedLabel={'\u2694\uFE0F'}
-          />
-          <FurnitureItem
-            emoji={'\uD83D\uDCDA'}
-            label="책상"
-            items={deskItems}
-            maxSlots={3}
-            onClick={() => setPlacementModal('book')}
-            highlight={activeFurniture === 'desk'}
-          />
-          <FurnitureItem
-            emoji={'\uD83E\uDE91'}
-            label="의자"
-            highlight={activeFurniture === 'chair'}
-            occupied={currentAction === SonAction.RESTING}
-            occupiedLabel={'\uD83D\uDE0C'}
-          />
-        </div>
+              {/* Action indicator */}
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-lg animate-pulse drop-shadow-md">{actionInfo.emoji}</span>
+                <span className="text-sm font-medium text-cream-100 drop-shadow-sm">{actionInfo.label}</span>
+                {son.actionTimer > 0 && (
+                  <span className="text-xs text-cream-200 tabular-nums ml-1 drop-shadow-sm">
+                    ({Math.ceil(son.actionTimer)}s)
+                  </span>
+                )}
+              </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          {/* Row 2: Table, Potion Shelf, Equipment Rack */}
-          <FurnitureItem
-            emoji={'\uD83C\uDF7D\uFE0F'}
-            label="식탁"
-            items={tableItems}
-            maxSlots={MAX_TABLE_FOOD}
-            onClick={() => setPlacementModal('food')}
-            highlight={activeFurniture === 'table'}
-            className="col-span-1"
-          />
-          <FurnitureItem
-            emoji={'\uD83E\uDDEA'}
-            label="포션 선반"
-            items={potionItems}
-            maxSlots={state.unlocks.potionSlots}
-            onClick={() => setPlacementModal('potion')}
-            highlight={activeFurniture === 'potionShelf'}
-            className="col-span-1"
-          />
-          <FurnitureItem
-            emoji={'\u2694\uFE0F'}
-            label="장비대"
-            items={equipmentItems}
-            maxSlots={3}
-            onClick={() => setPlacementModal('equipment')}
-            highlight={false}
-            className="col-span-1"
-          />
-        </div>
+              {/* Son character */}
+              <div className="flex justify-center">
+                <div
+                  className={`
+                    w-24 h-24 rounded-full
+                    bg-gradient-to-br from-amber-100/80 to-amber-200/80
+                    backdrop-blur-sm
+                    border-3 border-amber-300/70
+                    flex items-center justify-center
+                    shadow-lg
+                    transition-all duration-500
+                    ${currentAction === SonAction.TRAINING ? 'animate-bounce' : ''}
+                    ${currentAction === SonAction.SLEEPING ? 'opacity-80' : ''}
+                    ${currentAction === SonAction.DEPARTING ? 'animate-pulse' : ''}
+                  `}
+                >
+                  <span className="text-5xl select-none drop-shadow-md">
+                    {SON_STATE_EMOJI[currentAction] ?? '\uD83E\uDDD1'}
+                  </span>
+                </div>
+              </div>
 
-        {/* Door */}
-        <div className="flex justify-end">
-          <div
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-xl
-              border-2 transition-all duration-300
-              ${isDoorOpen
-                ? 'bg-amber-100 border-cozy-amber shadow-[0_0_12px_rgba(212,137,63,0.3)]'
-                : 'bg-cream-200/80 border-cream-500/50'
-              }
-            `}
-          >
-            <span className="text-2xl">
-              {isDoorOpen ? '\uD83D\uDEAA' : '\uD83D\uDEAA'}
-            </span>
-            <span className="text-xs text-cream-700">
-              {isDoorOpen ? '출발 중...' : '현관문'}
-            </span>
-            {isDoorOpen && (
-              <span className="text-lg animate-bounce">{'\uD83D\uDEB6'}</span>
-            )}
+              {/* Injury indicator */}
+              {son.isInjured && (
+                <div className="flex justify-center">
+                  <span className="text-xs bg-cozy-red/30 text-cream-100 px-2 py-0.5 rounded-full border border-cozy-red/40 backdrop-blur-sm">
+                    {'\uD83E\uDE79'} 부상 상태
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Empty house message (when son is away but not adventuring - brief transition state) */}
+          {!son.isHome && !isAdventuring && (
+            <div className="flex flex-col items-center justify-center py-8 gap-2">
+              <span className="text-5xl drop-shadow-lg">{'\uD83D\uDEB6'}</span>
+              <p className="text-lg text-cream-100 font-serif drop-shadow-sm">
+                아들이 모험을 떠났습니다...
+              </p>
+            </div>
+          )}
+
+          {/* Spacer to push furniture to bottom */}
+          <div className="flex-1 min-h-[20px]" />
+
+          {/* === Furniture Grid (bottom half, glass-morphism) === */}
+          <div className="grid grid-cols-4 gap-2">
+            {/* Row 1: Bed, Dummy, Desk, Chair */}
+            <FurnitureItem
+              emoji={'\uD83D\uDECF\uFE0F'}
+              label="침대"
+              highlight={activeFurniture === 'bed'}
+              occupied={sonIsHome && currentAction === SonAction.SLEEPING}
+              occupiedLabel={'\uD83D\uDCA4'}
+              dimmed={isAdventuring}
+            />
+            <FurnitureItem
+              emoji={'\uD83C\uDFAF'}
+              label="허수아비"
+              highlight={activeFurniture === 'dummy'}
+              occupied={sonIsHome && currentAction === SonAction.TRAINING}
+              occupiedLabel={'\u2694\uFE0F'}
+              dimmed={isAdventuring}
+            />
+            <FurnitureItem
+              emoji={'\uD83D\uDCDA'}
+              label="책상"
+              items={deskItems}
+              maxSlots={3}
+              onClick={() => setPlacementModal('book')}
+              highlight={activeFurniture === 'desk'}
+              dimmed={isAdventuring}
+            />
+            <FurnitureItem
+              emoji={'\uD83E\uDE91'}
+              label="의자"
+              highlight={activeFurniture === 'chair'}
+              occupied={sonIsHome && currentAction === SonAction.RESTING}
+              occupiedLabel={'\uD83D\uDE0C'}
+              dimmed={isAdventuring}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {/* Row 2: Table, Potion Shelf, Equipment Rack */}
+            <FurnitureItem
+              emoji={'\uD83C\uDF7D\uFE0F'}
+              label="식탁"
+              items={tableItems}
+              maxSlots={MAX_TABLE_FOOD}
+              onClick={() => setPlacementModal('food')}
+              highlight={activeFurniture === 'table'}
+              className="col-span-1"
+              dimmed={isAdventuring}
+            />
+            <FurnitureItem
+              emoji={'\uD83E\uDDEA'}
+              label="포션 선반"
+              items={potionItems}
+              maxSlots={state.unlocks.potionSlots}
+              onClick={() => setPlacementModal('potion')}
+              highlight={activeFurniture === 'potionShelf'}
+              className="col-span-1"
+              dimmed={isAdventuring}
+            />
+            <FurnitureItem
+              emoji={'\u2694\uFE0F'}
+              label="장비대"
+              items={equipmentItems}
+              maxSlots={3}
+              onClick={() => setPlacementModal('equipment')}
+              highlight={false}
+              className="col-span-1"
+              dimmed={isAdventuring}
+            />
+          </div>
+
+          {/* Door (bottom-right) */}
+          <div className="flex justify-end">
+            <div
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-xl
+                border-2 transition-all duration-300 backdrop-blur-sm
+                ${isDoorOpen && sonIsHome
+                  ? 'bg-amber-100/30 border-cozy-amber/70 shadow-[0_0_12px_rgba(212,137,63,0.3)]'
+                  : 'bg-white/15 border-white/20'
+                }
+                ${isAdventuring ? 'opacity-60' : ''}
+              `}
+            >
+              <span className="text-2xl drop-shadow-md">
+                {'\uD83D\uDEAA'}
+              </span>
+              <span className="text-xs text-cream-100 drop-shadow-sm">
+                {isDoorOpen && sonIsHome ? '출발 중...' : '현관문'}
+              </span>
+              {isDoorOpen && sonIsHome && (
+                <span className="text-lg animate-bounce">{'\uD83D\uDEB6'}</span>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Son not home message (brief empty state between adventure end and return) */}
-        {!son.isHome && !isAdventuring && (
-          <div className="text-center py-8">
-            <p className="text-lg text-cream-600 font-serif">
-              {'\uD83D\uDEB6'} 아들이 모험을 떠났습니다...
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Placement Modal */}

@@ -233,6 +233,7 @@ export interface Letter {
   timestamp: number;
   hpPercent?: number;
   battlesCompleted?: number;
+  imageUrl?: string;  // 모험 중 동봉한 이미지 경로
 }
 
 // --- Adventure ---

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import StatusBar from './StatusBar';
 import BottomNav, { type PageId } from './BottomNav';
 import HomePage from '@/components/game/HomePage';
+import MailboxPage from '@/components/game/MailboxPage';
 import BlacksmithPage from '@/components/game/BlacksmithPage';
 import KitchenPage from '@/components/game/KitchenPage';
 import AlchemyPage from '@/components/game/AlchemyPage';
@@ -22,6 +23,7 @@ interface GameLayoutProps {
 /** Built-in page component lookup */
 const DEFAULT_PAGES: Record<PageId, React.ComponentType> = {
   home: HomePage,
+  mailbox: MailboxPage,
   blacksmith: BlacksmithPage,
   kitchen: KitchenPage,
   alchemy: AlchemyPage,

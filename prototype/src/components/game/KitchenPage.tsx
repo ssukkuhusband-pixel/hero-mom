@@ -35,11 +35,11 @@ function MaterialBar({ materialKeys }: { materialKeys: MaterialKey[] }) {
   const { state } = useGameState();
 
   return (
-    <div className="flex flex-wrap gap-2 px-3 py-2 bg-cream-300/80 rounded-xl border border-cream-500/50">
+    <div className="flex flex-wrap gap-2 px-3 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/20">
       {materialKeys.map((key) => (
         <div key={key} className="flex items-center gap-1 text-xs">
           <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
-          <span className="font-medium text-cream-800 tabular-nums">
+          <span className="font-medium text-cream-200 tabular-nums">
             {state.inventory.materials[key]}
           </span>
         </div>
@@ -86,7 +86,7 @@ function FoodRecipeCard({ recipe }: { recipe: FoodRecipe }) {
   return (
     <div
       className={`
-        card-parchment !p-4 transition-opacity
+        bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4 transition-opacity
         ${!isUnlocked ? 'opacity-50' : ''}
       `}
     >
@@ -94,19 +94,19 @@ function FoodRecipeCard({ recipe }: { recipe: FoodRecipe }) {
       <div className="flex items-center gap-2 mb-2">
         <span className="text-2xl">{foodEmoji}</span>
         <div className="flex-1 min-w-0">
-          <p className="font-serif font-bold text-cream-900 text-sm truncate">
+          <p className="font-serif font-bold text-cream-100 text-sm truncate drop-shadow">
             {recipe.name}
           </p>
         </div>
         {!isUnlocked && (
-          <span className="text-[10px] bg-cream-700 text-cream-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+          <span className="text-[10px] bg-black/40 text-cream-100 px-2 py-0.5 rounded-full whitespace-nowrap">
             Lv.{recipe.unlockLevel} 필요
           </span>
         )}
       </div>
 
       {/* Effects */}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mb-2 text-xs text-cream-800 bg-cream-200/80 rounded-lg px-2.5 py-1.5">
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mb-2 text-xs text-cream-100 bg-white/10 rounded-lg px-2.5 py-1.5">
         {effects.map((eff, i) => (
           <span key={i}>{eff}</span>
         ))}
@@ -121,7 +121,7 @@ function FoodRecipeCard({ recipe }: { recipe: FoodRecipe }) {
             <div key={key} className="flex items-center gap-1 text-xs">
               <span className="text-sm">{EMOJI_MAP[key] ?? '?'}</span>
               <span
-                className={`tabular-nums font-medium ${enough ? 'text-cream-800' : 'text-cozy-red'}`}
+                className={`tabular-nums font-medium ${enough ? 'text-cream-200' : 'text-red-400'}`}
               >
                 {has}/{amount}
               </span>
@@ -167,7 +167,7 @@ function FoodInventory() {
   if (grouped.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-xs text-cream-500 italic">보유한 음식이 없습니다</p>
+        <p className="text-xs text-cream-400 italic">보유한 음식이 없습니다</p>
       </div>
     );
   }
@@ -192,18 +192,18 @@ function FoodInventory() {
         return (
           <div
             key={food.name}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-cream-400 bg-cream-100"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-white/20 bg-white/10"
           >
             <span className="text-xl">{matchedEmoji}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-cream-900 truncate">
+              <p className="text-sm font-medium text-cream-100 truncate">
                 {food.name}
               </p>
-              <p className="text-[10px] text-cream-600">
+              <p className="text-[10px] text-cream-300">
                 {effectParts.join('  ')}
               </p>
             </div>
-            <span className="text-sm font-bold text-cream-800 tabular-nums bg-cream-300 px-2 py-0.5 rounded-lg">
+            <span className="text-sm font-bold text-cream-200 tabular-nums bg-white/15 px-2 py-0.5 rounded-lg">
               x{count}
             </span>
           </div>
@@ -224,38 +224,48 @@ export default function KitchenPage() {
   ];
 
   return (
-    <div className="px-3 py-4 flex flex-col gap-4 pb-24">
-      {/* Header */}
-      <h1 className="font-serif font-bold text-xl text-cream-950 text-center">
-        {'\uD83C\uDF73'} 주방
-      </h1>
+    <div className="relative min-h-[calc(100vh-140px)]">
+      {/* Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/kitchen.png')" }}
+      />
+      <div className="absolute inset-0 bg-black/40" />
 
-      {/* Recipe list */}
-      <div>
-        <h2 className="font-serif font-bold text-sm text-cream-800 mb-2">
-          {'\uD83D\uDCD6'} 레시피
-        </h2>
-        <div className="flex flex-col gap-3">
-          {FOOD_RECIPES.map((recipe) => (
-            <FoodRecipeCard key={recipe.id} recipe={recipe} />
-          ))}
+      {/* Content */}
+      <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
+        {/* Header */}
+        <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
+          {'\uD83C\uDF73'} 주방
+        </h1>
+
+        {/* Recipe list */}
+        <div>
+          <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
+            {'\uD83D\uDCD6'} 레시피
+          </h2>
+          <div className="flex flex-col gap-3">
+            {FOOD_RECIPES.map((recipe) => (
+              <FoodRecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Divider */}
-      <div className="border-t-2 border-cream-400 my-1" />
+        {/* Divider */}
+        <div className="border-t-2 border-white/20 my-1" />
 
-      {/* Current food inventory */}
-      <div>
-        <h2 className="font-serif font-bold text-sm text-cream-800 mb-2">
-          {'\uD83C\uDF5E'} 보유 음식
-        </h2>
-        <FoodInventory />
-      </div>
+        {/* Current food inventory */}
+        <div>
+          <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
+            {'\uD83C\uDF5E'} 보유 음식
+          </h2>
+          <FoodInventory />
+        </div>
 
-      {/* Bottom material bar */}
-      <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
-        <MaterialBar materialKeys={kitchenMaterials} />
+        {/* Bottom material bar */}
+        <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
+          <MaterialBar materialKeys={kitchenMaterials} />
+        </div>
       </div>
     </div>
   );

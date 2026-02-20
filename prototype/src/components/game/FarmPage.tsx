@@ -56,17 +56,17 @@ function SeedInventoryBar() {
   const { state } = useGameState();
 
   return (
-    <div className="flex flex-wrap gap-2 px-3 py-2 bg-cream-300/80 rounded-xl border border-cream-500/50">
+    <div className="flex flex-wrap gap-2 px-3 py-2 bg-white/15 backdrop-blur-sm rounded-xl border border-white/20">
       {SEED_KEYS.map((key) => {
         const crop = SEED_TO_CROP[key];
         const count = state.inventory.materials[key];
         return (
           <div key={key} className="flex items-center gap-1 text-xs">
             <span className="text-sm">{EMOJI_MAP[key] ?? '\uD83C\uDF31'}</span>
-            <span className="text-[10px] text-cream-600">
+            <span className="text-[10px] text-cream-300">
               {crop ? CROP_NAME[crop] : key}
             </span>
-            <span className="font-medium text-cream-800 tabular-nums">
+            <span className="font-medium text-cream-200 tabular-nums">
               {count}
             </span>
           </div>
@@ -241,9 +241,9 @@ function FarmPlotCard({ plot, plotIndex }: FarmPlotCardProps) {
   if (!plot.crop) {
     return (
       <>
-        <div className="card-parchment !p-3 flex flex-col items-center justify-center min-h-[140px] gap-2 border-dashed !border-2 !border-cream-400">
-          <span className="text-3xl opacity-30">{'\uD83C\uDF31'}</span>
-          <p className="text-xs text-cream-500 font-medium">{'\uBE48 \uBC2D'}{/* 빈 밭 */}</p>
+        <div className="bg-white/15 backdrop-blur-sm border-2 border-dashed border-white/30 rounded-xl p-3 flex flex-col items-center justify-center min-h-[140px] gap-2">
+          <span className="text-3xl opacity-40">{'\uD83C\uDF31'}</span>
+          <p className="text-xs text-cream-300 font-medium">{'\uBE48 \uBC2D'}{/* 빈 밭 */}</p>
           <button
             onClick={() => setSeedModalOpen(true)}
             className="btn-wood text-xs !py-1.5 !px-4"
@@ -267,17 +267,17 @@ function FarmPlotCard({ plot, plotIndex }: FarmPlotCardProps) {
   if (plot.ready) {
     return (
       <div
-        className="card-parchment !p-3 flex flex-col items-center justify-center min-h-[140px] gap-2 relative overflow-hidden"
+        className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-3 flex flex-col items-center justify-center min-h-[140px] gap-2 relative overflow-hidden"
         style={{
           borderColor: 'rgba(232, 184, 74, 0.6)',
-          boxShadow: '0 0 12px rgba(232, 184, 74, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 12px rgba(61, 43, 31, 0.1)',
+          boxShadow: '0 0 12px rgba(232, 184, 74, 0.35), 0 4px 12px rgba(0, 0, 0, 0.2)',
         }}
       >
         {/* Golden glow overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(circle at center, rgba(232, 184, 74, 0.1) 0%, transparent 70%)',
+            background: 'radial-gradient(circle at center, rgba(232, 184, 74, 0.15) 0%, transparent 70%)',
           }}
         />
 
@@ -289,7 +289,7 @@ function FarmPlotCard({ plot, plotIndex }: FarmPlotCardProps) {
         >
           {cropEmoji}
         </span>
-        <p className="text-xs font-bold text-cozy-gold relative z-10">
+        <p className="text-xs font-bold text-cozy-gold relative z-10 drop-shadow">
           {'\uC218\uD655 \uAC00\uB2A5!'}{/* 수확 가능! */}
         </p>
         <button
@@ -304,7 +304,7 @@ function FarmPlotCard({ plot, plotIndex }: FarmPlotCardProps) {
 
   // Growing state
   return (
-    <div className="card-parchment !p-3 flex flex-col items-center justify-center min-h-[140px] gap-2">
+    <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-3 flex flex-col items-center justify-center min-h-[140px] gap-2">
       <span
         className="text-3xl"
         style={{
@@ -313,7 +313,7 @@ function FarmPlotCard({ plot, plotIndex }: FarmPlotCardProps) {
       >
         {cropEmoji}
       </span>
-      <p className="text-xs font-medium text-cream-800">{cropName}</p>
+      <p className="text-xs font-medium text-cream-100">{cropName}</p>
       <ProgressBar
         current={progress}
         max={100}
@@ -322,7 +322,7 @@ function FarmPlotCard({ plot, plotIndex }: FarmPlotCardProps) {
         size="sm"
         className="w-full"
       />
-      <p className="text-[10px] text-cream-600 tabular-nums">
+      <p className="text-[10px] text-cream-300 tabular-nums">
         {progress}% &middot; {timeRemaining}
       </p>
     </div>
@@ -341,67 +341,77 @@ export default function FarmPage() {
   const readyCrops = farm.plots.filter((p) => p.ready).length;
 
   return (
-    <div className="px-3 py-4 flex flex-col gap-4 pb-24">
-      {/* Header */}
-      <h1 className="font-serif font-bold text-xl text-cream-950 text-center">
-        {'\uD83C\uDF3E'} {'\uB18D\uC7A5'}{/* 농장 */}
-      </h1>
+    <div className="relative min-h-[calc(100vh-140px)]">
+      {/* Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/hero-mom/assets/backgrounds/farm.png')" }}
+      />
+      <div className="absolute inset-0 bg-black/40" />
 
-      {/* Harvest indicator */}
-      {readyCrops > 0 && (
-        <div className="bg-cozy-gold/20 border border-cozy-gold/40 rounded-xl px-3 py-2 text-center">
-          <p className="text-sm font-medium text-cream-900">
-            {'\u2728'} {readyCrops}{'\uAC1C \uC791\uBB3C \uC218\uD655 \uAC00\uB2A5!'}{/* N개 작물 수확 가능! */}
-          </p>
+      {/* Content */}
+      <div className="relative z-10 px-3 py-4 flex flex-col gap-4 pb-24">
+        {/* Header */}
+        <h1 className="font-serif font-bold text-xl text-cream-100 text-center drop-shadow-lg">
+          {'\uD83C\uDF3E'} {'\uB18D\uC7A5'}{/* 농장 */}
+        </h1>
+
+        {/* Harvest indicator */}
+        {readyCrops > 0 && (
+          <div className="bg-cozy-gold/30 border border-cozy-gold/50 rounded-xl px-3 py-2 text-center backdrop-blur-sm">
+            <p className="text-sm font-medium text-cream-100 drop-shadow">
+              {'\u2728'} {readyCrops}{'\uAC1C \uC791\uBB3C \uC218\uD655 \uAC00\uB2A5!'}{/* N개 작물 수확 가능! */}
+            </p>
+          </div>
+        )}
+
+        {/* Farm plots grid 2x2 */}
+        <div className="grid grid-cols-2 gap-3">
+          {farm.plots.slice(0, farm.maxPlots).map((plot, index) => (
+            <FarmPlotCard key={index} plot={plot} plotIndex={index} />
+          ))}
         </div>
-      )}
 
-      {/* Farm plots grid 2x2 */}
-      <div className="grid grid-cols-2 gap-3">
-        {farm.plots.slice(0, farm.maxPlots).map((plot, index) => (
-          <FarmPlotCard key={index} plot={plot} plotIndex={index} />
-        ))}
-      </div>
+        {/* Divider */}
+        <div className="border-t-2 border-white/20 my-1" />
 
-      {/* Divider */}
-      <div className="border-t-2 border-cream-400 my-1" />
-
-      {/* Seed inventory */}
-      <div>
-        <h2 className="font-serif font-bold text-sm text-cream-800 mb-2">
-          {'\uD83C\uDF31'} {'\uBCF4\uC720 \uC528\uC557'}{/* 보유 씨앗 */}
-        </h2>
-        <SeedInventoryBar />
-      </div>
-
-      {/* Bottom seed bar (fixed) */}
-      <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
-        <div className="flex flex-wrap gap-2 px-3 py-2 bg-cream-300/80 rounded-xl border border-cream-500/50">
-          {SEED_KEYS.map((key) => {
-            const crop = SEED_TO_CROP[key];
-            return (
-              <div key={key} className="flex items-center gap-1 text-xs">
-                <span className="text-sm">{crop ? CROP_EMOJI[crop] : EMOJI_MAP[key]}</span>
-                <span className="font-medium text-cream-800 tabular-nums">
-                  {state.inventory.materials[key]}
-                </span>
-              </div>
-            );
-          })}
+        {/* Seed inventory */}
+        <div>
+          <h2 className="font-serif font-bold text-sm text-cream-100 mb-2 drop-shadow">
+            {'\uD83C\uDF31'} {'\uBCF4\uC720 \uC528\uC557'}{/* 보유 씨앗 */}
+          </h2>
+          <SeedInventoryBar />
         </div>
-      </div>
 
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes farm-bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
-        }
-        @keyframes farm-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.9; }
-          50% { transform: scale(1.08); opacity: 1; }
-        }
-      `}</style>
+        {/* Bottom seed bar (fixed) */}
+        <div className="fixed bottom-16 left-0 right-0 max-w-[430px] mx-auto px-3 z-30">
+          <div className="flex flex-wrap gap-2 px-3 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/20">
+            {SEED_KEYS.map((key) => {
+              const crop = SEED_TO_CROP[key];
+              return (
+                <div key={key} className="flex items-center gap-1 text-xs">
+                  <span className="text-sm">{crop ? CROP_EMOJI[crop] : EMOJI_MAP[key]}</span>
+                  <span className="font-medium text-cream-200 tabular-nums">
+                    {state.inventory.materials[key]}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* CSS Animations */}
+        <style jsx>{`
+          @keyframes farm-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+          }
+          @keyframes farm-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.08); opacity: 1; }
+          }
+        `}</style>
+      </div>
     </div>
   );
 }
